@@ -1,0 +1,23 @@
+# Dev без MediaMTX: читаем сэмпл напрямую как файл (FileSource)
+site:
+  name: "Dev Stand"
+  timezone: "Asia/Tashkent"
+
+rules:
+  min_track_seconds: 0.7
+  track_lost_ttl: 2.0
+
+cameras:
+  - id: cam1
+    name: "Sample cam 1 (file)"
+    url: "data/samples/people.mp4"
+    process_fps: 4
+    detect_conf: 0.35
+    motion: { enabled: true, min_area_pct: 0.4, cooldown_s: 3.0 }
+    zones:
+      - name: restricted-right
+        type: restricted
+        polygon: [[0.55, 0.05], [0.98, 0.05], [0.98, 0.97], [0.55, 0.97]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 6, cooldown_s: 60 }
+          loitering: { dwell_s: 12, cooldown_s: 120 }

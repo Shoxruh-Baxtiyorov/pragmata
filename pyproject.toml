@@ -1,0 +1,71 @@
+[project]
+name = "soqchi"
+version = "0.1.0"
+description = "Soqchi AI — AI Security Copilot over existing CCTV"
+requires-python = ">=3.12"
+dependencies = [
+    "ultralytics>=8.3",
+    "supervision>=0.25",
+    "opencv-python>=4.10",
+    "numpy>=1.26",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "alembic>=1.13",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "pyyaml>=6.0",
+    "cryptography>=42.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-pyyaml>=6.0",
+]
+
+[tool.uv]
+package = false
+
+# Week 1: CPU-сборка torch (лёгкая и стабильная для верификации).
+# Для GPU (RTX 3050): замени url на https://download.pytorch.org/whl/cu124 и сделай `uv sync`.
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch" }]
+torchvision = [{ index = "pytorch" }]
+
+# Конфиг качества — зеркало iqbola-backend (тот же ruff-набор, mypy-базлайн).
+# Кодовая база свежая, поэтому mypy сразу строже: disallow_untyped_defs глобально.
+[tool.ruff]
+line-length = 99
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "TC"]
+
+[tool.ruff.lint.flake8-type-checking]
+# SQLAlchemy резолвит Mapped[...] аннотации в рантайме — их импорты нельзя уносить в TYPE_CHECKING
+runtime-evaluated-base-classes = ["sqlalchemy.orm.DeclarativeBase", "soqchi.db.models.Base"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+disallow_any_generics = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+check_untyped_defs = true
+strict_equality = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

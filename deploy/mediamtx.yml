@@ -1,0 +1,13 @@
+# dev-стенд: только RTSP, остальные протоколы выключены
+rtsp: yes
+rtspAddress: :8554
+rtmp: no
+hls: no
+webrtc: no
+srt: no
+api: no
+metrics: no
+pprof: no
+
+paths:
+  all_others:

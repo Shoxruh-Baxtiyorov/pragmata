@@ -1,0 +1,31 @@
+# Пример конфига реального объекта — скопируй, поправь, запусти:
+#   uv run python -m soqchi.main --config config/my-site.yaml
+site:
+  name: "My Object"
+  timezone: "Asia/Tashkent"
+
+rules:
+  min_track_seconds: 0.7
+  track_lost_ttl: 2.0
+
+cameras:
+  - id: entrance
+    name: "Кириш / Вход"
+    url: "rtsp://user:pass@192.168.1.64:554/Streaming/Channels/101"   # Hikvision main stream
+    process_fps: 5
+    detect_conf: 0.4
+    motion: { enabled: true, min_area_pct: 0.4, cooldown_s: 3.0 }
+    zones:
+      - name: door
+        type: restricted
+        polygon: [[0.30, 0.20], [0.70, 0.20], [0.70, 0.95], [0.30, 0.95]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 8, cooldown_s: 300 }
+
+  - id: phone-cam
+    name: "Телефон (IP Webcam)"
+    url: "http://192.168.1.50:8080/video"   # MJPEG — тоже работает
+    process_fps: 4
+    detect_conf: 0.4
+    motion: { enabled: true, min_area_pct: 0.5, cooldown_s: 3.0 }
+    zones: []
