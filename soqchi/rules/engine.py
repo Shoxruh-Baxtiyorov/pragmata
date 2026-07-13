@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
+from zoneinfo import ZoneInfo
 
 import cv2
 import numpy as np
 
 if TYPE_CHECKING:
-    from soqchi.config import CameraConfig, GlobalRules, ZoneConfig
+    from soqchi.config import CameraConfig, GlobalRules, SiteInfo, WorkingHours, ZoneConfig
     from soqchi.perception.tracker import TrackState
 
 SEVERITY = {
@@ -15,7 +18,20 @@ SEVERITY = {
     "person_exited": "info",
     "loitering": "warning",
     "zone_intrusion": "alert",
+    "after_hours_presence": "alert",
+    "camera_offline": "alert",
+    "camera_online": "info",
 }
+
+_DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+def is_outside_hours(ts: float, tz: str, wh: WorkingHours) -> bool:
+    local = datetime.fromtimestamp(ts, tz=ZoneInfo(tz))
+    if _DAY_KEYS[local.weekday()] not in wh.days:
+        return True
+    now = local.strftime("%H:%M")
+    return not (wh.open <= now < wh.close)
 
 
 @dataclass
@@ -27,6 +43,7 @@ class RuleEvent:
     zone: str | None = None
     track: TrackState | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
 
     @property
     def severity(self) -> str:
@@ -53,9 +70,12 @@ class ZoneRuntime:
 class RuleEngine:
     """Детерминированная фабрика событий: hysteresis + cooldown + dwell, никакого ML."""
 
-    def __init__(self, camera: CameraConfig, global_rules: GlobalRules):
+    def __init__(
+        self, camera: CameraConfig, global_rules: GlobalRules, site: SiteInfo | None = None
+    ):
         self.camera = camera
         self.g = global_rules
+        self.site = site
         self.zones = [ZoneRuntime(z) for z in camera.zones]
         self._cooldown_until: dict[tuple[str, str, int], float] = {}  # (rule, zone, track_id) → ts
 
@@ -86,6 +106,25 @@ class RuleEngine:
                         self.camera.id,
                         st.first_ts,
                         st.last_ts,
+                        track=st,
+                        meta={"track_id": st.track_id},
+                    )
+                )
+
+            if (
+                self.site is not None
+                and self.site.working_hours is not None
+                and st.entered_emitted
+                and not st.after_hours_emitted
+                and is_outside_hours(ts, self.site.timezone, self.site.working_hours)
+            ):
+                st.after_hours_emitted = True
+                events.append(
+                    RuleEvent(
+                        "after_hours_presence",
+                        self.camera.id,
+                        st.first_ts,
+                        ts,
                         track=st,
                         meta={"track_id": st.track_id},
                     )

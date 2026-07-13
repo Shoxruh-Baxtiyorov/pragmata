@@ -56,6 +56,31 @@ class Track(Base):
     __table_args__ = (Index("ix_tracks_camera_started", "camera_id", "started_at"),)
 
 
+class Chat(Base):
+    __tablename__ = "chats"
+
+    chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    role: Mapped[str] = mapped_column(String(16), default="viewer")
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("events.id"))
+    chat_id: Mapped[int] = mapped_column(BigInteger)
+    verdict: Mapped[str] = mapped_column(String(16))  # false_positive | confirmed
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (Index("ix_feedback_event", "event_id"),)
+
+
 class Event(Base):
     __tablename__ = "events"
 

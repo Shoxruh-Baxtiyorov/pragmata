@@ -23,10 +23,21 @@ uv run python -m soqchi.main --config config/dev.yaml
 События падают в Postgres (`events`, `tracks`) + кропы в `data/media/`. Без БД:
 `--sink jsonl` (события в `data/events.jsonl`). Тесты: `uv run pytest`.
 
-Пайплайн недели 1: `VideoSource (RTSP/mp4/MJPEG) → MotionGate → YOLO11n → ByteTrack →
-RuleEngine (zone_intrusion / loitering / entered / exited) → Postgres + кропы (L0-лица YuNet)`.
+Пайплайн: `VideoSource (RTSP/mp4/MJPEG) → MotionGate → YOLO11n → ByteTrack →
+RuleEngine (zone_intrusion / loitering / after_hours / entered / exited / camera_offline)
+→ Postgres + кропы (L0-лица YuNet) → клипы из кольцевого буфера → Telegram-алерты`.
+
+**Telegram:** токен от @BotFather в `TELEGRAM_BOT_TOKEN` (.env), свои chat_id — в
+`TELEGRAM_CHAT_IDS` (бот подскажет id на /start). Алерты приходят карточкой с фото и
+кнопками [🎬 Клип] [⚠️ Ложное] [✅ Ок]; клип (10с до + 20с после события) готов ~через
+30с после алерта.
+
+**Телефон как камера:** Android → приложение IP Webcam → Start server → в конфиг
+`url: "http://<ip-телефона>:8080/video"` (пример в `config/site.example.yaml`).
 
 ## Holat
 
-1-hafta boshlandi (2026-07-13): pipeline skeleti ishlaydi (yuqoridagi quickstart).
-Keyingi: hafta 2 — ring buffer kliplari + Telegram-alertlar (dizayn-hujjatdagi reja bo'yicha).
+2-hafta yakunlandi (2026-07-13): ring buffer kliplari (ffmpeg `-c copy`, 2s segmentlar)
++ Telegram-alertlar (kartochka: foto + tugmalar, FP-feedback bazaga) + after_hours va
+camera_offline/online qoidalari. Keyingi: hafta 3 — agent (SQL-first tools) + kechki
+digest + VLM tavsiflari.

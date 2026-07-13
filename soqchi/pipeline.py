@@ -12,7 +12,7 @@ from soqchi.perception.tracker import TrackManager
 from soqchi.rules.engine import RuleEngine
 
 if TYPE_CHECKING:
-    from soqchi.config import CameraConfig, GlobalRules
+    from soqchi.config import CameraConfig, GlobalRules, SiteInfo
     from soqchi.perception.detector import PersonDetector
     from soqchi.perception.faces import FaceCropper
     from soqchi.sinks import EventSink
@@ -53,6 +53,7 @@ class CameraWorker(threading.Thread):
         stop_event: threading.Event,
         loop_file: bool = False,
         realtime: bool = True,
+        site: SiteInfo | None = None,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
@@ -68,7 +69,7 @@ class CameraWorker(threading.Thread):
         self.tracks = TrackManager(
             camera.id, faces, lost_ttl=global_rules.track_lost_ttl, fps=camera.process_fps
         )
-        self.rules = RuleEngine(camera, global_rules)
+        self.rules = RuleEngine(camera, global_rules, site)
 
     def run(self) -> None:
         src = make_source(

@@ -65,6 +65,7 @@ class JsonlSink:
         self._write(
             {
                 "kind": "event",
+                "id": str(ev.id),
                 "type": ev.type,
                 "severity": ev.severity,
                 "camera_id": ev.camera_id,
@@ -122,6 +123,7 @@ class DbSink:
         with self._session_factory() as s:
             s.add(
                 Event(
+                    id=ev.id,
                     site_id=1,
                     camera_id=ev.camera_id,
                     type=ev.type,

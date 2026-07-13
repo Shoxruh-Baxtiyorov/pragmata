@@ -17,6 +17,11 @@ cameras:
       enabled: true
       min_area_pct: 0.4    # % изменившихся пикселей, чтобы проснуться
       cooldown_s: 3.0      # сколько держать «глаза открытыми» после движения
+    clips:
+      enabled: true
+      ring_minutes: 5
+      pre_s: 10
+      post_s: 20
     zones:
       - name: restricted-right
         type: restricted

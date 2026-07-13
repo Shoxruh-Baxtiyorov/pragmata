@@ -28,6 +28,7 @@ class TrackState:
     face_crop: np.ndarray | None = None
     face_score: float = 0.0
     entered_emitted: bool = False
+    after_hours_emitted: bool = False
     zone_hits: dict[str, int] = field(default_factory=dict)  # hysteresis-счётчики
     zone_dwell: dict[str, float] = field(default_factory=dict)  # непрерывные секунды в зоне
 

@@ -18,8 +18,16 @@ class Settings(BaseSettings):
     # Fernet-ключ для шифрования колонок (RTSP-креды камер). Вне APP_ENV=test
     # обязателен при первом обращении к шифрованию — см. soqchi/core/encryption.py.
     encryption_key: str = ""
+    # Telegram: пустой токен = бот выключен. Алерты уходят ТОЛЬКО в chat_id из
+    # allowlist (secure default: неизвестный чат не получает ничего).
+    telegram_bot_token: str = ""
+    telegram_chat_ids: str = ""  # "123456,-100987654"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def allowed_chat_ids(self) -> set[int]:
+        return {int(x) for x in self.telegram_chat_ids.split(",") if x.strip()}
 
 
 @lru_cache
@@ -55,6 +63,21 @@ class ZoneConfig(BaseModel):
     rules: ZoneRules = Field(default_factory=ZoneRules)
 
 
+class ClipConfig(BaseModel):
+    enabled: bool = False
+    ring_minutes: int = 10  # глубина кольцевого буфера на диске
+    pre_s: float = 10.0  # сколько секунд ДО события попадает в клип
+    post_s: float = 20.0  # и сколько ПОСЛЕ
+
+
+class WorkingHours(BaseModel):
+    """Рабочий календарь объекта — вне этих окон срабатывает after_hours_presence."""
+
+    days: list[str] = ["mon", "tue", "wed", "thu", "fri", "sat"]
+    open: str = "08:00"
+    close: str = "18:00"
+
+
 class CameraConfig(BaseModel):
     id: str
     name: str
@@ -63,6 +86,7 @@ class CameraConfig(BaseModel):
     detect_conf: float = 0.35
     motion: MotionConfig = Field(default_factory=MotionConfig)
     zones: list[ZoneConfig] = Field(default_factory=list)
+    clips: ClipConfig = Field(default_factory=ClipConfig)
 
 
 class GlobalRules(BaseModel):
@@ -73,6 +97,7 @@ class GlobalRules(BaseModel):
 class SiteInfo(BaseModel):
     name: str
     timezone: str = "Asia/Tashkent"
+    working_hours: WorkingHours | None = None  # None = правило after_hours выключено
 
 
 class SiteConfig(BaseModel):

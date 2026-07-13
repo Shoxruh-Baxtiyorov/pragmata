@@ -5,26 +5,66 @@ import logging
 import signal
 import threading
 import time
+from typing import TYPE_CHECKING
 
+from soqchi.alerts import BotSink, ClipSink
+from soqchi.clips import ClipWorker, SegmentRecorder
 from soqchi.config import SiteConfig, get_settings, load_site_config
 from soqchi.media import MediaStore
 from soqchi.perception.detector import PersonDetector
 from soqchi.perception.faces import FaceCropper
 from soqchi.pipeline import CameraWorker
+from soqchi.rules.engine import RuleEvent
 from soqchi.sinks import ConsoleSink, DbSink, EventSink, JsonlSink, MultiSink
 
+if TYPE_CHECKING:
+    import uuid
 
-def build_sink(kinds: set[str], cfg: SiteConfig, media: MediaStore) -> MultiSink:
+OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
+
+
+def build_sink(
+    kinds: set[str], cfg: SiteConfig, media: MediaStore
+) -> tuple[MultiSink, DbSink | None]:
     sinks: list[EventSink] = [ConsoleSink()]
+    db_sink: DbSink | None = None
     if "db" in kinds:
-        sinks.append(DbSink(cfg, media))
+        db_sink = DbSink(cfg, media)
+        sinks.append(db_sink)
     if "jsonl" in kinds:
         sinks.append(JsonlSink(get_settings().media_dir.parent / "events.jsonl", media))
-    return MultiSink(sinks)
+    return MultiSink(sinks), db_sink
+
+
+class CameraWatchdog:
+    """Кадры перестали идти → camera_offline; пошли снова → camera_online."""
+
+    def __init__(self, workers: list[CameraWorker], sink: EventSink):
+        self.workers = workers
+        self.sink = sink
+        now = time.time()
+        self._state = {w.camera.id: {"reads": -1, "changed": now, "online": True} for w in workers}
+
+    def check(self) -> None:
+        now = time.time()
+        for w in self.workers:
+            st = self._state[w.camera.id]
+            reads = w.stats.frames_read
+            if reads != st["reads"]:
+                st["reads"], st["changed"] = reads, now
+                if not st["online"]:
+                    st["online"] = True
+                    self._emit(w.camera.id, "camera_online", now)
+            elif st["online"] and now - float(st["changed"]) > OFFLINE_AFTER_S:
+                st["online"] = False
+                self._emit(w.camera.id, "camera_offline", float(st["changed"]))
+
+    def _emit(self, camera_id: str, kind: str, ts: float) -> None:
+        self.sink.emit_event(RuleEvent(kind, camera_id, ts, time.time()))
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser("soqchi", description="Soqchi AI — camera pipeline (week 1)")
+    parser = argparse.ArgumentParser("soqchi", description="Soqchi AI — camera pipeline (week 2)")
     parser.add_argument("--config", required=True, help="YAML конфиг объекта")
     parser.add_argument("--sink", default="db", help="куда писать события: db | jsonl | db,jsonl")
     parser.add_argument("--duration", type=float, default=0, help="сек; 0 = работать до Ctrl+C")
@@ -46,7 +86,7 @@ def main() -> None:
     cfg = load_site_config(args.config)
     settings = get_settings()
     media = MediaStore(settings.media_dir)
-    sink = build_sink({s.strip() for s in args.sink.split(",")}, cfg, media)
+    sink, db_sink = build_sink({s.strip() for s in args.sink.split(",")}, cfg, media)
 
     log.info("loading detector (первый запуск скачает yolo11n.pt)...")
     detector = PersonDetector()
@@ -57,6 +97,51 @@ def main() -> None:
     signal.signal(signal.SIGINT, lambda *_: stop_event.set())
     signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
 
+    # --- клипы: кольцевые буферы + отложенная нарезка -----------------------
+    data_root = settings.media_dir.parent
+    clip_cams = [c for c in cfg.cameras if c.clips.enabled]
+    recorders = [SegmentRecorder(c, data_root / "ring", stop_event) for c in clip_cams]
+    clip_worker: ClipWorker | None = None
+    if clip_cams:
+        session_factory = db_sink._session_factory if db_sink is not None else None
+
+        def persist_clip(event_id: uuid.UUID, path: str) -> None:
+            if session_factory is not None:
+                from soqchi.db.queries import update_clip_path
+
+                update_clip_path(session_factory, event_id, path)
+
+        clip_worker = ClipWorker(data_root / "ring", data_root / "clips", stop_event, persist_clip)
+        sink.sinks.append(ClipSink(clip_worker, cfg))
+        clip_worker.start()
+        for r in recorders:
+            r.start()
+        log.info(
+            "clips: on (%d камер, кольцо %d мин)", len(clip_cams), clip_cams[0].clips.ring_minutes
+        )
+    else:
+        log.info("clips: off (нет камер с clips.enabled)")
+
+    # --- telegram ------------------------------------------------------------
+    bot = None
+    if settings.telegram_bot_token and db_sink is not None:
+        from soqchi.bot.service import BotService
+        from soqchi.db.queries import get_clip_path, save_feedback
+
+        sf = db_sink._session_factory
+        bot = BotService(
+            settings.telegram_bot_token,
+            settings.allowed_chat_ids,
+            cfg,
+            get_clip_path=lambda eid: get_clip_path(sf, eid),
+            save_feedback=lambda eid, chat, verdict: save_feedback(sf, eid, chat, verdict),
+        )
+        bot.start()
+        sink.sinks.append(BotSink(bot))
+    else:
+        log.info("telegram: off (%s)", "нет TELEGRAM_BOT_TOKEN" if db_sink else "нужен --sink db")
+
+    # --- камеры ---------------------------------------------------------------
     workers = [
         CameraWorker(
             cam,
@@ -67,16 +152,19 @@ def main() -> None:
             stop_event,
             loop_file=args.loop_file,
             realtime=not args.offline,
+            site=cfg.site,
         )
         for cam in cfg.cameras
     ]
     for w in workers:
         w.start()
+    watchdog = CameraWatchdog(workers, sink)
 
     started = time.time()
     try:
         while not stop_event.is_set():
             time.sleep(5)
+            watchdog.check()
             for w in workers:
                 log.info("[%s] %s", w.camera.id, w.stats.snapshot())
             if args.duration and time.time() - started >= args.duration:
@@ -87,6 +175,14 @@ def main() -> None:
         stop_event.set()
         for w in workers:
             w.join(timeout=15)
+        # рекордеры обязаны пережить terminate ffmpeg-детей ДО выхода интерпретатора,
+        # иначе сироты-ffmpeg держат кольцо и пайпы
+        for r in recorders:
+            r.join(timeout=8)
+        if clip_worker is not None:
+            clip_worker.join(timeout=3)
+        if bot is not None:
+            bot.stop()
         total = {
             "events": sum(w.stats.events for w in workers),
             "processed": sum(w.stats.frames_processed for w in workers),
