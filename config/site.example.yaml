@@ -29,3 +29,15 @@ cameras:
     detect_conf: 0.4
     motion: { enabled: true, min_area_pct: 0.5, cooldown_s: 3.0 }
     zones: []
+
+  # НОЧНАЯ камера (без ИК или слабый свет) — калибровка 2026-07-14:
+  # темнота роняет детекцию на ~60%; пресет ниже возвращает половину потери.
+  # Остальное решает железо: ИК-подсветка/ночной режим самой камеры.
+  - id: yard-night
+    name: "Двор (ночь)"
+    url: "rtsp://user:pass@192.168.1.65:554/Streaming/Channels/101"
+    process_fps: 4
+    detect_conf: 0.2      # тёмные силуэты = низкая уверенность модели
+    detect_imgsz: 960     # мелкие детали в темноте
+    motion: { enabled: true, min_area_pct: 0.3, cooldown_s: 5.0 }
+    zones: []

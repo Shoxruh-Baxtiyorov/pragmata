@@ -72,3 +72,5 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["golden: полный пайплайн на эталонном клипе (медленно; uv run pytest -m golden)"]
+addopts = "-m 'not golden'"

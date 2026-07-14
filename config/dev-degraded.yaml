@@ -1,0 +1,27 @@
+# Стресс-тест качества видео: один исходник в 5 состояниях, одинаковые зоны.
+# Запуск: uv run python -m soqchi.main --config config/dev-degraded.yaml \
+#           --sink jsonl --offline --no-bot --duration 300
+site:
+  name: "Degradation Test"
+  timezone: "Asia/Tashkent"
+
+rules:
+  min_track_seconds: 0.7
+  track_lost_ttl: 2.0
+
+x-defaults: &cam-defaults
+  process_fps: 4
+  detect_conf: 0.35
+  motion: { enabled: false, min_area_pct: 0.4, cooldown_s: 3.0 }  # детерминизм замера
+  zones:
+    - name: restricted-right
+      polygon: [[0.55, 0.05], [0.98, 0.05], [0.98, 0.97], [0.55, 0.97]]
+      rules:
+        zone_intrusion: { hysteresis_frames: 6, cooldown_s: 60 }
+
+cameras:
+  - { id: orig,   name: "Оригинал",      url: "data/samples/people.mp4",            <<: *cam-defaults }
+  - { id: night,  name: "Ночь",          url: "data/samples/degraded/night.mp4",    <<: *cam-defaults }
+  - { id: blur,   name: "Расфокус",      url: "data/samples/degraded/blur.mp4",     <<: *cam-defaults }
+  - { id: noise,  name: "Шум",           url: "data/samples/degraded/noise.mp4",    <<: *cam-defaults }
+  - { id: oldcam, name: "Старая камера", url: "data/samples/degraded/oldcam.mp4",   <<: *cam-defaults }

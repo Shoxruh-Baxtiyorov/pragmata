@@ -1,0 +1,24 @@
+# Golden-set: детерминированный оффлайн-прогон для CI (motion выключен).
+# Базлайн 2026-07-14 (yolo11n, conf 0.35, imgsz 640, fps 4):
+#   person_entered=8, person_exited=8, zone_intrusion=3 на people.mp4
+site:
+  name: "Golden"
+  timezone: "Asia/Tashkent"
+
+rules:
+  min_track_seconds: 0.7
+  track_lost_ttl: 2.0
+
+cameras:
+  - id: golden1
+    name: "Golden cam"
+    url: "data/samples/people.mp4"
+    process_fps: 4
+    detect_conf: 0.35
+    detect_imgsz: 640
+    motion: { enabled: false, min_area_pct: 0.4, cooldown_s: 3.0 }
+    zones:
+      - name: restricted-right
+        polygon: [[0.55, 0.05], [0.98, 0.05], [0.98, 0.97], [0.55, 0.97]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 6, cooldown_s: 60 }
