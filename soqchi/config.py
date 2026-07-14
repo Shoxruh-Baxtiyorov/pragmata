@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # allowlist (secure default: неизвестный чат не получает ничего).
     telegram_bot_token: str = ""
     telegram_chat_ids: str = ""  # "123456,-100987654"
+    # LLM-агент через OpenRouter (паттерн Iqbola: free на dev, env-switch на платные).
+    # Пустой ключ = агент выключен, /digest и /find работают без него.
+    openrouter_api_key: str = ""
+    openrouter_model: str = "google/gemini-2.0-flash-001"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

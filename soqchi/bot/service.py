@@ -69,14 +69,19 @@ class BotService:
         get_clip_path: Callable[[uuid.UUID], str | None],
         save_feedback: Callable[[uuid.UUID, int, str], None],
         build_digest: Callable[[], str] | None = None,
+        find_person: Callable[[str], list[tuple[str, str]]] | None = None,
+        agent_answer: Callable[[int, str], tuple[str, list[str]]] | None = None,
     ):
         self.build_digest = build_digest
+        self.find_person = find_person
+        self.agent_answer = agent_answer
         self.allowed = allowed_chat_ids
         self.site_cfg = site_cfg
         self.tz = ZoneInfo(site_cfg.site.timezone)
         self.camera_names = {c.id: c.name for c in site_cfg.cameras}
         self.get_clip_path = get_clip_path
         self.save_feedback = save_feedback
+        self.media_root: Path | None = None  # выставляет main — для фото из инструментов агента
 
         self.bot = Bot(token)
         self.dp = Dispatcher()
@@ -173,6 +178,46 @@ class BotService:
             if msg.chat.id not in self.allowed or self.build_digest is None:
                 return
             await msg.answer(await asyncio.to_thread(self.build_digest))
+
+        @router.message(Command("find"))
+        async def find(msg: Message) -> None:
+            if msg.chat.id not in self.allowed or self.find_person is None:
+                return
+            query = (msg.text or "").removeprefix("/find").strip()
+            if not query:
+                await msg.answer(texts.FIND_USAGE)
+                return
+            results = await asyncio.to_thread(self.find_person, query)
+            if not results:
+                await msg.answer(texts.FIND_EMPTY)
+                return
+            for path, caption in results[:5]:
+                if Path(path).exists():
+                    await self.bot.send_photo(msg.chat.id, FSInputFile(path), caption=caption)
+
+        @router.message(F.text & ~F.text.startswith("/"))
+        async def free_text(msg: Message) -> None:
+            if msg.chat.id not in self.allowed or not msg.text:
+                return
+            if self.agent_answer is None:
+                await msg.answer(texts.AGENT_OFF)
+                return
+            await self.bot.send_chat_action(msg.chat.id, "typing")
+            try:
+                text, photos = await asyncio.to_thread(self.agent_answer, msg.chat.id, msg.text)
+            except Exception:  # noqa: BLE001 — ошибка LLM не должна молчать
+                log.exception("agent failed")
+                await msg.answer(texts.AGENT_ERROR)
+                return
+            await msg.answer(text)
+            for p in photos[:5]:
+                full = (
+                    self.media_root / p
+                    if self.media_root and not Path(p).is_absolute()
+                    else Path(p)
+                )
+                if full.exists():
+                    await self.bot.send_photo(msg.chat.id, FSInputFile(str(full)))
 
         @router.callback_query(F.data.startswith("clip:"))
         async def cb_clip(q: CallbackQuery) -> None:

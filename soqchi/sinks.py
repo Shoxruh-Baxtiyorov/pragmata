@@ -178,6 +178,7 @@ class DbSink:
                     frames=st.frames,
                     best_frame_path=best_path,
                     face_crop_path=face_path,
+                    clip_emb=st.clip_emb,
                     meta={"best_bbox": list(st.best_bbox)},
                 )
             )

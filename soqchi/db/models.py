@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -51,6 +52,8 @@ class Track(Base):
     frames: Mapped[int] = mapped_column(BigInteger, default=0)
     best_frame_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     face_crop_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # CLIP ViT-B/32 эмбеддинг лучшего кропа — поиск человека по текстовому описанию
+    clip_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
     __table_args__ = (Index("ix_tracks_camera_started", "camera_id", "started_at"),)

@@ -12,6 +12,7 @@ from soqchi.clips import ClipWorker, SegmentRecorder
 from soqchi.config import SiteConfig, get_settings, load_site_config
 from soqchi.media import MediaStore
 from soqchi.perception.detector import PersonDetector
+from soqchi.perception.embedder import ClipEmbedder
 from soqchi.perception.faces import FaceCropper
 from soqchi.pipeline import CameraWorker
 from soqchi.rules.engine import RuleEvent
@@ -92,6 +93,7 @@ def main() -> None:
     detector = PersonDetector(weights=settings.yolo_model)
     faces = FaceCropper(settings.models_dir)
     log.info("face detector (L0): %s", "on" if faces.available else "OFF (нет models/yunet)")
+    embedder = ClipEmbedder()  # ленивый: веса скачаются при первом завершённом треке
 
     stop_event = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stop_event.set())
@@ -131,6 +133,39 @@ def main() -> None:
         from soqchi.digest import build_digest_text, seconds_until
 
         sf = db_sink._session_factory
+
+        def find_person_cmd(query: str) -> list[tuple[str, str]]:
+            from soqchi.db.queries import find_tracks_by_embedding
+
+            emb = embedder.embed_text(query)
+            tracks = find_tracks_by_embedding(sf, emb, hours=48, limit=5)
+            cam_names = {c.id: c.name for c in cfg.cameras}
+            out: list[tuple[str, str]] = []
+            for t in tracks:
+                if t.best_frame_path:
+                    caption = (
+                        f"{t.started_at.astimezone().strftime('%d.%m %H:%M:%S')} · "
+                        f"{cam_names.get(t.camera_id, t.camera_id)}"
+                    )
+                    out.append((str(settings.media_dir / t.best_frame_path), caption))
+            return out
+
+        agent_answer = None
+        if settings.openrouter_api_key:
+            from soqchi.agent.runner import AgentRunner
+            from soqchi.agent.tools import AgentTools
+
+            runner = AgentRunner(
+                settings.openrouter_api_key,
+                settings.openrouter_model,
+                AgentTools(sf, cfg, embedder),
+                cfg,
+            )
+            agent_answer = runner.answer
+            log.info("agent: on (%s)", settings.openrouter_model)
+        else:
+            log.info("agent: off (нет OPENROUTER_API_KEY)")
+
         bot = BotService(
             settings.telegram_bot_token,
             settings.allowed_chat_ids,
@@ -138,7 +173,10 @@ def main() -> None:
             get_clip_path=lambda eid: get_clip_path(sf, eid),
             save_feedback=lambda eid, chat, verdict: save_feedback(sf, eid, chat, verdict),
             build_digest=lambda: build_digest_text(sf, cfg),
+            find_person=find_person_cmd,
+            agent_answer=agent_answer,
         )
+        bot.media_root = settings.media_dir
         bot.start()
         sink.sinks.append(BotSink(bot))
 
@@ -168,6 +206,7 @@ def main() -> None:
             loop_file=args.loop_file,
             realtime=not args.offline,
             site=cfg.site,
+            embedder=embedder,
         )
         for cam in cfg.cameras
     ]
