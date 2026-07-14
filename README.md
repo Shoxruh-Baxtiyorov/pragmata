@@ -10,6 +10,8 @@ Loyiha President AI Award 2026 uchun. Muddatlar: early bird **15.08.2026**, fina
 - [docs/DESIGN.ru.md](docs/DESIGN.ru.md) — полный дизайн-док (русский)
 - [docs/VISION.uz.md](docs/VISION.uz.md) — vizyon va kelajak rejalari (o'zbekcha)
 - [docs/VISION.ru.md](docs/VISION.ru.md) — видение и дальнейшие планы (русский)
+- [docs/PITCH_DECK.md](docs/PITCH_DECK.md) — скелет питч-деки (12 слайдов, конкурс)
+- [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) — посекундный сценарий 3-мин видео + план съёмки
 
 ## Quickstart (dev-стенд, неделя 1)
 
