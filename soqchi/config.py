@@ -34,8 +34,9 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = "google/gemini-2.0-flash-001"
     # Investigation Mode: контраст-порог «похож сильнее, чем просто человек».
-    # Выше = меньше ложных находок, ниже = выше полнота (калибровка в investigation.py)
-    find_min_margin: float = 0.025
+    # Калибровка 2026-07-14: реальные совпадения ≥ +0.033 (dress/hat/shirt),
+    # негации и «почти похожие» ≤ +0.030 → порог между ними. Выше = точнее, ниже = полнее.
+    find_min_margin: float = 0.032
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

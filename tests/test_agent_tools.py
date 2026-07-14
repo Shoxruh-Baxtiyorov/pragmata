@@ -22,3 +22,16 @@ def test_tool_names_unique_and_implemented() -> None:
 def test_unknown_tool_returns_error_not_crash() -> None:
     tools = AgentTools.__new__(AgentTools)  # без БД: проверяем только диспетчер
     assert tools.call("rm_rf_slash", {})["error"].startswith("unknown tool")
+
+
+def test_parse_inline_tool_call() -> None:
+    from soqchi.agent.runner import parse_inline_tool_call
+
+    # локальная модель пишет вызов сырым JSON'ом в текст (баг qwen на узбекском вопросе)
+    assert parse_inline_tool_call('ronics\n{"name": "stats", "arguments": {"hours": 24}}') == (
+        "stats",
+        {"hours": 24},
+    )
+    assert parse_inline_tool_call('{"name": "camera_status"}') == ("camera_status", {})
+    assert parse_inline_tool_call("Обычный ответ без JSON") is None
+    assert parse_inline_tool_call('в зоне было {"people": 2} человека') is None  # не tool-call

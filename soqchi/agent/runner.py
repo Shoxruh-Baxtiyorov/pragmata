@@ -23,6 +23,33 @@ log = logging.getLogger("soqchi.agent")
 
 MAX_TOOL_ROUNDS = 5
 
+
+def parse_inline_tool_call(text: str) -> tuple[str, dict[str, Any]] | None:
+    """Локальные модели иногда пишут tool-call сырым JSON'ом в текст ответа.
+
+    Ловим `{"name": "...", "arguments": {...}}` и исполняем как настоящий вызов.
+    """
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        obj = json.loads(text[start : i + 1])
+                    except json.JSONDecodeError:
+                        break
+                    if isinstance(obj, dict) and isinstance(obj.get("name"), str):
+                        args = obj.get("arguments") or obj.get("parameters") or {}
+                        return obj["name"], args if isinstance(args, dict) else {}
+                    break
+        start = text.find("{", start + 1)
+    return None
+
+
 SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюдения объекта «{site}».
 Сейчас {now} ({tz}). Отвечай кратко, НА ЯЗЫКЕ ВОПРОСА (узбекский или русский).
 Правила:
@@ -33,8 +60,10 @@ SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюд
 4. Поиск человека по внешности → find_person, description по-английски.
    Отрицания переформулируй в положительный признак ДО вызова:
    «без волос/no hair» → "bald man", «без куртки» → "man in a t-shirt".
-   Пустой результат find_person = такого человека НЕ БЫЛО — так и ответь,
-   не подставляй других людей.
+   Результат find_person читай буквально:
+   — ПУСТОЙ список = человека НЕ БЫЛО, так и ответь, никого не подставляй;
+   — НЕПУСТОЙ список = НАЙДЕНО: перечисли время и камеру каждой записи,
+     отрицать непустой результат ЗАПРЕЩЕНО.
 5. Времена в результатах уже локальные — показывай как есть."""
 
 
@@ -77,6 +106,29 @@ class AgentRunner:
             msg = resp.choices[0].message
             if not msg.tool_calls:
                 text = msg.content or "…"
+                inline = parse_inline_tool_call(text)
+                if inline is not None and hasattr(self.tools, inline[0]):
+                    name, args = inline
+                    log.info("agent inline tool %s(%s)", name, args)
+                    result = self.tools.call(name, args)
+                    if name == "find_person":
+                        photos = [
+                            item["photo"]
+                            for item in (result if isinstance(result, list) else [])
+                            if isinstance(item, dict) and item.get("photo")
+                        ]
+                    messages.append({"role": "assistant", "content": text})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Результат {name}: "
+                                f"{json.dumps(result, ensure_ascii=False, default=str)}\n"
+                                "Сформулируй окончательный ответ пользователю."
+                            ),
+                        }
+                    )
+                    continue
                 history.extend(
                     [{"role": "user", "content": question}, {"role": "assistant", "content": text}]
                 )
@@ -99,12 +151,14 @@ class AgentRunner:
                     args = {}
                 log.info("agent tool %s(%s)", tc.function.name, args)
                 result = self.tools.call(tc.function.name, args)
-                if tc.function.name == "find_person":  # фото только из поиска людей
-                    photos.extend(
+                if tc.function.name == "find_person":
+                    # фото — только из ПОСЛЕДНЕГО поиска: если финальный запрос
+                    # ничего не нашёл, старые кандидаты не должны уйти в чат
+                    photos = [
                         item["photo"]
                         for item in (result if isinstance(result, list) else [])
                         if isinstance(item, dict) and item.get("photo")
-                    )
+                    ]
                 messages.append(
                     {
                         "role": "tool",

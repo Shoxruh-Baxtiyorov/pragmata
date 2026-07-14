@@ -198,7 +198,16 @@ class AgentTools:
         if self.embedder is None:
             return [{"error": "embedder disabled"}]
         from soqchi.config import get_settings
-        from soqchi.investigation import find_people
+        from soqchi.investigation import find_people, has_negation
+
+        if has_negation(description):
+            return [
+                {
+                    "error": "negation queries are unreliable for the vision model; "
+                    "rephrase with a POSITIVE attribute (e.g. 'bald man' instead of "
+                    "'man with no hair') and call find_person again"
+                }
+            ]
 
         found = find_people(
             self.sf,
