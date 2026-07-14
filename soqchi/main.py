@@ -75,6 +75,12 @@ def main() -> None:
         action="store_true",
         help="файлы читать быстрее реального времени (golden-прогоны)",
     )
+    parser.add_argument(
+        "--no-bot",
+        action="store_true",
+        help="не поднимать Telegram-бота (тестовые прогоны рядом с боевым инстансом: "
+        "два поллера одного токена конфликтуют)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -127,7 +133,7 @@ def main() -> None:
     # --- telegram ------------------------------------------------------------
     bot = None
     digest_thread: threading.Thread | None = None
-    if settings.telegram_bot_token and db_sink is not None:
+    if settings.telegram_bot_token and db_sink is not None and not args.no_bot:
         from soqchi.bot.service import BotService
         from soqchi.db.queries import get_clip_path, save_feedback
         from soqchi.digest import build_digest_text, seconds_until

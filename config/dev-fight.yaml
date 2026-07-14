@@ -1,0 +1,30 @@
+# Разовый тест на роликах драк (2-3с каждый): смотрим, как трекинг держит
+# обоих участников. Отдельного события «драка» в MVP нет (anti-scope, см. DESIGN §8) —
+# путь к нему: VLM-описания флагнутых событий, затем pose-based классификатор (v3).
+site:
+  name: "Fight Test"
+  timezone: "Asia/Tashkent"
+
+rules:
+  min_track_seconds: 0.3   # клипы по 2с — иначе треки не успевают «подтвердиться»
+  track_lost_ttl: 1.0
+
+x-defaults: &cam-defaults
+  process_fps: 12
+  detect_conf: 0.3
+  motion: { enabled: false, min_area_pct: 0.4, cooldown_s: 3.0 }  # каждый кадр важен
+  zones: []
+
+cameras:
+  - id: fight1
+    name: "Драка 1 (улица)"
+    url: "data/samples/fight_fi001.mp4"
+    <<: *cam-defaults
+  - id: fight2
+    name: "Драка 2"
+    url: "data/samples/fight_fi002.mp4"
+    <<: *cam-defaults
+  - id: fight3
+    name: "Драка 3"
+    url: "data/samples/fight_fi003.mp4"
+    <<: *cam-defaults
