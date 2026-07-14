@@ -95,9 +95,15 @@ class CameraWorker(threading.Thread):
                 ):
                     continue
 
-                detections = self.detector.detect(frame.image, self.camera.detect_conf)
+                detections = self.detector.detect(
+                    frame.image, self.camera.detect_conf, self.camera.detect_imgsz
+                )
                 updated, ended = self.tracks.update(detections, frame.image, frame.ts)
                 events = self.rules.process(updated, ended, frame.ts, frame.image.shape)
+                for ev in events:
+                    if ev.severity == "alert":
+                        # карточка показывает момент срабатывания, а не best-frame прошлого
+                        ev.frame = frame.image.copy()
 
                 self.stats.frames_processed += 1
                 self.stats.detections += len(detections)

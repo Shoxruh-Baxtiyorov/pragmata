@@ -31,6 +31,7 @@ class TrackState:
     after_hours_emitted: bool = False
     zone_hits: dict[str, int] = field(default_factory=dict)  # hysteresis-счётчики
     zone_dwell: dict[str, float] = field(default_factory=dict)  # непрерывные секунды в зоне
+    zone_miss: dict[str, int] = field(default_factory=dict)  # подряд кадров ВНЕ зоны
 
     @property
     def lifetime(self) -> float:

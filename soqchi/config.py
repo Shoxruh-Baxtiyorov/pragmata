@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://soqchi:soqchi@127.0.0.1:5433/soqchi"
     media_dir: Path = Path("./data/media")
     models_dir: Path = Path("./models")
+    # yolo11n = скорость; yolo11s = recall в группах людей (для демо на GPU/сильном CPU)
+    yolo_model: str = "yolo11n.pt"
     # Fernet-ключ для шифрования колонок (RTSP-креды камер). Вне APP_ENV=test
     # обязателен при первом обращении к шифрованию — см. soqchi/core/encryption.py.
     encryption_key: str = ""
@@ -84,6 +86,8 @@ class CameraConfig(BaseModel):
     url: str
     process_fps: float = 5.0
     detect_conf: float = 0.35
+    # 640 — базлайн; 960 заметно поднимает recall мелких/перекрытых людей (толпа, даль)
+    detect_imgsz: int = 640
     motion: MotionConfig = Field(default_factory=MotionConfig)
     zones: list[ZoneConfig] = Field(default_factory=list)
     clips: ClipConfig = Field(default_factory=ClipConfig)
@@ -98,6 +102,7 @@ class SiteInfo(BaseModel):
     name: str
     timezone: str = "Asia/Tashkent"
     working_hours: WorkingHours | None = None  # None = правило after_hours выключено
+    digest_time: str = "20:00"  # время вечернего дайджеста (в timezone объекта)
 
 
 class SiteConfig(BaseModel):

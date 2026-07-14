@@ -21,9 +21,14 @@ class PersonDetector:
         self.device = device
         self._lock = threading.Lock()
 
-    def detect(self, image: np.ndarray, conf: float) -> sv.Detections:
+    def detect(self, image: np.ndarray, conf: float, imgsz: int = 640) -> sv.Detections:
         with self._lock:
             result = self.model.predict(
-                image, classes=[PERSON_CLASS_ID], conf=conf, device=self.device, verbose=False
+                image,
+                classes=[PERSON_CLASS_ID],
+                conf=conf,
+                imgsz=imgsz,
+                device=self.device,
+                verbose=False,
             )[0]
         return sv.Detections.from_ultralytics(result)

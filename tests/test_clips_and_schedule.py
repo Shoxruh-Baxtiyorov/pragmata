@@ -53,3 +53,20 @@ def test_open_boundary_inclusive_close_exclusive() -> None:
     six_pm = MON_NOON_UTC + 6 * 3600  # 18:00 Ташкент
     assert not is_outside_hours(eight_am, TZ, WH)
     assert is_outside_hours(six_pm, TZ, WH)
+
+
+# --- расписание дайджеста -------------------------------------------------------
+
+
+def test_seconds_until_today() -> None:
+    from soqchi.digest import seconds_until
+
+    # сейчас пн 12:00 Ташкент → до 20:00 сегодня ровно 8 часов
+    assert seconds_until("20:00", TZ, MON_NOON_UTC) == 8 * 3600
+
+
+def test_seconds_until_rolls_to_tomorrow() -> None:
+    from soqchi.digest import seconds_until
+
+    # сейчас 12:00 → 08:00 уже прошло → до завтрашних 08:00 20 часов
+    assert seconds_until("08:00", TZ, MON_NOON_UTC) == 20 * 3600

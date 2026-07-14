@@ -88,8 +88,8 @@ def main() -> None:
     media = MediaStore(settings.media_dir)
     sink, db_sink = build_sink({s.strip() for s in args.sink.split(",")}, cfg, media)
 
-    log.info("loading detector (первый запуск скачает yolo11n.pt)...")
-    detector = PersonDetector()
+    log.info("loading detector %s ...", settings.yolo_model)
+    detector = PersonDetector(weights=settings.yolo_model)
     faces = FaceCropper(settings.models_dir)
     log.info("face detector (L0): %s", "on" if faces.available else "OFF (нет models/yunet)")
 
@@ -124,9 +124,11 @@ def main() -> None:
 
     # --- telegram ------------------------------------------------------------
     bot = None
+    digest_thread: threading.Thread | None = None
     if settings.telegram_bot_token and db_sink is not None:
         from soqchi.bot.service import BotService
         from soqchi.db.queries import get_clip_path, save_feedback
+        from soqchi.digest import build_digest_text, seconds_until
 
         sf = db_sink._session_factory
         bot = BotService(
@@ -135,9 +137,22 @@ def main() -> None:
             cfg,
             get_clip_path=lambda eid: get_clip_path(sf, eid),
             save_feedback=lambda eid, chat, verdict: save_feedback(sf, eid, chat, verdict),
+            build_digest=lambda: build_digest_text(sf, cfg),
         )
         bot.start()
         sink.sinks.append(BotSink(bot))
+
+        def _digest_loop() -> None:
+            while not stop_event.is_set():
+                wait = seconds_until(cfg.site.digest_time, cfg.site.timezone, time.time())
+                if stop_event.wait(wait):
+                    return
+                assert bot is not None
+                bot.broadcast_text(build_digest_text(sf, cfg))
+
+        digest_thread = threading.Thread(target=_digest_loop, name="digest", daemon=True)
+        digest_thread.start()
+        log.info("digest: ежедневно в %s (%s)", cfg.site.digest_time, cfg.site.timezone)
     else:
         log.info("telegram: off (%s)", "нет TELEGRAM_BOT_TOKEN" if db_sink else "нужен --sink db")
 

@@ -44,6 +44,10 @@ class RuleEvent:
     track: TrackState | None = None
     meta: dict[str, Any] = field(default_factory=dict)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    # кадр момента срабатывания (только для alert; иначе best_frame трека)
+    frame: np.ndarray | None = None
+    # bbox остальных людей в зоне в момент срабатывания — для оверлея на доказательстве
+    others: list[tuple[float, float, float, float]] = field(default_factory=list)
 
     @property
     def severity(self) -> str:
@@ -135,11 +139,16 @@ class RuleEngine:
                 zname = zr.cfg.name
                 inside = zr.contains(foot, frame_shape)
                 if inside:
+                    st.zone_miss[zname] = 0
                     st.zone_hits[zname] = st.zone_hits.get(zname, 0) + 1
                     st.zone_dwell[zname] = st.zone_dwell.get(zname, 0.0) + st.dt
                 else:
-                    st.zone_hits[zname] = 0
-                    st.zone_dwell[zname] = 0.0
+                    # флаппинг-толерантность: один пропавший кадр (перекрытие людей,
+                    # дрожание детекции) не обнуляет счётчики — только 2+ подряд
+                    st.zone_miss[zname] = st.zone_miss.get(zname, 0) + 1
+                    if st.zone_miss[zname] >= 2:
+                        st.zone_hits[zname] = 0
+                        st.zone_dwell[zname] = 0.0
                     continue
 
                 zi = zr.cfg.rules.zone_intrusion
@@ -148,6 +157,9 @@ class RuleEngine:
                     and st.zone_hits[zname] == zi.hysteresis_frames
                     and self._cooldown_ok("zone_intrusion", zname, st.track_id, ts, zi.cooldown_s)
                 ):
+                    others = [
+                        o.bbox for o in updated if o is not st and zr.contains(o.foot, frame_shape)
+                    ]
                     events.append(
                         RuleEvent(
                             "zone_intrusion",
@@ -156,7 +168,12 @@ class RuleEngine:
                             ts,
                             zone=zname,
                             track=st,
-                            meta={"track_id": st.track_id, "hits": st.zone_hits[zname]},
+                            meta={
+                                "track_id": st.track_id,
+                                "hits": st.zone_hits[zname],
+                                "people_in_zone": 1 + len(others),
+                            },
+                            others=others,
                         )
                     )
 

@@ -7,14 +7,29 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
-from soqchi.media import MediaStore, annotate
+from soqchi.media import MediaStore, annotate, annotate_many
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from soqchi.config import SiteConfig
     from soqchi.perception.tracker import TrackState
     from soqchi.rules.engine import RuleEvent
 
 log = logging.getLogger("soqchi.events")
+
+
+def render_event_image(ev: RuleEvent) -> np.ndarray | None:
+    """Единый рендер доказательства для БД и Telegram: кадр момента + все люди."""
+    st = ev.track
+    if st is None:
+        return None
+    label = f"{ev.type}" + (f" @{ev.zone}" if ev.zone else "")
+    if ev.frame is not None:
+        return annotate_many(ev.frame, (st.bbox, label), ev.others)
+    if st.best_frame is not None:
+        return annotate(st.best_frame, st.best_bbox, label)
+    return None
 
 
 def _dt(ts: float) -> datetime:
@@ -185,12 +200,10 @@ class MultiSink:
 def _save_evidence(media: MediaStore, ev: RuleEvent) -> tuple[str | None, str | None]:
     frame_path = None
     face_path = None
+    img = render_event_image(ev)
+    if img is not None:
+        frame_path = media.save_jpeg(img, ev.camera_id, "event", ev.t_end)
     st = ev.track
-    if st is not None and st.best_frame is not None:
-        label = f"{ev.type}" + (f" @{ev.zone}" if ev.zone else "")
-        frame_path = media.save_jpeg(
-            annotate(st.best_frame, st.best_bbox, label), ev.camera_id, "event", ev.t_end
-        )
     if st is not None and st.face_crop is not None:
         face_path = media.save_jpeg(st.face_crop, ev.camera_id, "face", ev.t_end)
     return frame_path, face_path

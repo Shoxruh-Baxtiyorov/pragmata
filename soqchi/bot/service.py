@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 import cv2
 from aiogram import Bot, Dispatcher, F, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     BufferedInputFile,
     CallbackQuery,
@@ -32,7 +32,7 @@ from aiogram.types import (
 )
 
 from soqchi.bot import texts
-from soqchi.media import annotate
+from soqchi.sinks import render_event_image
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -68,7 +68,9 @@ class BotService:
         site_cfg: SiteConfig,
         get_clip_path: Callable[[uuid.UUID], str | None],
         save_feedback: Callable[[uuid.UUID, int, str], None],
+        build_digest: Callable[[], str] | None = None,
     ):
+        self.build_digest = build_digest
         self.allowed = allowed_chat_ids
         self.site_cfg = site_cfg
         self.tz = ZoneInfo(site_cfg.site.timezone)
@@ -106,8 +108,8 @@ class BotService:
         if ev.severity not in PUSH_SEVERITIES:
             return
         photo: bytes | None = None
-        if ev.track is not None and ev.track.best_frame is not None:
-            frame = annotate(ev.track.best_frame, ev.track.best_bbox, ev.type)
+        frame = render_event_image(ev)
+        if frame is not None:
             ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
             if ok:
                 photo = buf.tobytes()
@@ -130,6 +132,18 @@ class BotService:
             except Exception:  # noqa: BLE001 — один недоступный чат не роняет рассылку
                 log.exception("telegram send failed chat=%s", chat_id)
 
+    def broadcast_text(self, text: str) -> None:
+        """Текст всем чатам allowlist (дайджест по расписанию). Любой поток."""
+
+        async def _send() -> None:
+            for chat_id in self.allowed:
+                try:
+                    await self.bot.send_message(chat_id, text)
+                except Exception:  # noqa: BLE001
+                    log.exception("telegram broadcast failed chat=%s", chat_id)
+
+        asyncio.run_coroutine_threadsafe(_send(), self.loop)
+
     def _caption(self, ev: RuleEvent) -> str:
         title = texts.EVENT_TITLES.get(ev.type, ev.type)
         when = datetime.fromtimestamp(ev.t_end, tz=self.tz).strftime("%H:%M:%S")
@@ -137,6 +151,9 @@ class BotService:
         lines = [title, f"📷 {cam} · 🕒 {when}"]
         if ev.zone:
             lines.append(f"Зона: {ev.zone}")
+        people = ev.meta.get("people_in_zone", 0)
+        if people > 1:
+            lines.append(f"Людей в зоне: {people}")
         return "\n".join(lines)
 
     # --- хэндлеры ---------------------------------------------------------
@@ -150,6 +167,12 @@ class BotService:
                 await msg.answer(texts.START_OK.format(chat_id=msg.chat.id))
             else:
                 await msg.answer(texts.NOT_ALLOWED.format(chat_id=msg.chat.id))
+
+        @router.message(Command("digest"))
+        async def digest(msg: Message) -> None:
+            if msg.chat.id not in self.allowed or self.build_digest is None:
+                return
+            await msg.answer(await asyncio.to_thread(self.build_digest))
 
         @router.callback_query(F.data.startswith("clip:"))
         async def cb_clip(q: CallbackQuery) -> None:
