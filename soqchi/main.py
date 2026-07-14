@@ -151,20 +151,21 @@ def main() -> None:
             return out
 
         agent_answer = None
-        if settings.openrouter_api_key:
+        if settings.llm_api_key:
             from soqchi.agent.runner import AgentRunner
             from soqchi.agent.tools import AgentTools
 
             runner = AgentRunner(
-                settings.openrouter_api_key,
-                settings.openrouter_model,
+                settings.llm_base_url,
+                settings.llm_api_key,
+                settings.llm_model,
                 AgentTools(sf, cfg, embedder),
                 cfg,
             )
             agent_answer = runner.answer
-            log.info("agent: on (%s)", settings.openrouter_model)
+            log.info("agent: on (%s @ %s)", settings.llm_model, settings.llm_base_url)
         else:
-            log.info("agent: off (нет OPENROUTER_API_KEY)")
+            log.info("agent: off (нет LLM_API_KEY)")
 
         bot = BotService(
             settings.telegram_bot_token,

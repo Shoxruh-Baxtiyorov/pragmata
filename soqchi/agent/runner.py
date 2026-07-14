@@ -1,6 +1,7 @@
-"""LLM-цикл агента поверх типизированных инструментов (OpenRouter, OpenAI-совместимый).
+"""LLM-цикл агента поверх типизированных инструментов (любой OpenAI-совместимый API).
 
-Паттерн Iqbola: free-модели на dev, переключение через env (OPENROUTER_MODEL).
+Ollama локально (бесплатно, офлайн — важный режим для госсектора) или OpenRouter
+в облаке — выбирается env'ами LLM_BASE_URL / LLM_API_KEY / LLM_MODEL без правок кода.
 Фото из результатов инструментов собираются отдельно и уходят в Telegram альбомом.
 """
 
@@ -23,17 +24,23 @@ log = logging.getLogger("soqchi.agent")
 MAX_TOOL_ROUNDS = 5
 
 SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюдения объекта «{site}».
-Сейчас {now} ({tz}). Отвечай кратко и по делу, НА ЯЗЫКЕ ВОПРОСА (узбекский или русский).
-Факты бери ТОЛЬКО из инструментов — не выдумывай события и время.
-Для поиска человека по внешности вызывай find_person с английским описанием.
-Времена в ответе — уже локальные, показывай как есть."""
+Сейчас {now} ({tz}). Отвечай кратко, НА ЯЗЫКЕ ВОПРОСА (узбекский или русский).
+Правила:
+1. Факты — ТОЛЬКО из инструментов. Не выдумывай события, числа и время.
+2. Вопрос «сколько/были ли» → вызывай stats и отвечай ЦИФРАМИ из него
+   (alerts = тревоги). Списки событий перечисляй только если попросили список.
+3. Вопрос про тревоги списком → search_events с severity=alert.
+4. Поиск человека по внешности → find_person, description по-английски.
+5. Времена в результатах уже локальные — показывай как есть."""
 
 
 class AgentRunner:
-    def __init__(self, api_key: str, model: str, tools: AgentTools, cfg: SiteConfig):
+    def __init__(
+        self, base_url: str, api_key: str, model: str, tools: AgentTools, cfg: SiteConfig
+    ):
         from openai import OpenAI
 
-        self.client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+        self.client = OpenAI(base_url=base_url, api_key=api_key)
         self.model = model
         self.tools = tools
         self.cfg = cfg
@@ -88,11 +95,12 @@ class AgentRunner:
                     args = {}
                 log.info("agent tool %s(%s)", tc.function.name, args)
                 result = self.tools.call(tc.function.name, args)
-                photos.extend(
-                    item["photo"]
-                    for item in (result if isinstance(result, list) else [])
-                    if isinstance(item, dict) and item.get("photo")
-                )
+                if tc.function.name == "find_person":  # фото только из поиска людей
+                    photos.extend(
+                        item["photo"]
+                        for item in (result if isinstance(result, list) else [])
+                        if isinstance(item, dict) and item.get("photo")
+                    )
                 messages.append(
                     {
                         "role": "tool",

@@ -24,10 +24,15 @@ class Settings(BaseSettings):
     # allowlist (secure default: неизвестный чат не получает ничего).
     telegram_bot_token: str = ""
     telegram_chat_ids: str = ""  # "123456,-100987654"
-    # LLM-агент через OpenRouter (паттерн Iqbola: free на dev, env-switch на платные).
-    # Пустой ключ = агент выключен, /digest и /find работают без него.
-    openrouter_api_key: str = ""
-    openrouter_model: str = "google/gemini-2.0-flash-001"
+    # LLM-агент: любой OpenAI-совместимый endpoint. Пустой ключ = агент выключен,
+    # /digest и /find работают без него. Пресеты:
+    #   Ollama (локально, бесплатно):  LLM_BASE_URL=http://127.0.0.1:11434/v1
+    #                                  LLM_API_KEY=ollama  LLM_MODEL=qwen2.5:3b
+    #   OpenRouter (облако):           LLM_BASE_URL=https://openrouter.ai/api/v1
+    #                                  LLM_API_KEY=sk-...  LLM_MODEL=google/gemini-2.0-flash-001
+    llm_base_url: str = "https://openrouter.ai/api/v1"
+    llm_api_key: str = ""
+    llm_model: str = "google/gemini-2.0-flash-001"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
