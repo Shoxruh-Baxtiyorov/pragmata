@@ -187,6 +187,11 @@ class BotService:
             if not query:
                 await msg.answer(texts.FIND_USAGE)
                 return
+            from soqchi.investigation import has_negation
+
+            if has_negation(query):
+                await msg.answer(texts.FIND_NEGATION)
+                return
             results = await asyncio.to_thread(self.find_person, query)
             if not results:
                 await msg.answer(texts.FIND_EMPTY)

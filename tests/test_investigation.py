@@ -37,3 +37,16 @@ def test_limit_respected() -> None:
 def test_query_prompt_template() -> None:
     assert build_query_prompt("man in black") == "a photo of man in black"
     assert build_query_prompt("A PHOTO of a man") == "A PHOTO of a man"  # уже шаблонный
+
+
+def test_negation_detected() -> None:
+    from soqchi.investigation import has_negation
+
+    assert has_negation("man with no hair")
+    assert has_negation("man without jacket")
+    assert has_negation("человек без куртки")
+    assert has_negation("sochi yo'q odam")
+    assert not has_negation("bald man in a t-shirt")
+    assert not has_negation("woman in a black dress")
+    # "nose"/"North" не должны срабатывать на \bno\b
+    assert not has_negation("man with a big nose")

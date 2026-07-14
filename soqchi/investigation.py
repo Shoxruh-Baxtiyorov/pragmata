@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -19,6 +20,18 @@ if TYPE_CHECKING:
 
 BASELINE_PROMPT = "a photo of a person"
 CANDIDATE_POOL = 20  # столько ближайших забираем из БД до контраст-фильтра
+
+# CLIP игнорирует отрицания: «man with no hair» ≈ «man with hair» (калибровка
+# 2026-07-14: +0.030 против «bald man» +0.024). Такие запросы честно отклоняем
+# с подсказкой переформулировать положительным признаком.
+_NEGATION = re.compile(
+    r"\b(no|not|without|non)\b|\bбез\b|\bне\b|\bнет\b|\byo['ʻ]?q\b|\bemas\b|siz\b",
+    re.IGNORECASE,
+)
+
+
+def has_negation(query: str) -> bool:
+    return _NEGATION.search(query) is not None
 
 
 def _dot(a: list[float], b: list[float]) -> float:
