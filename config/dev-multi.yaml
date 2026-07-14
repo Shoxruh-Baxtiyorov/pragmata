@@ -1,0 +1,80 @@
+# Мульти-камерный dev-стенд: 6 сцен (офис, очередь, магазин, улица, лица, класс).
+# process_fps=2 — на CPU шесть камер, детектор общий (см. calc в DESIGN §1.4).
+site:
+  name: "Dev Stand Multi"
+  timezone: "Asia/Tashkent"
+  working_hours: { days: [mon, tue, wed, thu, fri, sat], open: "08:00", close: "18:00" }
+  digest_time: "20:00"
+
+rules:
+  min_track_seconds: 0.7
+  track_lost_ttl: 2.5
+
+x-defaults: &cam-defaults
+  process_fps: 2
+  detect_conf: 0.35
+  motion: { enabled: true, min_area_pct: 0.4, cooldown_s: 3.0 }
+
+cameras:
+  - id: cam1
+    name: "Офис (коридор)"
+    url: "rtsp://127.0.0.1:8554/cam1"
+    <<: *cam-defaults
+    clips: { enabled: true, ring_minutes: 5, pre_s: 10, post_s: 20 }
+    zones:
+      - name: restricted-right
+        polygon: [[0.55, 0.05], [0.98, 0.05], [0.98, 0.97], [0.55, 0.97]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 4, cooldown_s: 60 }
+          loitering: { dwell_s: 12, cooldown_s: 120 }
+
+  - id: cam2
+    name: "Проходная (по одному)"
+    url: "rtsp://127.0.0.1:8554/cam2"
+    <<: *cam-defaults
+    zones:
+      - name: entry-line
+        polygon: [[0.35, 0.1], [0.75, 0.1], [0.75, 0.95], [0.35, 0.95]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 4, cooldown_s: 45 }
+
+  - id: cam3
+    name: "Магазин (проход)"
+    url: "rtsp://127.0.0.1:8554/cam3"
+    <<: *cam-defaults
+    clips: { enabled: true, ring_minutes: 5, pre_s: 10, post_s: 20 }
+    zones:
+      - name: aisle
+        polygon: [[0.25, 0.2], [0.8, 0.2], [0.8, 0.95], [0.25, 0.95]]
+        rules:
+          loitering: { dwell_s: 15, cooldown_s: 120 }
+
+  - id: cam4
+    name: "Улица (перекрёсток)"
+    url: "rtsp://127.0.0.1:8554/cam4"
+    <<: *cam-defaults
+    zones:
+      - name: roadside
+        polygon: [[0.05, 0.55], [0.95, 0.55], [0.95, 0.97], [0.05, 0.97]]
+        rules:
+          loitering: { dwell_s: 20, cooldown_s: 180 }
+
+  - id: cam5
+    name: "Вход (лица анфас)"
+    url: "rtsp://127.0.0.1:8554/cam5"
+    <<: *cam-defaults
+    zones:
+      - name: doorway
+        polygon: [[0.3, 0.15], [0.7, 0.15], [0.7, 0.95], [0.3, 0.95]]
+        rules:
+          zone_intrusion: { hysteresis_frames: 4, cooldown_s: 60 }
+
+  - id: cam6
+    name: "Класс (образование)"
+    url: "rtsp://127.0.0.1:8554/cam6"
+    <<: *cam-defaults
+    zones:
+      - name: board-area
+        polygon: [[0.05, 0.3], [0.5, 0.3], [0.5, 0.97], [0.05, 0.97]]
+        rules:
+          loitering: { dwell_s: 20, cooldown_s: 180 }
