@@ -70,7 +70,7 @@ class BotService:
         save_feedback: Callable[[uuid.UUID, int, str], None],
         build_digest: Callable[[], str] | None = None,
         find_person: Callable[[str], list[tuple[str, str]]] | None = None,
-        agent_answer: Callable[[int, str], tuple[str, list[str]]] | None = None,
+        agent_answer: Callable[[int, str], tuple[str, list[dict[str, str]]]] | None = None,
     ):
         self.build_digest = build_digest
         self.find_person = find_person
@@ -178,6 +178,16 @@ class BotService:
 
         asyncio.run_coroutine_threadsafe(_send(), self.loop)
 
+    def _resolve_media(self, path: str) -> Path | None:
+        if not path:
+            return None
+        full = (
+            self.media_root / path
+            if self.media_root and not Path(path).is_absolute()
+            else Path(path)
+        )
+        return full if full.exists() else None
+
     def _caption(self, ev: RuleEvent) -> str:
         title = texts.EVENT_TITLES.get(ev.type, ev.type)
         when = datetime.fromtimestamp(ev.t_end, tz=self.tz).strftime("%H:%M:%S")
@@ -238,20 +248,25 @@ class BotService:
                 return
             await self.bot.send_chat_action(msg.chat.id, "typing")
             try:
-                text, photos = await asyncio.to_thread(self.agent_answer, msg.chat.id, msg.text)
+                text, evidence = await asyncio.to_thread(self.agent_answer, msg.chat.id, msg.text)
             except Exception:  # noqa: BLE001 — ошибка LLM не должна молчать
                 log.exception("agent failed")
                 await msg.answer(texts.AGENT_ERROR)
                 return
             await msg.answer(text)
-            for p in photos[:5]:
-                full = (
-                    self.media_root / p
-                    if self.media_root and not Path(p).is_absolute()
-                    else Path(p)
-                )
-                if full.exists():
-                    await self.bot.send_photo(msg.chat.id, FSInputFile(str(full)))
+            clips_sent = 0
+            for item in evidence[:5]:
+                photo = self._resolve_media(item.get("photo", ""))
+                if photo is not None:
+                    await self.bot.send_photo(
+                        msg.chat.id, FSInputFile(str(photo)), caption=item.get("caption")
+                    )
+                clip = self._resolve_media(item.get("clip", ""))
+                if clip is not None and clips_sent < 2:  # видео тяжёлые — максимум пара
+                    clips_sent += 1
+                    await self.bot.send_video(
+                        msg.chat.id, FSInputFile(str(clip)), caption=item.get("caption")
+                    )
 
         @router.callback_query(F.data.startswith("clip:"))
         async def cb_clip(q: CallbackQuery) -> None:

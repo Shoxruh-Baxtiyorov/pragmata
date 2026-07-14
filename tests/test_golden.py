@@ -34,9 +34,17 @@ def test_full_pipeline_on_golden_clip(tmp_path: Path) -> None:
     }
     res = subprocess.run(
         [
-            sys.executable, "-m", "soqchi.main",
-            "--config", "config/golden.yaml",
-            "--sink", "jsonl", "--offline", "--no-bot", "--duration", "600",
+            sys.executable,
+            "-m",
+            "soqchi.main",
+            "--config",
+            "config/golden.yaml",
+            "--sink",
+            "jsonl",
+            "--offline",
+            "--no-bot",
+            "--duration",
+            "600",
         ],
         cwd=ROOT,
         env=env,

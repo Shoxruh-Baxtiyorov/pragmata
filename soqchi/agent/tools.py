@@ -87,6 +87,29 @@ TOOL_SPECS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "classify_people",
+            "description": (
+                "Разложить замеченных людей по категориям внешности и посчитать. "
+                'categories — ПО-АНГЛИЙСКИ, взаимоисключающие: ["man", "woman"] или '
+                '["person in uniform", "person in casual clothes"]. '
+                "zone_only=true — только те, кто входил в запретные зоны. "
+                "Возвращает counts и примеры с фото. Это ОЦЕНКА по внешности — "
+                "обязательно скажи об этом в ответе."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "categories": {"type": "array", "items": {"type": "string"}},
+                    "hours": {"type": "number", "default": 24},
+                    "zone_only": {"type": "boolean", "default": False},
+                },
+                "required": ["categories"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "camera_status",
             "description": "Список камер и время их последнего события (живы ли).",
             "parameters": {"type": "object", "properties": {}},
@@ -158,6 +181,7 @@ class AgentTools:
                 "duration_s": ev.duration_s,
                 "description": ev.description,  # VLM: что происходило на кадрах
                 "photo": ev.frame_path,
+                "clip": ev.clip_path,
             }
             for ev in rows
         ]
@@ -228,6 +252,85 @@ class AgentTools:
             }
             for t, sim in found
         ]
+
+    def classify_people(
+        self, categories: list[str], hours: float = 24, zone_only: bool = False
+    ) -> dict[str, Any]:
+        """Zero-shot классификация треков по CLIP: argmax по категорийным промптам."""
+        if self.embedder is None:
+            return {"error": "embedder disabled"}
+        if not categories:
+            return {"error": "нужны категории по-английски"}
+        if len(categories) == 1:
+            # маленькие модели зовут с одной категорией — дополняем парной сами
+            complements = {
+                "woman": "man",
+                "man": "woman",
+                "girl": "man",
+                "boy": "woman",
+                "child": "adult",
+                "adult": "child",
+            }
+            categories = [categories[0], complements.get(categories[0].lower(), "other person")]
+        from soqchi.db.models import Event, Track
+        from soqchi.investigation import build_query_prompt
+
+        cat_embs = {c: self.embedder.embed_text(build_query_prompt(c)) for c in categories}
+        since = datetime.now(UTC) - timedelta(hours=hours)
+
+        with self.sf() as s:
+            tracks = (
+                s.execute(
+                    select(Track)
+                    .where(Track.clip_emb.is_not(None), Track.started_at >= since)
+                    .order_by(Track.started_at.desc())
+                    .limit(300)
+                )
+                .scalars()
+                .all()
+            )
+            if zone_only:
+                zone_rows = s.execute(
+                    select(Event.camera_id, Event.meta["track_id"].as_integer()).where(
+                        Event.t_start >= since, Event.type == "zone_intrusion"
+                    )
+                ).all()
+                in_zone = {(r[0], r[1]) for r in zone_rows if r[1] is not None}
+                tracks = [t for t in tracks if (t.camera_id, t.track_id) in in_zone]
+
+        counts: dict[str, int] = dict.fromkeys(categories, 0)
+        examples: list[dict[str, Any]] = []
+        for t in tracks:
+            emb = list(t.clip_emb)  # type: ignore[arg-type]
+            sims = {
+                c: sum(a * b for a, b in zip(emb, e, strict=True)) for c, e in cat_embs.items()
+            }
+            ranked = sorted(sims.items(), key=lambda kv: -kv[1])
+            best, gap = ranked[0][0], ranked[0][1] - ranked[1][1]
+            counts[best] += 1
+            examples.append(
+                {
+                    "category": best,
+                    "confidence_gap": round(gap, 3),
+                    "time": self._t(t.started_at),
+                    "camera": self.cam_names.get(t.camera_id, t.camera_id),
+                    "photo": t.best_frame_path,
+                }
+            )
+        # в примеры — по 2 самых уверенных на категорию
+        examples.sort(key=lambda e: -e["confidence_gap"])
+        per_cat: dict[str, int] = dict.fromkeys(categories, 0)
+        top_examples = []
+        for ex in examples:
+            if per_cat[ex["category"]] < 2:
+                per_cat[ex["category"]] += 1
+                top_examples.append(ex)
+        return {
+            "total_people": len(tracks),
+            "counts": counts,
+            "examples": top_examples,
+            "note": "оценка по внешности (zero-shot CLIP), возможны ошибки",
+        }
 
     def camera_status(self) -> list[dict[str, Any]]:
         from soqchi.db.models import Event

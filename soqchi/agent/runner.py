@@ -56,7 +56,9 @@ SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюд
 1. Факты — ТОЛЬКО из инструментов. Не выдумывай события, числа и время.
 2. Вопрос «сколько/были ли» → вызывай stats и отвечай ЦИФРАМИ из него
    (alerts = тревоги). Списки событий перечисляй только если попросили список.
-3. Вопрос про тревоги списком → search_events с severity=alert.
+3. Вопрос про тревоги/входы в зону списком → search_events (severity=alert или
+   type=zone_intrusion). В ответе перечисли ВРЕМЯ и КАМЕРУ каждого события —
+   фото и клипы приложатся автоматически.
 4. Поиск человека по внешности → find_person, description по-английски.
    Отрицания переформулируй в положительный признак ДО вызова:
    «без волос/no hair» → "bald man", «без куртки» → "man in a t-shirt".
@@ -64,7 +66,45 @@ SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюд
    — ПУСТОЙ список = человека НЕ БЫЛО, так и ответь, никого не подставляй;
    — НЕПУСТОЙ список = НАЙДЕНО: перечисли время и камеру каждой записи,
      отрицать непустой результат ЗАПРЕЩЕНО.
-5. Времена в результатах уже локальные — показывай как есть."""
+5. Пол, возраст, категории людей — ТОЛЬКО через classify_people. САМ пол/
+   категории НЕ определяй и НЕ выдумывай.
+   Пример: «сколько девушек было в запретной зоне» →
+   classify_people(categories=["woman","man"], zone_only=true).
+   В ответе назови цифры по категориям и добавь, что это оценка по внешности.
+6. Времена в результатах уже локальные — показывай как есть."""
+
+# инструменты, чьи результаты уходят пользователю как доказательства (фото/клипы)
+EVIDENCE_TOOLS = {"find_person", "search_events", "classify_people"}
+
+
+def collect_evidence(tool_name: str, result: Any) -> list[dict[str, str]]:
+    """Фото/клип/подпись из результата инструмента → медиа для Telegram."""
+    if tool_name not in EVIDENCE_TOOLS:
+        return []
+    items = (
+        result
+        if isinstance(result, list)
+        else result.get("examples", [])
+        if isinstance(result, dict)
+        else []
+    )
+    out: list[dict[str, str]] = []
+    for item in items:
+        if not isinstance(item, dict) or not item.get("photo"):
+            continue
+        parts = [str(item.get("time", "")), str(item.get("camera", ""))]
+        if item.get("category"):
+            parts.append(f"категория: {item['category']}")
+        if item.get("type"):
+            parts.append(str(item["type"]))
+        entry: dict[str, str] = {
+            "photo": str(item["photo"]),
+            "caption": " · ".join(p for p in parts if p),
+        }
+        if item.get("clip"):
+            entry["clip"] = str(item["clip"])
+        out.append(entry)
+    return out[:5]
 
 
 class AgentRunner:
@@ -80,8 +120,8 @@ class AgentRunner:
         # короткая память диалога per chat_id
         self._history: dict[int, list[dict[str, Any]]] = {}
 
-    def answer(self, chat_id: int, question: str) -> tuple[str, list[str]]:
-        """→ (текст ответа, пути к фото из инструментов). Вызывать из thread'а."""
+    def answer(self, chat_id: int, question: str) -> tuple[str, list[dict[str, str]]]:
+        """→ (текст, доказательства [{photo, caption, clip?}]). Вызывать из thread'а."""
         tz = self.cfg.site.timezone
         system = SYSTEM_PROMPT.format(
             site=self.cfg.site.name,
@@ -94,7 +134,7 @@ class AgentRunner:
             *history,
             {"role": "user", "content": question},
         ]
-        photos: list[str] = []
+        evidence: list[dict[str, str]] = []
 
         for _ in range(MAX_TOOL_ROUNDS):
             resp = self.client.chat.completions.create(
@@ -111,12 +151,9 @@ class AgentRunner:
                     name, args = inline
                     log.info("agent inline tool %s(%s)", name, args)
                     result = self.tools.call(name, args)
-                    if name == "find_person":
-                        photos = [
-                            item["photo"]
-                            for item in (result if isinstance(result, list) else [])
-                            if isinstance(item, dict) and item.get("photo")
-                        ]
+                    if name in EVIDENCE_TOOLS:
+                        # доказательства — из ПОСЛЕДНЕГО вызова (пусто = ничего не шлём)
+                        evidence = collect_evidence(name, result)
                     messages.append({"role": "assistant", "content": text})
                     messages.append(
                         {
@@ -133,7 +170,7 @@ class AgentRunner:
                     [{"role": "user", "content": question}, {"role": "assistant", "content": text}]
                 )
                 del history[:-6]  # держим последние 3 обмена
-                return text, photos
+                return text, evidence
 
             messages.append(
                 {
@@ -151,14 +188,10 @@ class AgentRunner:
                     args = {}
                 log.info("agent tool %s(%s)", tc.function.name, args)
                 result = self.tools.call(tc.function.name, args)
-                if tc.function.name == "find_person":
-                    # фото — только из ПОСЛЕДНЕГО поиска: если финальный запрос
+                if tc.function.name in EVIDENCE_TOOLS:
+                    # доказательства — из ПОСЛЕДНЕГО вызова: если финальный запрос
                     # ничего не нашёл, старые кандидаты не должны уйти в чат
-                    photos = [
-                        item["photo"]
-                        for item in (result if isinstance(result, list) else [])
-                        if isinstance(item, dict) and item.get("photo")
-                    ]
+                    evidence = collect_evidence(tc.function.name, result)
                 messages.append(
                     {
                         "role": "tool",
@@ -166,4 +199,4 @@ class AgentRunner:
                         "content": json.dumps(result, ensure_ascii=False, default=str),
                     }
                 )
-        return "Не уложился в лимит шагов — уточни вопрос.", photos
+        return "Не уложился в лимит шагов — уточни вопрос.", evidence

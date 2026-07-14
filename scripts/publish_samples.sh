@@ -13,18 +13,24 @@ declare -A MAP=(
   [cam6]=classroom.mp4
 )
 
-pids=()
-trap '[ ${#pids[@]} -gt 0 ] && kill "${pids[@]}" 2>/dev/null; wait' EXIT
+# kill 0 валит всю процесс-группу: и обёртки-циклы, и сами ffmpeg
+trap 'kill 0' EXIT
 
 for cam in "${!MAP[@]}"; do
   f="data/samples/${MAP[$cam]}"
   [ -s "$f" ] || { echo "skip $cam: нет $f"; continue; }
-  ffmpeg -hide_banner -loglevel error \
-    -re -stream_loop -1 -i "$f" \
-    -vf "scale='min(768,iw)':-2,fps=12" \
-    -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p -g 24 \
-    -an -rtsp_transport tcp -f rtsp "rtsp://127.0.0.1:8554/${cam}" &
-  pids+=($!)
+  (
+    # ffmpeg умирает (сеть/EOF-глюк) → перезапуск через 2с, камера не «умирает навсегда»
+    while true; do
+      ffmpeg -hide_banner -loglevel error \
+        -re -stream_loop -1 -i "$f" \
+        -vf "scale='min(768,iw)':-2,fps=12" \
+        -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p -g 24 \
+        -an -rtsp_transport tcp -f rtsp "rtsp://127.0.0.1:8554/${cam}" || true
+      echo "restart ${cam}" >&2
+      sleep 2
+    done
+  ) &
   echo "publish ${MAP[$cam]} → ${cam}"
 done
 wait
