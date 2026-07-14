@@ -135,17 +135,18 @@ def main() -> None:
         sf = db_sink._session_factory
 
         def find_person_cmd(query: str) -> list[tuple[str, str]]:
-            from soqchi.db.queries import find_tracks_by_embedding
+            from soqchi.investigation import find_people
 
-            emb = embedder.embed_text(query)
-            tracks = find_tracks_by_embedding(sf, emb, hours=48, limit=5)
+            found = find_people(
+                sf, embedder, query, hours=48, limit=5, min_margin=settings.find_min_margin
+            )
             cam_names = {c.id: c.name for c in cfg.cameras}
             out: list[tuple[str, str]] = []
-            for t in tracks:
+            for t, sim in found:
                 if t.best_frame_path:
                     caption = (
                         f"{t.started_at.astimezone().strftime('%d.%m %H:%M:%S')} · "
-                        f"{cam_names.get(t.camera_id, t.camera_id)}"
+                        f"{cam_names.get(t.camera_id, t.camera_id)} · сходство {sim:.0%}"
                     )
                     out.append((str(settings.media_dir / t.best_frame_path), caption))
             return out

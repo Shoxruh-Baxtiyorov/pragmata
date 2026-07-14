@@ -197,18 +197,26 @@ class AgentTools:
     def find_person(self, description: str, hours: float = 48) -> list[dict[str, Any]]:
         if self.embedder is None:
             return [{"error": "embedder disabled"}]
-        from soqchi.db.queries import find_tracks_by_embedding
+        from soqchi.config import get_settings
+        from soqchi.investigation import find_people
 
-        emb = self.embedder.embed_text(description)
-        tracks = find_tracks_by_embedding(self.sf, emb, hours=int(hours), limit=5)
+        found = find_people(
+            self.sf,
+            self.embedder,
+            description,
+            hours=int(hours),
+            limit=5,
+            min_margin=get_settings().find_min_margin,
+        )
         return [
             {
                 "time": self._t(t.started_at),
                 "camera": self.cam_names.get(t.camera_id, t.camera_id),
                 "duration_s": round((t.ended_at - t.started_at).total_seconds(), 1),
+                "similarity": round(sim, 3),
                 "photo": t.best_frame_path,
             }
-            for t in tracks
+            for t, sim in found
         ]
 
     def camera_status(self) -> list[dict[str, Any]]:

@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://openrouter.ai/api/v1"
     llm_api_key: str = ""
     llm_model: str = "google/gemini-2.0-flash-001"
+    # Investigation Mode: контраст-порог «похож сильнее, чем просто человек».
+    # Выше = меньше ложных находок, ниже = выше полнота (калибровка в investigation.py)
+    find_min_margin: float = 0.025
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

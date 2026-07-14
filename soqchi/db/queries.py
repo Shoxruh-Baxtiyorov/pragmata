@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from soqchi.db.models import Event, Feedback, Track
+from soqchi.db.models import Event, Feedback
 
 if TYPE_CHECKING:
     import uuid
@@ -36,26 +36,4 @@ def save_feedback(
         s.commit()
 
 
-def find_tracks_by_embedding(
-    session_factory: sessionmaker[Session],
-    embedding: list[float],
-    hours: int = 48,
-    limit: int = 5,
-) -> list[Track]:
-    """Треки, ближайшие к текстовому CLIP-эмбеддингу (Investigation Mode)."""
-    from datetime import UTC, datetime, timedelta
-
-    from sqlalchemy import select
-
-    since = datetime.now(UTC) - timedelta(hours=hours)
-    with session_factory() as s:
-        return list(
-            s.execute(
-                select(Track)
-                .where(Track.clip_emb.is_not(None), Track.started_at >= since)
-                .order_by(Track.clip_emb.cosine_distance(embedding))
-                .limit(limit)
-            )
-            .scalars()
-            .all()
-        )
+# Поиск по описанию внешности — в soqchi/investigation.py (контраст-порог)
