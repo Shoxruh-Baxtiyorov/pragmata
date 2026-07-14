@@ -202,6 +202,30 @@ def main() -> None:
     else:
         log.info("telegram: off (%s)", "нет TELEGRAM_BOT_TOKEN" if db_sink else "нужен --sink db")
 
+    # --- VLM-описания alert-событий (независимо от бота: описания нужны и в БД) ---
+    if settings.llm_api_key and settings.vlm_model and db_sink is not None:
+        from soqchi.alerts import VlmSink
+        from soqchi.db.queries import update_description
+        from soqchi.vlm import HourBudget, VlmDescriber, VlmWorker
+
+        vlm_sf = db_sink._session_factory
+
+        def persist_description(eid: uuid.UUID, text: str, meta: dict[str, object]) -> None:
+            update_description(vlm_sf, eid, text, meta)
+
+        vlm_worker = VlmWorker(
+            VlmDescriber(settings.llm_base_url, settings.llm_api_key, settings.vlm_model),
+            HourBudget(settings.vlm_max_per_hour),
+            persist=persist_description,
+            notify=(bot.attach_description if bot is not None else None),
+            stop_event=stop_event,
+        )
+        vlm_worker.start()
+        sink.sinks.append(VlmSink(vlm_worker, cfg))
+        log.info("vlm: on (%s, лимит %d/час)", settings.vlm_model, settings.vlm_max_per_hour)
+    else:
+        log.info("vlm: off")
+
     # --- камеры ---------------------------------------------------------------
     workers = [
         CameraWorker(

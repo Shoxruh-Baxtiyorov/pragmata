@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://openrouter.ai/api/v1"
     llm_api_key: str = ""
     llm_model: str = "google/gemini-2.0-flash-001"
+    # VLM-описания alert-событий (тот же endpoint, что LLM_BASE_URL/LLM_API_KEY).
+    # Локально: qwen2.5vl:3b (Ollama свапает модели — секунды на алерт, ок).
+    # Облако: пусто = использовать LLM_MODEL (gemini-flash мультимодальна).
+    vlm_model: str = "qwen2.5vl:3b"
+    vlm_max_per_hour: int = 60
     # Investigation Mode: контраст-порог «похож сильнее, чем просто человек».
     # Калибровка 2026-07-14: реальные совпадения ≥ +0.033 (dress/hat/shirt),
     # негации и «почти похожие» ≤ +0.030 → порог между ними. Выше = точнее, ниже = полнее.

@@ -156,6 +156,7 @@ class AgentTools:
                 "camera": self.cam_names.get(ev.camera_id, ev.camera_id),
                 "zone": ev.zone,
                 "duration_s": ev.duration_s,
+                "description": ev.description,  # VLM: что происходило на кадрах
                 "photo": ev.frame_path,
             }
             for ev in rows

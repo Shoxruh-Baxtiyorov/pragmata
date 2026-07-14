@@ -28,6 +28,20 @@ def update_clip_path(
             s.commit()
 
 
+def update_description(
+    session_factory: sessionmaker[Session],
+    event_id: uuid.UUID,
+    description: str,
+    vlm_meta: dict[str, object],
+) -> None:
+    with session_factory() as s:
+        ev = s.get(Event, event_id)
+        if ev is not None:
+            ev.description = description
+            ev.meta = {**ev.meta, "vlm": vlm_meta}
+            s.commit()
+
+
 def save_feedback(
     session_factory: sessionmaker[Session], event_id: uuid.UUID, chat_id: int, verdict: str
 ) -> None:

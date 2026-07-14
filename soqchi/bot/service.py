@@ -82,6 +82,9 @@ class BotService:
         self.get_clip_path = get_clip_path
         self.save_feedback = save_feedback
         self.media_root: Path | None = None  # выставляет main — для фото из инструментов агента
+        # отправленные алерт-карточки: event_id → [(chat_id, message_id, caption)]
+        # нужно VLM-воркеру, чтобы дописать описание в уже отправленную карточку
+        self._alert_msgs: dict[uuid.UUID, list[tuple[int, int, str]]] = {}
 
         self.bot = Bot(token)
         self.dp = Dispatcher()
@@ -123,19 +126,45 @@ class BotService:
     async def _send_alert(self, ev: RuleEvent, photo: bytes | None) -> None:
         caption = self._caption(ev)
         kb = _keyboard(ev.id) if ev.track is not None else None
+        sent: list[tuple[int, int, str]] = []
         for chat_id in self.allowed:
             try:
                 if photo is not None:
-                    await self.bot.send_photo(
+                    msg = await self.bot.send_photo(
                         chat_id,
                         BufferedInputFile(photo, filename="event.jpg"),
                         caption=caption,
                         reply_markup=kb,
                     )
                 else:
-                    await self.bot.send_message(chat_id, caption, reply_markup=kb)
+                    msg = await self.bot.send_message(chat_id, caption, reply_markup=kb)
+                sent.append((chat_id, msg.message_id, caption))
             except Exception:  # noqa: BLE001 — один недоступный чат не роняет рассылку
                 log.exception("telegram send failed chat=%s", chat_id)
+        if sent:
+            self._alert_msgs[ev.id] = sent
+            while len(self._alert_msgs) > 300:  # не копим бесконечно
+                self._alert_msgs.pop(next(iter(self._alert_msgs)))
+
+    def attach_description(self, event_id: uuid.UUID, description: str, fp_hint: bool) -> None:
+        """VLM дописывает описание в уже отправленную карточку. Любой поток."""
+
+        async def _edit() -> None:
+            suffix = f"\n🧠 {description}"
+            if fp_hint:
+                suffix += "\n🤖 возможно ложное срабатывание (нет людей в кадре?)"
+            for chat_id, message_id, caption in self._alert_msgs.get(event_id, []):
+                try:
+                    await self.bot.edit_message_caption(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        caption=f"{caption}{suffix}"[:1024],
+                        reply_markup=_keyboard(event_id),
+                    )
+                except Exception:  # noqa: BLE001 — старые/удалённые сообщения
+                    log.exception("caption edit failed event=%s chat=%s", event_id, chat_id)
+
+        asyncio.run_coroutine_threadsafe(_edit(), self.loop)
 
     def broadcast_text(self, text: str) -> None:
         """Текст всем чатам allowlist (дайджест по расписанию). Любой поток."""
