@@ -1,9 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage, useIsAuthed } from '@/features/auth'
+import { OverviewPage } from '@/features/overview'
 import { LivePage } from '@/features/live'
 import { EventsPage } from '@/features/events'
 import { StatsPage } from '@/features/insights'
 import { SearchPage } from '@/features/search'
+import { SystemPage } from '@/features/system'
 import { AppLayout } from '@/app/layout/AppLayout'
 
 export function AppRouter() {
@@ -21,11 +23,13 @@ export function AppRouter() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
+        <Route path="/overview" element={<OverviewPage />} />
         <Route path="/live" element={<LivePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="*" element={<Navigate to="/live" replace />} />
+        <Route path="/system" element={<SystemPage />} />
+        <Route path="*" element={<Navigate to="/overview" replace />} />
       </Route>
     </Routes>
   )

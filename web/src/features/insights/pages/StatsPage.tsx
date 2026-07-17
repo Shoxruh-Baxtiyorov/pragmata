@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { Card, EmptyState, Spinner } from '@/shared/ui'
+import { Card, CardContent, EmptyState, PageHeader, Spinner, StatTile } from '@/shared/ui'
 import { eventLabel } from '@/shared/lib/format'
-import { eventIcon, ShieldAlert, Users } from '@/shared/ui/icons'
+import { eventIcon, ShieldAlert, ShieldCheck, Users } from '@/shared/ui/icons'
 import type { EventType } from '@/shared/api/types'
 import { useDigest, useStats } from '../api/insightsApi'
 
@@ -10,25 +10,19 @@ function Bars({ data, labelType }: { data: Record<string, number>; labelType?: b
   const max = Math.max(1, ...Object.values(data))
   const rows = Object.entries(data).sort((a, b) => b[1] - a[1])
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {rows.map(([k, v]) => {
         const Icon = labelType ? eventIcon[k as EventType] : null
         return (
-          <div key={k} className="flex items-center gap-2">
-            <span
-              className="flex w-44 flex-shrink-0 items-center gap-1.5 truncate text-sm text-[var(--color-muted)]"
-              title={k}
-            >
-              {Icon && <Icon size={14} className="flex-shrink-0" />}
+          <div key={k} className="flex items-center gap-3">
+            <span className="flex w-44 flex-shrink-0 items-center gap-1.5 truncate text-sm text-[var(--color-text-secondary)]" title={k}>
+              {Icon && <Icon size={14} className="flex-shrink-0 text-[var(--color-text-subtle)]" />}
               <span className="truncate">{labelType ? eventLabel(k, i18n.language) : k}</span>
             </span>
-            <div className="h-4 flex-1 overflow-hidden rounded bg-[var(--color-surface-2)]">
-              <div
-                className="h-full rounded bg-[var(--color-accent)]"
-                style={{ width: `${(v / max) * 100}%` }}
-              />
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-[var(--color-bg-muted)]">
+              <div className="h-full rounded-full bg-[var(--color-brand-500)]" style={{ width: `${(v / max) * 100}%` }} />
             </div>
-            <span className="w-10 flex-shrink-0 text-right font-mono text-sm">{v}</span>
+            <span className="w-10 flex-shrink-0 text-right font-mono text-sm font-medium">{v}</span>
           </div>
         )
       })}
@@ -45,47 +39,42 @@ export function StatsPage() {
   if (stats.isError || !stats.data) return <EmptyState title={t('common.noConnection')} />
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="flex items-center gap-4 p-4">
-          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-[var(--color-accent)]">
-            <Users size={22} />
-          </span>
-          <div>
-            <p className="text-sm text-[var(--color-muted)]">{t('stats.visitors')}</p>
-            <p className="font-mono text-3xl">{stats.data.visitors_entered}</p>
-          </div>
+    <>
+      <PageHeader title={t('stats.title')} subtitle={t('stats.subtitle')} />
+
+      <div className="grid grid-cols-3 gap-4">
+        <StatTile icon={Users} tone="brand" label={t('stats.visitors')} value={stats.data.visitors_entered} />
+        <StatTile icon={ShieldAlert} tone="error" label={t('stats.alerts')} value={stats.data.alerts} />
+        <StatTile icon={ShieldCheck} tone="warning" label={t('stats.fp')} value={stats.data.false_positives} />
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent>
+            <h2 className="mb-4 text-sm font-bold">{t('stats.byType')}</h2>
+            <Bars data={stats.data.by_type} labelType />
+          </CardContent>
         </Card>
-        <Card className="flex items-center gap-4 p-4">
-          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-[var(--color-alert)]">
-            <ShieldAlert size={22} />
-          </span>
-          <div>
-            <p className="text-sm text-[var(--color-muted)]">{t('stats.alerts')}</p>
-            <p className="font-mono text-3xl text-[var(--color-alert)]">{stats.data.alerts}</p>
-          </div>
+        <Card>
+          <CardContent>
+            <h2 className="mb-4 text-sm font-bold">{t('stats.byCamera')}</h2>
+            <Bars data={stats.data.by_camera} />
+          </CardContent>
         </Card>
       </div>
 
-      <Card className="p-4">
-        <h2 className="mb-3 text-sm font-medium">{t('stats.byType')}</h2>
-        <Bars data={stats.data.by_type} labelType />
+      <Card className="mt-4">
+        <CardContent>
+          <h2 className="mb-3 text-sm font-bold">{t('stats.digest')}</h2>
+          {digest.data ? (
+            <pre className="whitespace-pre-wrap font-sans text-sm text-[var(--color-text-secondary)]">
+              {digest.data.text}
+            </pre>
+          ) : (
+            <Spinner />
+          )}
+        </CardContent>
       </Card>
-      <Card className="p-4">
-        <h2 className="mb-3 text-sm font-medium">{t('stats.byCamera')}</h2>
-        <Bars data={stats.data.by_camera} />
-      </Card>
-
-      <Card className="p-4">
-        <h2 className="mb-3 text-sm font-medium">{t('stats.digest')}</h2>
-        {digest.data ? (
-          <pre className="whitespace-pre-wrap font-sans text-sm text-[var(--color-text)]">
-            {digest.data.text}
-          </pre>
-        ) : (
-          <Spinner />
-        )}
-      </Card>
-    </div>
+    </>
   )
 }

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
+import { StatusBadge } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { eventLabel, severityColor, timeHMS } from '@/shared/lib/format'
+import { eventLabel, severityColor, severityTone, timeHMS } from '@/shared/lib/format'
 import { eventIcon, Users } from '@/shared/ui/icons'
 import type { EventItem } from '@/shared/api/types'
 
@@ -13,10 +14,10 @@ export function EventCard({ event, onClick }: { event: EventItem; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className="group flex w-full items-stretch gap-3 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-left transition hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-2)]"
+      className="group flex w-full items-stretch gap-3 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-white text-left shadow-[var(--shadow-xs)] transition hover:border-[var(--color-brand-300)] hover:shadow-[var(--shadow-sm)]"
       style={{ borderLeft: `3px solid ${color}` }}
     >
-      <div className="relative h-[68px] w-28 flex-shrink-0 overflow-hidden bg-black">
+      <div className="h-[68px] w-28 flex-shrink-0 overflow-hidden bg-black">
         {thumb ? (
           <img src={thumb} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -29,27 +30,26 @@ export function EventCard({ event, onClick }: { event: EventItem; onClick: () =>
       <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pr-3">
         <div className="flex items-center gap-1.5">
           <Icon size={15} style={{ color }} className="flex-shrink-0" />
-          <span className="truncate text-sm font-medium">{eventLabel(event.type, i18n.language)}</span>
+          <span className="truncate text-sm font-bold text-[var(--color-text-primary)]">
+            {eventLabel(event.type, i18n.language)}
+          </span>
           {event.people_in_zone && event.people_in_zone > 1 && (
-            <span
-              className="ml-1 inline-flex flex-shrink-0 items-center gap-0.5 rounded-full px-1.5 text-[11px]"
-              style={{ color: 'var(--color-warning)', border: '1px solid var(--color-warning)' }}
-            >
+            <StatusBadge tone={severityTone[event.severity] === 'danger' ? 'error' : 'neutral'} soft className="ml-1">
               <Users size={11} />
               {event.people_in_zone}
-            </span>
+            </StatusBadge>
           )}
         </div>
-        <p className="truncate text-xs text-[var(--color-muted)]" title={event.camera}>
+        <p className="truncate text-xs text-[var(--color-text-muted)]" title={event.camera}>
           {event.camera}
           {event.zone ? ` · ${event.zone}` : ''}
         </p>
         {event.description && (
-          <p className="truncate text-xs text-[var(--color-muted)] italic">{event.description}</p>
+          <p className="truncate text-xs text-[var(--color-text-subtle)] italic">{event.description}</p>
         )}
       </div>
 
-      <span className="flex flex-shrink-0 items-center pr-3 font-mono text-xs text-[var(--color-muted)]">
+      <span className="flex flex-shrink-0 items-center pr-3 font-mono text-xs text-[var(--color-text-subtle)]">
         {timeHMS(event.t_start)}
       </span>
     </button>

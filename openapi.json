@@ -263,6 +263,29 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HourBucket": {
+        "properties": {
+          "alerts": {
+            "title": "Alerts",
+            "type": "integer"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "hour": {
+            "title": "Hour",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hour",
+          "events",
+          "alerts"
+        ],
+        "title": "HourBucket",
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "password": {
@@ -287,6 +310,91 @@
         "title": "OkOut",
         "type": "object"
       },
+      "OverviewOut": {
+        "properties": {
+          "alerts_today": {
+            "title": "Alerts Today",
+            "type": "integer"
+          },
+          "cameras_online": {
+            "title": "Cameras Online",
+            "type": "integer"
+          },
+          "cameras_total": {
+            "title": "Cameras Total",
+            "type": "integer"
+          },
+          "false_positives_today": {
+            "title": "False Positives Today",
+            "type": "integer"
+          },
+          "hourly": {
+            "items": {
+              "$ref": "#/components/schemas/HourBucket"
+            },
+            "title": "Hourly",
+            "type": "array"
+          },
+          "recent_alerts": {
+            "items": {
+              "$ref": "#/components/schemas/EventOut"
+            },
+            "title": "Recent Alerts",
+            "type": "array"
+          },
+          "visitors_today": {
+            "title": "Visitors Today",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "visitors_today",
+          "alerts_today",
+          "cameras_online",
+          "cameras_total",
+          "false_positives_today",
+          "hourly",
+          "recent_alerts"
+        ],
+        "title": "OverviewOut",
+        "type": "object"
+      },
+      "PersonAppearance": {
+        "properties": {
+          "camera": {
+            "title": "Camera",
+            "type": "string"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          },
+          "time": {
+            "format": "date-time",
+            "title": "Time",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "camera",
+          "type",
+          "photo_url"
+        ],
+        "title": "PersonAppearance",
+        "type": "object"
+      },
       "StatsOut": {
         "properties": {
           "alerts": {
@@ -307,6 +415,10 @@
             "title": "By Type",
             "type": "object"
           },
+          "false_positives": {
+            "title": "False Positives",
+            "type": "integer"
+          },
           "hours": {
             "title": "Hours",
             "type": "number"
@@ -320,10 +432,108 @@
           "hours",
           "visitors_entered",
           "alerts",
+          "false_positives",
           "by_type",
           "by_camera"
         ],
         "title": "StatsOut",
+        "type": "object"
+      },
+      "SystemCamera": {
+        "properties": {
+          "events_24h": {
+            "title": "Events 24H",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "online": {
+            "title": "Online",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "online",
+          "last_event",
+          "events_24h"
+        ],
+        "title": "SystemCamera",
+        "type": "object"
+      },
+      "SystemOut": {
+        "properties": {
+          "agent_enabled": {
+            "title": "Agent Enabled",
+            "type": "boolean"
+          },
+          "cameras": {
+            "items": {
+              "$ref": "#/components/schemas/SystemCamera"
+            },
+            "title": "Cameras",
+            "type": "array"
+          },
+          "events_total": {
+            "title": "Events Total",
+            "type": "integer"
+          },
+          "media_dir": {
+            "title": "Media Dir",
+            "type": "string"
+          },
+          "offline_mode": {
+            "title": "Offline Mode",
+            "type": "boolean"
+          },
+          "site_name": {
+            "title": "Site Name",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "vlm_enabled": {
+            "title": "Vlm Enabled",
+            "type": "boolean"
+          },
+          "yolo_model": {
+            "title": "Yolo Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_name",
+          "timezone",
+          "cameras",
+          "yolo_model",
+          "agent_enabled",
+          "vlm_enabled",
+          "offline_mode",
+          "media_dir",
+          "events_total"
+        ],
+        "title": "SystemOut",
         "type": "object"
       },
       "TokenResponse": {
@@ -1028,6 +1238,32 @@
         ]
       }
     },
+    "/api/v1/overview": {
+      "get": {
+        "operationId": "overview_api_v1_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Overview",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/stats": {
       "get": {
         "operationId": "stats_api_v1_stats_get",
@@ -1078,6 +1314,32 @@
         ]
       }
     },
+    "/api/v1/system": {
+      "get": {
+        "operationId": "system_api_v1_system_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "System",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/tracks/{track_id}/photo": {
       "get": {
         "operationId": "track_photo_api_v1_tracks__track_id__photo_get",
@@ -1121,6 +1383,70 @@
         "summary": "Track Photo",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/tracks/{track_id}/timeline": {
+      "get": {
+        "operationId": "timeline_api_v1_tracks__track_id__timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "exclusiveMinimum": 0,
+              "maximum": 168,
+              "title": "Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PersonAppearance"
+                  },
+                  "title": "Response Timeline Api V1 Tracks  Track Id  Timeline Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Timeline",
+        "tags": [
+          "insights"
         ]
       }
     },

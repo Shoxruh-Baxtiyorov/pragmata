@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, EmptyState, Spinner } from '@/shared/ui'
+import { Button, EmptyState, PageHeader, Select, Skeleton } from '@/shared/ui'
 import type { EventItem, EventType, Severity } from '@/shared/api/types'
 import { useEvents, type EventFilters } from '../api/eventsApi'
 import { EventCard } from '../components/EventCard'
@@ -31,41 +31,47 @@ export function EventsPage() {
     type: type || undefined,
     severity: severity || undefined,
   }
-  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useEvents(filters)
-
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useEvents(filters)
   const items = data?.pages.flatMap((p) => p.items) ?? []
-  const selectCls =
-    'rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm'
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <select value={hours} onChange={(e) => setHours(Number(e.target.value))} className={selectCls}>
-          <option value={1}>{t('events.h1')}</option>
-          <option value={24}>{t('events.h24')}</option>
-          <option value={168}>{t('events.h168')}</option>
-        </select>
-        <select value={type} onChange={(e) => setType(e.target.value)} className={selectCls}>
-          <option value="">{t('events.type')}: {t('events.all')}</option>
-          {TYPES.map((ty) => (
-            <option key={ty} value={ty}>
-              {ty}
-            </option>
-          ))}
-        </select>
-        <select value={severity} onChange={(e) => setSeverity(e.target.value)} className={selectCls}>
-          <option value="">{t('events.severity')}: {t('events.all')}</option>
-          {SEVERITIES.map((sv) => (
-            <option key={sv} value={sv}>
-              {sv}
-            </option>
-          ))}
-        </select>
-      </div>
+    <>
+      <PageHeader
+        title={t('events.title')}
+        subtitle={t('events.subtitle')}
+        actions={
+          <>
+            <Select value={hours} onChange={(v) => setHours(Number(v))}>
+              <option value={1}>{t('events.h1')}</option>
+              <option value={24}>{t('events.h24')}</option>
+              <option value={168}>{t('events.h168')}</option>
+            </Select>
+            <Select value={type} onChange={setType}>
+              <option value="">{t('events.type')}: {t('events.all')}</option>
+              {TYPES.map((ty) => (
+                <option key={ty} value={ty}>
+                  {ty}
+                </option>
+              ))}
+            </Select>
+            <Select value={severity} onChange={setSeverity}>
+              <option value="">{t('events.severity')}: {t('events.all')}</option>
+              {SEVERITIES.map((sv) => (
+                <option key={sv} value={sv}>
+                  {sv}
+                </option>
+              ))}
+            </Select>
+          </>
+        }
+      />
 
       {isLoading ? (
-        <Spinner />
+        <div className="space-y-2">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-[68px]" />
+          ))}
+        </div>
       ) : isError ? (
         <EmptyState title={t('common.noConnection')} />
       ) : items.length === 0 ? (
@@ -77,7 +83,7 @@ export function EventsPage() {
           ))}
           {hasNextPage && (
             <div className="flex justify-center pt-2">
-              <Button variant="ghost" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
+              <Button variant="outline" size="sm" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
                 {t('events.more')}
               </Button>
             </div>
@@ -86,6 +92,6 @@ export function EventsPage() {
       )}
 
       {selected && <EventModal event={selected} onClose={() => setSelected(null)} />}
-    </div>
+    </>
   )
 }

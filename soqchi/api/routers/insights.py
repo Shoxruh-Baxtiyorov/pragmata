@@ -2,15 +2,45 @@
 
 from __future__ import annotations
 
+import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута резолвит FastAPI в рантайме
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from soqchi.api.deps import require_site, session_factory
-from soqchi.api.schemas import DigestOut, FindItem, StatsOut
+from soqchi.api.schemas import (
+    DigestOut,
+    FindItem,
+    OverviewOut,
+    PersonAppearance,
+    StatsOut,
+    SystemOut,
+)
 from soqchi.api.security import require_auth
 from soqchi.config import get_settings
+from soqchi.services import insights_service as isvc
 
 router = APIRouter(prefix="/api/v1", tags=["insights"])
 _embedder = None
+
+
+@router.get("/overview", response_model=OverviewOut)
+def overview(_: str = Depends(require_auth)) -> OverviewOut:
+    require_site()
+    return isvc.overview()
+
+
+@router.get("/system", response_model=SystemOut)
+def system(_: str = Depends(require_auth)) -> SystemOut:
+    return isvc.system_status()
+
+
+@router.get("/tracks/{track_id}/timeline", response_model=list[PersonAppearance])
+def timeline(
+    track_id: uuid.UUID,
+    hours: int = Query(24, gt=0, le=24 * 7),
+    _: str = Depends(require_auth),
+) -> list[PersonAppearance]:
+    return isvc.person_timeline(track_id, hours)
 
 
 @router.get("/stats", response_model=StatsOut)

@@ -1,21 +1,30 @@
 // Единый иконочный слой (lucide — тонкий-штриховой стиль, как Hugeicons в imaktab-front).
-// Эмодзи в UI больше не используем.
 import {
   AlertTriangle,
   BarChart3,
   Check,
+  Clock,
+  Cpu,
+  Database,
   DoorOpen,
+  Film,
+  LayoutDashboard,
   LogIn,
   LogOut,
+  MapPin,
+  Menu,
   Moon,
   MonitorPlay,
   Search,
+  Settings,
   ShieldAlert,
+  ShieldCheck,
   Timer,
   User,
   Users,
   Video,
   VideoOff,
+  WifiOff,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -31,29 +40,32 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   camera_online: Video,
 }
 
-export const navIcon = {
-  live: MonitorPlay,
-  events: BarChart3,
-  stats: BarChart3,
-  search: Search,
-}
-
 export {
   AlertTriangle,
   BarChart3,
   Check,
+  Clock,
+  Cpu,
+  Database,
   DoorOpen,
+  Film,
+  LayoutDashboard,
   LogIn,
   LogOut,
+  MapPin,
+  Menu,
   MonitorPlay,
   Moon,
   Search,
+  Settings,
   ShieldAlert,
+  ShieldCheck,
   Timer,
   User,
   Users,
   Video,
   VideoOff,
+  WifiOff,
   X,
 }
 export type { LucideIcon }

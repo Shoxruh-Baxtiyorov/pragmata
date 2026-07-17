@@ -52,8 +52,52 @@ export interface Stats {
   hours: number
   visitors_entered: number
   alerts: number
+  false_positives: number
   by_type: Record<string, number>
   by_camera: Record<string, number>
+}
+
+export interface HourBucket {
+  hour: string
+  events: number
+  alerts: number
+}
+
+export interface Overview {
+  visitors_today: number
+  alerts_today: number
+  cameras_online: number
+  cameras_total: number
+  false_positives_today: number
+  hourly: HourBucket[]
+  recent_alerts: EventItem[]
+}
+
+export interface SystemCamera {
+  id: string
+  name: string
+  online: boolean
+  last_event: string | null
+  events_24h: number
+}
+
+export interface SystemInfo {
+  site_name: string
+  timezone: string
+  cameras: SystemCamera[]
+  yolo_model: string
+  agent_enabled: boolean
+  vlm_enabled: boolean
+  offline_mode: boolean
+  media_dir: string
+  events_total: number
+}
+
+export interface PersonAppearance {
+  time: string
+  camera: string
+  type: string
+  photo_url: string | null
 }
 
 export interface Digest {

@@ -19,9 +19,15 @@ export function dateTime(iso: string): string {
 }
 
 export const severityColor: Record<Severity, string> = {
-  alert: 'var(--color-alert)',
+  alert: 'var(--color-danger)',
   warning: 'var(--color-warning)',
-  info: 'var(--color-muted)',
+  info: 'var(--color-text-subtle)',
+}
+
+export const severityTone: Record<Severity, 'danger' | 'warning' | 'neutral'> = {
+  alert: 'danger',
+  warning: 'warning',
+  info: 'neutral',
 }
 
 const EVENT_LABEL: Record<string, { ru: string; uz: string }> = {

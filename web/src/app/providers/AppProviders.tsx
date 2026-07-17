@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { setUnauthorizedHandler } from '@/shared/api/client'
 import { authActions } from '@/features/auth'
+import { ToastProvider } from '@/shared/ui/toast'
 
 function UnauthorizedBridge() {
   const nav = useNavigate()
@@ -25,7 +26,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={qc}>
       <UnauthorizedBridge />
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </QueryClientProvider>
   )
 }

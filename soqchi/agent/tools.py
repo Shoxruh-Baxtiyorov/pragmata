@@ -187,7 +187,7 @@ class AgentTools:
         ]
 
     def stats(self, hours: float = 24) -> dict[str, Any]:
-        from soqchi.db.models import Event
+        from soqchi.db.models import Event, Feedback
 
         since = datetime.now(UTC) - timedelta(hours=hours)
         with self.sf() as s:
@@ -207,6 +207,11 @@ class AgentTools:
                     .group_by(Event.camera_id)
                 ).all()
             }
+            fp = s.execute(
+                select(func.count())
+                .select_from(Feedback)
+                .where(Feedback.created_at >= since, Feedback.verdict == "false_positive")
+            ).scalar_one()
         return {
             "hours": hours,
             "visitors_entered": by_type.get("person_entered", 0),
@@ -215,6 +220,7 @@ class AgentTools:
                 for t, n in by_type.items()
                 if t in ("zone_intrusion", "after_hours_presence", "camera_offline")
             ),
+            "false_positives": fp,
             "by_type": by_type,
             "by_camera": by_camera,
         }
