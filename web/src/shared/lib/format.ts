@@ -1,4 +1,4 @@
-import type { EventType, Severity } from '@/shared/api/types'
+import type { Severity } from '@/shared/api/types'
 
 export function timeHMS(iso: string): string {
   return new Date(iso).toLocaleTimeString('ru-RU', {
@@ -24,14 +24,19 @@ export const severityColor: Record<Severity, string> = {
   info: 'var(--color-muted)',
 }
 
-export const eventIcon: Record<EventType, string> = {
-  zone_intrusion: '🚨',
-  loitering: '⏳',
-  after_hours_presence: '🌙',
-  person_entered: '👤',
-  person_exited: '🚪',
-  camera_offline: '📵',
-  camera_online: '✅',
+const EVENT_LABEL: Record<string, { ru: string; uz: string }> = {
+  zone_intrusion: { ru: 'Вход в зону', uz: 'Zonaga kirish' },
+  loitering: { ru: 'Долгое присутствие', uz: 'Uzoq turish' },
+  after_hours_presence: { ru: 'Нерабочее время', uz: 'Ish vaqtidan tashqari' },
+  person_entered: { ru: 'Человек вошёл', uz: 'Odam kirdi' },
+  person_exited: { ru: 'Человек вышел', uz: 'Odam chiqdi' },
+  camera_offline: { ru: 'Камера офлайн', uz: 'Kamera oflayn' },
+  camera_online: { ru: 'Камера в сети', uz: 'Kamera onlayn' },
+}
+
+export function eventLabel(type: string, lang: string): string {
+  const l = EVENT_LABEL[type]
+  return l ? (lang === 'uz' ? l.uz : l.ru) : type
 }
 
 /** Интервалы поллинга — одно место (заменим при появлении WebSocket). */

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchAuthedBlob } from '@/shared/api/client'
-import { Badge } from '@/shared/ui'
+import { Video, VideoOff } from '@/shared/ui/icons'
 import type { Camera } from '@/shared/api/types'
 
 /** Снапшот перезапрашиваем сами (cache-buster), чтоб не кэшировался; поверх — зоны. */
@@ -46,7 +46,7 @@ export function CameraTile({ camera, onClick }: { camera: Camera; onClick: () =>
           />
         ) : (
           <div className="flex h-full items-center justify-center text-[var(--color-muted)]">
-            {camera.online ? '…' : '📵'}
+            {camera.online ? <Video size={28} /> : <VideoOff size={28} />}
           </div>
         )}
         {/* SVG-оверлей зон: polygon в долях 0..1 → viewBox 0..100 */}
@@ -68,15 +68,23 @@ export function CameraTile({ camera, onClick }: { camera: Camera; onClick: () =>
           </svg>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 p-2">
+      <div className="flex items-center justify-between gap-2 p-2.5">
         <span className="min-w-0 truncate text-sm font-medium" title={camera.name}>
           {camera.name}
         </span>
-        {camera.online ? (
-          <Badge color="var(--color-ok)">{t('live.online')}</Badge>
-        ) : (
-          <Badge color="var(--color-alert)">{t('live.offline')}</Badge>
-        )}
+        <span
+          className="flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+          style={{
+            color: camera.online ? 'var(--color-ok)' : 'var(--color-alert)',
+            border: `1px solid ${camera.online ? 'var(--color-ok)' : 'var(--color-alert)'}`,
+          }}
+        >
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: camera.online ? 'var(--color-ok)' : 'var(--color-alert)' }}
+          />
+          {camera.online ? t('live.online') : t('live.offline')}
+        </span>
       </div>
     </button>
   )

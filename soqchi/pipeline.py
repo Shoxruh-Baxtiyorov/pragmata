@@ -117,10 +117,14 @@ class CameraWorker(threading.Thread):
                 )
                 updated, ended = self.tracks.update(detections, frame.image, frame.ts)
                 events = self.rules.process(updated, ended, frame.ts, frame.image.shape)
+                # для событий с ВИДИМЫМ сейчас треком доказательство = текущий кадр
+                # со ВСЕМИ людьми (виновник + остальные), а не best-frame с одним боксом.
+                # exited-события трек уже не виден → оставляем его best-frame.
+                visible = {id(st) for st in updated}
                 for ev in events:
-                    if ev.severity == "alert":
-                        # карточка показывает момент срабатывания, а не best-frame прошлого
+                    if ev.track is not None and id(ev.track) in visible:
                         ev.frame = frame.image.copy()
+                        ev.others = [o.bbox for o in updated if o is not ev.track]
 
                 self.stats.frames_processed += 1
                 self.stats.detections += len(detections)
