@@ -27,6 +27,23 @@ def test_login_wrong_password(client: TestClient) -> None:
     assert client.post("/api/v1/auth/login", json={"password": "nope"}).status_code == 401
 
 
+def test_login_lockout_after_5_failures(client: TestClient) -> None:
+    from soqchi.api.routers.auth import _throttle
+
+    _throttle.reset("testclient")  # TestClient использует host "testclient"
+    for _ in range(5):
+        assert client.post("/api/v1/auth/login", json={"password": "x"}).status_code == 401
+    # 6-я попытка — блок, даже с ВЕРНЫМ паролем
+    assert client.post("/api/v1/auth/login", json={"password": "correct-horse"}).status_code == 429
+    _throttle.reset("testclient")
+
+
+def test_security_headers_present(client: TestClient) -> None:
+    r = client.get("/health")
+    assert r.headers["X-Content-Type-Options"] == "nosniff"
+    assert r.headers["X-Frame-Options"] == "DENY"
+
+
 def test_login_and_me(client: TestClient) -> None:
     token = client.post("/api/v1/auth/login", json={"password": "correct-horse"}).json()[
         "access_token"
