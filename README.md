@@ -25,6 +25,10 @@ uv run python -m soqchi.main --config config/dev.yaml
 События падают в Postgres (`events`, `tracks`) + кропы в `data/media/`. Без БД:
 `--sink jsonl` (события в `data/events.jsonl`). Тесты: `uv run pytest`.
 
+**Dashboard API** (бэкенд веб-фронта): `uv run uvicorn soqchi.api.app:app --port 8088`
+→ OpenAPI на `/docs`. Нужны `SECRET_KEY` и `ADMIN_PASSWORD` в `.env` (fail-closed).
+Промт для фронта: [docs/FRONTEND_PROMPT.md](docs/FRONTEND_PROMPT.md); код фронта — в `web/`.
+
 Пайплайн: `VideoSource (RTSP/mp4/MJPEG) → MotionGate → YOLO11n → ByteTrack →
 RuleEngine (zone_intrusion / loitering / after_hours / entered / exited / camera_offline)
 → Postgres + кропы (L0-лица YuNet) → клипы из кольцевого буфера → Telegram-алерты`.

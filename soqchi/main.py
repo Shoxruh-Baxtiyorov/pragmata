@@ -239,6 +239,7 @@ def main() -> None:
             realtime=not args.offline,
             site=cfg.site,
             embedder=embedder,
+            live_dir=data_root / "live",
         )
         for cam in cfg.cameras
     ]

@@ -20,6 +20,15 @@ class Settings(BaseSettings):
     # Fernet-ключ для шифрования колонок (RTSP-креды камер). Вне APP_ENV=test
     # обязателен при первом обращении к шифрованию — см. soqchi/core/encryption.py.
     encryption_key: str = ""
+    # --- Dashboard API (soqchi.api) ---
+    # Пустой secret/пароль = API-логин отвечает 503 (fail-closed, как encryption)
+    secret_key: str = (
+        ""  # JWT HS256; сгенерировать: python -c "import secrets;print(secrets.token_urlsafe(48))"
+    )
+    admin_password: str = ""
+    site_config: Path = Path("config/dev.yaml")  # откуда API берёт имена камер/зоны
+    api_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    api_enable_find: bool = False  # /find грузит CLIP вторым процессом — включать осознанно
     # Telegram: пустой токен = бот выключен. Алерты уходят ТОЛЬКО в chat_id из
     # allowlist (secure default: неизвестный чат не получает ничего).
     telegram_bot_token: str = ""

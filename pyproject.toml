@@ -19,6 +19,9 @@ dependencies = [
     "aiogram>=3.7",
     "open-clip-torch>=2.24",
     "openai>=1.40",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pyjwt>=2.8",
 ]
 
 [dependency-groups]
@@ -53,8 +56,16 @@ target-version = "py312"
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "TC"]
 
 [tool.ruff.lint.flake8-type-checking]
-# SQLAlchemy резолвит Mapped[...] аннотации в рантайме — их импорты нельзя уносить в TYPE_CHECKING
-runtime-evaluated-base-classes = ["sqlalchemy.orm.DeclarativeBase", "soqchi.db.models.Base"]
+# SQLAlchemy и pydantic резолвят аннотации в рантайме — их импорты нельзя уносить в TYPE_CHECKING
+runtime-evaluated-base-classes = [
+    "sqlalchemy.orm.DeclarativeBase",
+    "soqchi.db.models.Base",
+    "pydantic.BaseModel",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI DI: Depends/Query в дефолтах — канонический паттерн, не мутабельный дефолт
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 
 [tool.mypy]
 python_version = "3.12"

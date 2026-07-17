@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+
+import cv2
 
 from soqchi.core.redact import redact_url
 from soqchi.ingest.motion import MotionGate
@@ -12,6 +15,10 @@ from soqchi.perception.tracker import TrackManager
 from soqchi.rules.engine import RuleEngine
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    import numpy as np
+
     from soqchi.config import CameraConfig, GlobalRules, SiteInfo
     from soqchi.perception.detector import PersonDetector
     from soqchi.perception.embedder import ClipEmbedder
@@ -57,11 +64,14 @@ class CameraWorker(threading.Thread):
         realtime: bool = True,
         site: SiteInfo | None = None,
         embedder: ClipEmbedder | None = None,
+        live_dir: Path | None = None,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
         self.g = global_rules
         self.embedder = embedder
+        self.live_dir = live_dir
+        self._last_live = 0.0
         self.detector = detector
         self.sink = sink
         self.stop_event = stop_event
@@ -90,6 +100,9 @@ class CameraWorker(threading.Thread):
                 if self.stop_event.is_set():
                     break
                 self.stats.frames_read += 1
+                if self.live_dir is not None and frame.ts - self._last_live >= 2.0:
+                    self._last_live = frame.ts
+                    self._write_live(frame.image)
                 if frame.ts - last_processed < interval:
                     continue
                 last_processed = frame.ts
@@ -131,6 +144,21 @@ class CameraWorker(threading.Thread):
                     self.sink.emit_track_end(st)
             src.close()
             log.info("[%s] stopped: %s", self.camera.id, self.stats.snapshot())
+
+    def _write_live(self, image: np.ndarray) -> None:
+        """Свежий кадр для live-стены дашборда (атомарная запись, ≤640px)."""
+        assert self.live_dir is not None
+        try:
+            h, w = image.shape[:2]
+            if w > 640:
+                image = cv2.resize(image, (640, max(int(h * 640 / w), 1)))
+            self.live_dir.mkdir(parents=True, exist_ok=True)
+            # расширение должно остаться .jpg — по нему cv2 выбирает кодек
+            tmp = self.live_dir / f".{self.camera.id}.tmp.jpg"
+            cv2.imwrite(str(tmp), image, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            os.replace(tmp, self.live_dir / f"{self.camera.id}.jpg")
+        except Exception:  # noqa: BLE001 — live-кадр не должен ронять камеру
+            log.exception("[%s] live frame write failed", self.camera.id)
 
     def _embed_track(self, st: TrackState) -> None:
         """CLIP-эмбеддинг лучшего кропа — один раз, при завершении трека."""
