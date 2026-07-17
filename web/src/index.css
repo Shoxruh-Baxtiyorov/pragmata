@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@source './**/*.{ts,tsx}';
+
+/* Тёмная security-ops тема — единственная в MVP (дизайн-токены из FRONTEND_PROMPT) */
+@theme {
+  --color-bg: #0b0f14;
+  --color-surface: #121820;
+  --color-surface-2: #1a222c;
+  --color-border: #263140;
+  --color-text: #e6edf3;
+  --color-muted: #8b98a5;
+  --color-alert: #f85149;
+  --color-warning: #d29922;
+  --color-ok: #3fb950;
+  --color-accent: #58a6ff;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
