@@ -127,6 +127,8 @@ class SystemOut(BaseModel):
     yolo_model: str
     agent_enabled: bool
     vlm_enabled: bool
+    weapon_detection: bool
+    vehicle_detection: bool
     offline_mode: bool  # весь AI локальный
     media_dir: str
     events_total: int

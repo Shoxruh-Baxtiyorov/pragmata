@@ -149,6 +149,8 @@ def system_status() -> SystemOut:
         yolo_model=settings.yolo_model,
         agent_enabled=bool(settings.llm_api_key),
         vlm_enabled=bool(settings.llm_api_key and settings.vlm_model),
+        weapon_detection=bool(settings.weapon_detection and settings.llm_api_key),
+        vehicle_detection=bool(settings.vehicle_detection),
         offline_mode="127.0.0.1" in settings.llm_base_url or "localhost" in settings.llm_base_url,
         media_dir=str(settings.media_dir),
         events_total=total,

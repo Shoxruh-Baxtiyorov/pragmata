@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     import uuid
     from pathlib import Path
 
+    import numpy as np
+
     from soqchi.watchlist import WatchlistMatcher
 
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
@@ -310,6 +312,36 @@ def main() -> None:
         log.info("vlm: on (%s, лимит %d/час)", settings.vlm_model, settings.vlm_max_per_hour)
     else:
         log.info("vlm: off")
+
+    # --- детекция оружия: та же VLM проверяет кадр каждого входящего человека ----
+    if settings.weapon_detection and settings.llm_api_key and settings.vlm_model:
+        from soqchi.alerts import WeaponSink
+        from soqchi.vlm import HourBudget, VlmDescriber, WeaponWorker
+
+        def emit_weapon_alert(camera_id: str, frames: list[np.ndarray], kind: str) -> None:
+            now = time.time()
+            sink.emit_event(
+                RuleEvent(
+                    "weapon_detected",
+                    camera_id,
+                    now,
+                    now,
+                    meta={"weapon_type": kind} if kind else {},
+                    frame=frames[0] if frames else None,
+                )
+            )
+
+        weapon_worker = WeaponWorker(
+            VlmDescriber(settings.llm_base_url, settings.llm_api_key, settings.vlm_model),
+            HourBudget(settings.weapon_max_per_hour),
+            emit_alert=emit_weapon_alert,
+            stop_event=stop_event,
+        )
+        weapon_worker.start()
+        sink.sinks.append(WeaponSink(weapon_worker))
+        log.info("weapon detection: on (лимит %d/час)", settings.weapon_max_per_hour)
+    else:
+        log.info("weapon detection: off")
 
     # --- камеры: перезапускаемая группа с hot-reload по config_version --------
     reloadable = db_sink is not None and not args.loop_file

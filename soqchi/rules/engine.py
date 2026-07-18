@@ -22,6 +22,8 @@ SEVERITY = {
     "camera_offline": "alert",
     "camera_online": "info",
     "watchlist_match": "alert",
+    "weapon_detected": "alert",
+    "vehicle_seen": "info",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

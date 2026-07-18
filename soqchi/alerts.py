@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from soqchi.config import SiteConfig
     from soqchi.perception.tracker import TrackState
     from soqchi.rules.engine import RuleEvent
-    from soqchi.vlm import VlmWorker
+    from soqchi.vlm import VlmWorker, WeaponWorker
 
 
 class ClipSink:
@@ -38,6 +38,27 @@ class BotSink:
 
     def emit_event(self, ev: RuleEvent) -> None:
         self.bot.notify_event(ev)
+
+    def emit_track_end(self, st: TrackState) -> None:
+        pass
+
+
+class WeaponSink:
+    """person_entered → очередь проверки кадра на оружие (VLM, свой бюджет).
+
+    Проверяем именно вход человека: оружие имеет смысл только при людях в кадре,
+    а не на каждом треке — так экономим VLM-бюджет и не дёргаем модель впустую.
+    """
+
+    def __init__(self, worker: WeaponWorker):
+        self.worker = worker
+
+    def emit_event(self, ev: RuleEvent) -> None:
+        if ev.type != "person_entered" or ev.track is None:
+            return
+        frame = ev.frame if ev.frame is not None else ev.track.best_frame
+        if frame is not None:
+            self.worker.enqueue(ev.camera_id, [frame.copy()])
 
     def emit_track_end(self, st: TrackState) -> None:
         pass
