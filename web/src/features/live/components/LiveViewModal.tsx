@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchAuthedBlob } from '@/shared/api/client'
-import { Badge, Button } from '@/shared/ui'
-import { Video, VideoOff } from '@/shared/ui/icons'
+import { Badge, Button, Modal } from '@/shared/ui'
+import { Video, VideoOff, X } from '@/shared/ui/icons'
 import type { Camera } from '@/shared/api/types'
 
-/** Снапшот перезапрашиваем сами (cache-buster), чтоб не кэшировался; поверх — зоны. */
-export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera: Camera) => void }) {
+/** Живой просмотр: тот же приём, что и в CameraTile, но с интервалом 1с (псевдо-live). */
+export function LiveViewModal({ camera, onClose }: { camera: Camera; onClose: () => void }) {
   const { t } = useTranslation()
   const nav = useNavigate()
   const [src, setSrc] = useState<string | null>(null)
@@ -27,7 +27,7 @@ export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera
         .catch(() => {})
     }
     tick()
-    const id = setInterval(tick, 3000)
+    const id = setInterval(tick, 1000)
     return () => {
       active = false
       clearInterval(id)
@@ -36,17 +36,26 @@ export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera
   }, [camera.snapshot_url])
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(camera)}
-      onKeyDown={(e) => {
-        if (e.key === ' ') e.preventDefault()
-        if (e.key === 'Enter' || e.key === ' ') onOpen(camera)
-      }}
-      className="group relative overflow-hidden rounded-card border border-border-default bg-surface text-left shadow-s transition hover:shadow-m"
-    >
-      <div className="relative aspect-video bg-black">
+    <Modal onClose={onClose} className="max-w-3xl">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <h2 className="min-w-0 truncate text-h3 text-text-primary" title={camera.name}>
+            {camera.name}
+          </h2>
+          <Badge tone={camera.online ? 'success' : 'error'}>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'currentColor' }} />
+            {camera.online ? t('live.online') : t('live.offline')}
+          </Badge>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 rounded-card p-1.5 text-text-secondary hover:bg-bg-secondary"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="relative mt-4 aspect-video overflow-hidden rounded-card bg-black">
         {src ? (
           <img
             src={src}
@@ -73,28 +82,12 @@ export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera
           </svg>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 p-3">
-        <span className="min-w-0 truncate text-body font-semibold text-text-primary" title={camera.name}>
-          {camera.name}
-        </span>
-        <div className="flex flex-shrink-0 items-center gap-2">
-          <Badge tone={camera.online ? 'success' : 'error'}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'currentColor' }} />
-            {camera.online ? t('live.online') : t('live.offline')}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              nav(`/events?camera_id=${camera.id}`)
-            }}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            {t('nav.events')}
-          </Button>
-        </div>
+
+      <div className="mt-4 flex justify-end">
+        <Button variant="ghost" onClick={() => nav(`/events?camera_id=${camera.id}`)}>
+          {t('nav.events')}
+        </Button>
       </div>
-    </div>
+    </Modal>
   )
 }

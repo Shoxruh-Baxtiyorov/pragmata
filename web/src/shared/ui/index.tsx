@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
+import { Button } from './button'
 export { Button } from './button'
 export { Input } from './input'
 export { Card } from './card'
@@ -73,11 +74,16 @@ export function StatTile({ label, value }: { label: string; value: ReactNode }) 
   )
 }
 
-export function EmptyState({ text }: { text?: string }) {
+export function EmptyState({ text, onRetry }: { text?: string; onRetry?: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center gap-2 py-16 text-text-secondary">
       {text ?? t('common.empty')}
+      {onRetry && (
+        <Button variant="secondary" size="sm" onClick={onRetry}>
+          {t('common.retry')}
+        </Button>
+      )}
     </div>
   )
 }

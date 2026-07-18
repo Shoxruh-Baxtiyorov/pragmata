@@ -11,9 +11,9 @@ export function useStats(hours: number) {
   })
 }
 
-export function useDigest(hours: number) {
+export function useDigest(hours: number, lang: 'ru' | 'uz' | 'en') {
   return useQuery({
-    queryKey: ['digest', hours],
-    queryFn: () => api.get<Digest>(`/api/v1/digest?hours=${hours}`),
+    queryKey: ['digest', hours, lang],
+    queryFn: () => api.get<Digest>(`/api/v1/digest?hours=${hours}&lang=${lang}`),
   })
 }

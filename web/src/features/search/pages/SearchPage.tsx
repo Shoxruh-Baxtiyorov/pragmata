@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Button, Card, EmptyState, Input, PageHeader } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
 import { dateTime } from '@/shared/lib/format'
-import { MapPin, Search } from '@/shared/ui/icons'
+import { MapPin, Search, UserPlus } from '@/shared/ui/icons'
 import type { FindItem } from '@/shared/api/types'
+import { useCreatePerson } from '@/features/watchlist'
 import { useSearch } from '../api/searchApi'
 import { TimelineModal } from '../components/TimelineModal'
 
@@ -18,6 +19,18 @@ function ResultCard({ item, onTimeline }: { item: FindItem; onTimeline: (id: str
   const { t } = useTranslation()
   const photo = useAuthedMedia(item.photo_url)
   const trackId = trackIdFromUrl(item.photo_url)
+  const createPerson = useCreatePerson()
+
+  function addToWatchlist() {
+    if (!trackId || createPerson.isPending) return
+    const name = window.prompt(t('watchlist.namePrompt'))
+    if (name) {
+      createPerson.mutate(
+        { name, watch: true, track_id: trackId },
+        { onError: () => window.alert(t('assistant.error')) },
+      )
+    }
+  }
 
   return (
     <Card className="overflow-hidden p-0">
@@ -37,7 +50,7 @@ function ResultCard({ item, onTimeline }: { item: FindItem; onTimeline: (id: str
         </p>
       </div>
       {trackId && (
-        <div className="p-2">
+        <div className="flex gap-2 p-2">
           <Button
             variant="ghost"
             size="sm"
@@ -45,6 +58,15 @@ function ResultCard({ item, onTimeline }: { item: FindItem; onTimeline: (id: str
             onClick={() => onTimeline(trackId)}
           >
             <MapPin size={16} /> {t('search.timeline')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full"
+            onClick={addToWatchlist}
+            disabled={createPerson.isPending}
+          >
+            <UserPlus size={16} /> {t('watchlist.addToList')}
           </Button>
         </div>
       )}
@@ -86,7 +108,12 @@ export function SearchPage() {
         </Button>
       </form>
 
-      {search.isError && <EmptyState text={t('common.noConnection')} />}
+      {search.isError && (
+        <EmptyState
+          text={t('common.noConnection')}
+          onRetry={q.trim().length >= 3 ? () => search.mutate({ description: q.trim(), hours: 48 }) : undefined}
+        />
+      )}
       {res?.disabled && <EmptyState text={t('search.disabled')} />}
       {res?.message && <p className="text-body text-warning">{res.message}</p>}
       {res && !res.disabled && res.items.length === 0 && !res.message && (

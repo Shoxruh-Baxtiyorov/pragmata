@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута резолвит FastAPI в рантайме
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -52,11 +53,15 @@ def stats(hours: float = Query(24, gt=0, le=24 * 30), _: str = Depends(require_a
 
 
 @router.get("/digest", response_model=DigestOut)
-def digest(hours: int = Query(24, gt=0, le=24 * 7), _: str = Depends(require_auth)) -> DigestOut:
+def digest(
+    hours: int = Query(24, gt=0, le=24 * 7),
+    lang: Literal["ru", "uz", "en"] = Query("ru"),
+    _: str = Depends(require_auth),
+) -> DigestOut:
     from soqchi.digest import build_digest_text
 
     cfg = require_site()
-    return DigestOut(text=build_digest_text(session_factory(), cfg, hours=hours))
+    return DigestOut(text=build_digest_text(session_factory(), cfg, hours=hours, lang=lang))
 
 
 @router.get("/find", response_model=list[FindItem])

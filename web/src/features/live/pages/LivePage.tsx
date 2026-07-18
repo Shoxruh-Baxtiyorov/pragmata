@@ -1,13 +1,15 @@
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState, PageHeader, Skeleton } from '@/shared/ui'
+import type { Camera } from '@/shared/api/types'
 import { useCameras } from '../api/liveApi'
 import { CameraTile } from '../components/CameraTile'
+import { LiveViewModal } from '../components/LiveViewModal'
 
 export function LivePage() {
   const { t } = useTranslation()
-  const nav = useNavigate()
-  const { data, isLoading, isError } = useCameras()
+  const { data, isLoading, isError, refetch } = useCameras()
+  const [selected, setSelected] = useState<Camera | null>(null)
 
   return (
     <>
@@ -19,16 +21,17 @@ export function LivePage() {
           ))}
         </div>
       ) : isError ? (
-        <EmptyState text={t('common.noConnection')} />
+        <EmptyState text={t('common.noConnection')} onRetry={refetch} />
       ) : !data || data.length === 0 ? (
         <EmptyState text={t('live.empty')} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {data.map((cam) => (
-            <CameraTile key={cam.id} camera={cam} onClick={() => nav(`/events?camera_id=${cam.id}`)} />
+            <CameraTile key={cam.id} camera={cam} onOpen={setSelected} />
           ))}
         </div>
       )}
+      {selected && <LiveViewModal camera={selected} onClose={() => setSelected(null)} />}
     </>
   )
 }

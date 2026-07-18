@@ -54,9 +54,11 @@ export interface EventsResponse {
 
 // ZoneOut
 export interface Zone {
+  id?: string | null
   name: string
   type: string
   polygon: [number, number][]
+  rules?: Record<string, unknown>
 }
 
 // CameraOut
@@ -64,8 +66,48 @@ export interface Camera {
   id: string
   name: string
   online: boolean
+  enabled: boolean
   snapshot_url: string | null
   zones: Zone[]
+}
+
+// PersonOut
+export interface Person {
+  id: string
+  name: string
+  note: string | null
+  photo_url: string | null
+  seen_count: number
+  watch: boolean
+}
+
+// CameraIn
+export interface CameraInput {
+  id: string
+  name: string
+  url: string
+  process_fps?: number
+  detect_conf?: number
+  clips_enabled?: boolean
+}
+
+// ZoneIn
+export interface ZoneInput {
+  name: string
+  polygon: [number, number][]
+  zone_intrusion?: boolean
+  loitering?: boolean
+  hysteresis_frames?: number
+  type?: string
+  dwell_s?: number
+}
+
+// PersonCreate
+export interface PersonCreate {
+  name: string
+  track_id: string
+  watch?: boolean
+  note?: string
 }
 
 // StatsOut

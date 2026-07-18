@@ -31,8 +31,9 @@ function Bars({ data, labelType, lang }: { data: Record<string, number>; labelTy
 
 export function StatsPage() {
   const { t, i18n } = useTranslation()
+  const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'
   const stats = useStats(24)
-  const digest = useDigest(24)
+  const digest = useDigest(24, lang)
 
   if (stats.isLoading)
     return (
@@ -40,9 +41,7 @@ export function StatsPage() {
         <Spinner />
       </div>
     )
-  if (stats.isError || !stats.data) return <EmptyState text={t('common.noConnection')} />
-
-  const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'
+  if (stats.isError || !stats.data) return <EmptyState text={t('common.noConnection')} onRetry={stats.refetch} />
 
   return (
     <div className="space-y-4">
@@ -68,7 +67,7 @@ export function StatsPage() {
       <Card>
         <h2 className="mb-3 text-h4">{t('stats.digest')}</h2>
         {digest.isError ? (
-          <EmptyState text={t('common.noConnection')} />
+          <EmptyState text={t('common.noConnection')} onRetry={digest.refetch} />
         ) : digest.data ? (
           <pre className="whitespace-pre-wrap text-body text-text-secondary">{digest.data.text}</pre>
         ) : (

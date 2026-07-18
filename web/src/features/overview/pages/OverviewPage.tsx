@@ -11,7 +11,7 @@ import { HourlyBars } from '@/features/overview/ui/HourlyBars'
 export function OverviewPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['overview'],
     queryFn: () => api.get<OverviewOut>('/api/v1/overview'),
     refetchInterval: POLL.stats,
@@ -23,7 +23,7 @@ export function OverviewPage() {
         <Spinner />
       </div>
     )
-  if (isError || !data) return <EmptyState text={t('overview.error')} />
+  if (isError || !data) return <EmptyState text={t('overview.error')} onRetry={refetch} />
 
   // язык гарантированно из известного набора — иначе fallback uz
   const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'

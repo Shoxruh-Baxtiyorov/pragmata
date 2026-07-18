@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   Sun,
   TrendingUp,
+  Users,
   Video,
   type LucideIcon,
 } from '@/shared/ui/icons'
@@ -34,6 +35,8 @@ const NAV: { to: string; key: string; icon: LucideIcon }[] = [
   { to: '/stats', key: 'nav.stats', icon: TrendingUp },
   { to: '/search', key: 'nav.search', icon: Search },
   { to: '/system', key: 'nav.system', icon: Settings },
+  { to: '/manage', key: 'nav.manage', icon: Video },
+  { to: '/watchlist', key: 'nav.watchlist', icon: Users },
 ]
 
 export function AppLayout() {

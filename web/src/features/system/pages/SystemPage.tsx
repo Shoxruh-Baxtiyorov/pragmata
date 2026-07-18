@@ -15,7 +15,7 @@ function Row({ label, value, tone }: { label: string; value: string; tone?: 'suc
 
 export function SystemPage() {
   const { t } = useTranslation()
-  const { data, isLoading, isError } = useSystem()
+  const { data, isLoading, isError, refetch } = useSystem()
 
   if (isLoading)
     return (
@@ -23,7 +23,7 @@ export function SystemPage() {
         <Spinner />
       </div>
     )
-  if (isError || !data) return <EmptyState text={t('common.noConnection')} />
+  if (isError || !data) return <EmptyState text={t('common.noConnection')} onRetry={refetch} />
 
   return (
     <>

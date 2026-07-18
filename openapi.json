@@ -829,6 +829,10 @@
             "title": "Events Total",
             "type": "integer"
           },
+          "face_recognition": {
+            "title": "Face Recognition",
+            "type": "boolean"
+          },
           "media_dir": {
             "title": "Media Dir",
             "type": "string"
@@ -845,8 +849,16 @@
             "title": "Timezone",
             "type": "string"
           },
+          "vehicle_detection": {
+            "title": "Vehicle Detection",
+            "type": "boolean"
+          },
           "vlm_enabled": {
             "title": "Vlm Enabled",
+            "type": "boolean"
+          },
+          "weapon_detection": {
+            "title": "Weapon Detection",
             "type": "boolean"
           },
           "yolo_model": {
@@ -861,6 +873,9 @@
           "yolo_model",
           "agent_enabled",
           "vlm_enabled",
+          "face_recognition",
+          "weapon_detection",
+          "vehicle_detection",
           "offline_mode",
           "media_dir",
           "events_total"
@@ -1489,6 +1504,21 @@
               "maximum": 168,
               "title": "Hours",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "default": "ru",
+              "enum": [
+                "ru",
+                "uz",
+                "en"
+              ],
+              "title": "Lang",
+              "type": "string"
             }
           }
         ],

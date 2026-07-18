@@ -70,3 +70,18 @@ def test_seconds_until_rolls_to_tomorrow() -> None:
 
     # сейчас 12:00 → 08:00 уже прошло → до завтрашних 08:00 20 часов
     assert seconds_until("08:00", TZ, MON_NOON_UTC) == 20 * 3600
+
+
+def test_digest_labels_langs() -> None:
+    from soqchi.digest import _digest_labels
+
+    ru = _digest_labels("ru")
+    uz = _digest_labels("uz")
+    en = _digest_labels("en")
+    # uz/en заголовки отличаются от ru (реально локализованы)
+    assert uz["header"] != ru["header"]
+    assert en["header"] != ru["header"]
+    assert uz["titles"]["zone_intrusion"] != ru["titles"]["zone_intrusion"]
+    # неизвестный язык → ru
+    assert _digest_labels("de") == ru
+    assert _digest_labels("") == ru

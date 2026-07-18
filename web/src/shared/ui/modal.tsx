@@ -1,7 +1,16 @@
 import { useEffect, type ReactNode } from 'react'
+import { cn } from '@/shared/lib/utils'
 
 // Модалка: radius 24 (component/radius/modal), тень L, закрытие по Escape и оверлею
-export function Modal({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+export function Modal({
+  onClose,
+  children,
+  className,
+}: {
+  onClose: () => void
+  children: ReactNode
+  className?: string
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -16,7 +25,7 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-modal bg-surface p-6 shadow-l"
+        className={cn('max-h-[85vh] w-full max-w-lg overflow-auto rounded-modal bg-surface p-6 shadow-l', className)}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
