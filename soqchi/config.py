@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     weapon_max_per_hour: int = 120
     # детекция транспорта (ANPR): YOLO-классы car/truck/bus/motorcycle + OCR номера
     vehicle_detection: bool = False
+    vehicle_conf: float = 0.3  # порог уверенности для транспорта (обычно ниже людей)
     # Investigation Mode: контраст-порог «похож сильнее, чем просто человек».
     # Калибровка 2026-07-14: реальные совпадения ≥ +0.033 (dress/hat/shirt),
     # негации и «почти похожие» ≤ +0.030 → порог между ними. Выше = точнее, ниже = полнее.

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     import numpy as np
 
     from soqchi.perception.face_recog import FaceRecognizer
+    from soqchi.vehicles import VehicleWatcher
     from soqchi.watchlist import WatchlistMatcher
 
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
@@ -92,6 +93,7 @@ class _CameraGroup:
         realtime: bool,
         watchlist: WatchlistMatcher | None = None,
         face_recog: FaceRecognizer | None = None,
+        vehicle_watcher: VehicleWatcher | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -131,6 +133,7 @@ class _CameraGroup:
                 live_dir=data_root / "live",
                 watchlist=watchlist,
                 face_recog=face_recog,
+                vehicle_watcher=vehicle_watcher,
             )
             for cam in cfg.cameras
         ]
@@ -229,6 +232,18 @@ def main() -> None:
         log.info("face recognition: включено (модель загрузится при первом лице)")
     else:
         log.info("face recognition: off")
+
+    # учёт транспорта + ANPR (best-effort) — отдельный YOLO-проход, дросселируется
+    vehicle_watcher = None
+    if settings.vehicle_detection:
+        from soqchi.perception.plates import PlateReader
+        from soqchi.vehicles import VehicleWatcher
+
+        plate_reader = PlateReader(enabled=True)
+        vehicle_watcher = VehicleWatcher(detector, settings.vehicle_conf, 640, plate_reader)
+        log.info("vehicle detection: on (номер — best-effort, если OCR доступен)")
+    else:
+        log.info("vehicle detection: off")
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -383,6 +398,7 @@ def main() -> None:
                 realtime=not args.offline,
                 watchlist=matcher,
                 face_recog=face_recog,
+                vehicle_watcher=vehicle_watcher,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

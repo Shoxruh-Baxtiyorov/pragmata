@@ -9,6 +9,9 @@ if TYPE_CHECKING:
     import numpy as np
 
 PERSON_CLASS_ID = 0
+# COCO: car / motorcycle / bus / truck — для ANPR/учёта транспорта
+VEHICLE_CLASS_IDS = (2, 3, 5, 7)
+VEHICLE_NAMES = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
 
 
 class PersonDetector:
@@ -26,6 +29,19 @@ class PersonDetector:
             result = self.model.predict(
                 image,
                 classes=[PERSON_CLASS_ID],
+                conf=conf,
+                imgsz=imgsz,
+                device=self.device,
+                verbose=False,
+            )[0]
+        return sv.Detections.from_ultralytics(result)
+
+    def detect_vehicles(self, image: np.ndarray, conf: float, imgsz: int = 640) -> sv.Detections:
+        """Тот же YOLO, но классы транспорта (car/moto/bus/truck)."""
+        with self._lock:
+            result = self.model.predict(
+                image,
+                classes=list(VEHICLE_CLASS_IDS),
                 conf=conf,
                 imgsz=imgsz,
                 device=self.device,

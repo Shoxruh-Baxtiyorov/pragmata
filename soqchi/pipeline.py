@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from soqchi.perception.faces import FaceCropper
     from soqchi.perception.tracker import TrackState
     from soqchi.sinks import EventSink
+    from soqchi.vehicles import VehicleWatcher
     from soqchi.watchlist import WatchlistMatcher
 
 log = logging.getLogger("soqchi.pipeline")
@@ -69,6 +70,7 @@ class CameraWorker(threading.Thread):
         live_dir: Path | None = None,
         watchlist: WatchlistMatcher | None = None,
         face_recog: FaceRecognizer | None = None,
+        vehicle_watcher: VehicleWatcher | None = None,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
@@ -77,6 +79,8 @@ class CameraWorker(threading.Thread):
         self.live_dir = live_dir
         self.watchlist = watchlist
         self.face_recog = face_recog
+        self.vehicle_watcher = vehicle_watcher
+        self._last_vehicle = 0.0
         self._last_live = 0.0
         self.detector = detector
         self.sink = sink
@@ -135,6 +139,14 @@ class CameraWorker(threading.Thread):
                 self.stats.frames_processed += 1
                 self.stats.detections += len(detections)
                 self.stats.active_tracks = len(self.tracks.active)
+
+                # транспорт (ANPR): отдельный YOLO-проход, дросселируем до ~1/сек —
+                # машинам не нужна частота людей, а инференс не бесплатен
+                if self.vehicle_watcher is not None and frame.ts - self._last_vehicle >= 1.0:
+                    self._last_vehicle = frame.ts
+                    for ev in self.vehicle_watcher.process(self.camera.id, frame.image, frame.ts):
+                        self.stats.events += 1
+                        self.sink.emit_event(ev)
 
                 for st in ended:
                     self._embed_track(st)
