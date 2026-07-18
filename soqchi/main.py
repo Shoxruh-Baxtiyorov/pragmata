@@ -20,6 +20,7 @@ from soqchi.sinks import ConsoleSink, DbSink, EventSink, JsonlSink, MultiSink
 
 if TYPE_CHECKING:
     import uuid
+    from pathlib import Path
 
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
 
@@ -64,6 +65,87 @@ class CameraWatchdog:
         self.sink.emit_event(RuleEvent(kind, camera_id, ts, time.time()))
 
 
+class _CameraGroup:
+    """Перезапускаемая группа: рекордеры + клип-воркер + камеры + вотчдог.
+
+    Живёт до group_stop; при hot-reload конфига пересоздаётся с нуля. Постоянные
+    сервисы (бот/VLM/дайджест) в MultiSink `base_sink` переживают перезапуск.
+    """
+
+    def __init__(
+        self,
+        cfg: SiteConfig,
+        base_sink: MultiSink,
+        detector: PersonDetector,
+        faces: FaceCropper,
+        embedder: ClipEmbedder,
+        data_root: Path,
+        db_sink: DbSink | None,
+        group_stop: threading.Event,
+        *,
+        loop_file: bool,
+        realtime: bool,
+    ):
+        self.group_stop = group_stop
+        self.recorders: list[SegmentRecorder] = []
+        self.clip_worker: ClipWorker | None = None
+
+        # клип-синк — только на время жизни группы (кольца зависят от списка камер)
+        sink = MultiSink(list(base_sink.sinks))
+        clip_cams = [c for c in cfg.cameras if c.clips.enabled]
+        if clip_cams and db_sink is not None:
+            sf = db_sink._session_factory
+
+            def persist_clip(event_id: uuid.UUID, path: str) -> None:
+                from soqchi.db.queries import update_clip_path
+
+                update_clip_path(sf, event_id, path)
+
+            self.recorders = [
+                SegmentRecorder(c, data_root / "ring", group_stop) for c in clip_cams
+            ]
+            self.clip_worker = ClipWorker(
+                data_root / "ring", data_root / "clips", group_stop, persist_clip
+            )
+            sink.sinks.append(ClipSink(self.clip_worker, cfg))
+
+        self.workers = [
+            CameraWorker(
+                cam,
+                cfg.rules,
+                detector,
+                faces,
+                sink,
+                group_stop,
+                loop_file=loop_file,
+                realtime=realtime,
+                site=cfg.site,
+                embedder=embedder,
+                live_dir=data_root / "live",
+            )
+            for cam in cfg.cameras
+        ]
+        self.watchdog = CameraWatchdog(self.workers, sink)
+
+    def start(self) -> None:
+        if self.clip_worker is not None:
+            self.clip_worker.start()
+        for r in self.recorders:
+            r.start()
+        for w in self.workers:
+            w.start()
+
+    def shutdown(self) -> None:
+        self.group_stop.set()
+        for w in self.workers:
+            w.join(timeout=15)
+        # рекордеры обязаны пережить terminate ffmpeg-детей — иначе сироты держат пайпы
+        for r in self.recorders:
+            r.join(timeout=8)
+        if self.clip_worker is not None:
+            self.clip_worker.join(timeout=3)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser("soqchi", description="Soqchi AI — camera pipeline (week 2)")
     parser.add_argument("--config", required=True, help="YAML конфиг объекта")
@@ -90,10 +172,27 @@ def main() -> None:
     )
     log = logging.getLogger("soqchi")
 
-    cfg = load_site_config(args.config)
     settings = get_settings()
     media = MediaStore(settings.media_dir)
-    sink, db_sink = build_sink({s.strip() for s in args.sink.split(",")}, cfg, media)
+    data_root = settings.media_dir.parent
+
+    # база всегда есть → строим db-синк; конфиг из YAML сидим в БД однократно
+    yaml_cfg = load_site_config(args.config)
+    sink, db_sink = build_sink({s.strip() for s in args.sink.split(",")}, yaml_cfg, media)
+    if db_sink is not None:
+        from soqchi.db.config_store import (
+            config_version,
+            load_config_from_db,
+            seed_config_from_yaml,
+        )
+
+        seed_config_from_yaml(db_sink._session_factory, yaml_cfg)
+        cfg = load_config_from_db(db_sink._session_factory)
+        log.info(
+            "config: из БД (%d камер); правки из UI/чата подхватятся на лету", len(cfg.cameras)
+        )
+    else:
+        cfg = yaml_cfg  # jsonl-режим без БД — статичный YAML, без hot-reload
 
     log.info("loading detector %s ...", settings.yolo_model)
     detector = PersonDetector(weights=settings.yolo_model)
@@ -104,31 +203,6 @@ def main() -> None:
     stop_event = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stop_event.set())
     signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    # --- клипы: кольцевые буферы + отложенная нарезка -----------------------
-    data_root = settings.media_dir.parent
-    clip_cams = [c for c in cfg.cameras if c.clips.enabled]
-    recorders = [SegmentRecorder(c, data_root / "ring", stop_event) for c in clip_cams]
-    clip_worker: ClipWorker | None = None
-    if clip_cams:
-        session_factory = db_sink._session_factory if db_sink is not None else None
-
-        def persist_clip(event_id: uuid.UUID, path: str) -> None:
-            if session_factory is not None:
-                from soqchi.db.queries import update_clip_path
-
-                update_clip_path(session_factory, event_id, path)
-
-        clip_worker = ClipWorker(data_root / "ring", data_root / "clips", stop_event, persist_clip)
-        sink.sinks.append(ClipSink(clip_worker, cfg))
-        clip_worker.start()
-        for r in recorders:
-            r.start()
-        log.info(
-            "clips: on (%d камер, кольцо %d мин)", len(clip_cams), clip_cams[0].clips.ring_minutes
-        )
-    else:
-        log.info("clips: off (нет камер с clips.enabled)")
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -226,55 +300,55 @@ def main() -> None:
     else:
         log.info("vlm: off")
 
-    # --- камеры ---------------------------------------------------------------
-    workers = [
-        CameraWorker(
-            cam,
-            cfg.rules,
-            detector,
-            faces,
-            sink,
-            stop_event,
-            loop_file=args.loop_file,
-            realtime=not args.offline,
-            site=cfg.site,
-            embedder=embedder,
-            live_dir=data_root / "live",
-        )
-        for cam in cfg.cameras
-    ]
-    for w in workers:
-        w.start()
-    watchdog = CameraWatchdog(workers, sink)
-
+    # --- камеры: перезапускаемая группа с hot-reload по config_version --------
+    reloadable = db_sink is not None and not args.loop_file
     started = time.time()
     try:
         while not stop_event.is_set():
-            time.sleep(5)
-            watchdog.check()
-            for w in workers:
-                log.info("[%s] %s", w.camera.id, w.stats.snapshot())
-            if args.duration and time.time() - started >= args.duration:
-                stop_event.set()
-            if all(not w.is_alive() for w in workers):
-                stop_event.set()
+            if db_sink is not None:
+                from soqchi.db.config_store import config_version, load_config_from_db
+
+                cfg = load_config_from_db(db_sink._session_factory)
+                cur_ver = config_version(db_sink._session_factory)
+            else:
+                cur_ver = 0
+
+            group_stop = threading.Event()
+            group = _CameraGroup(
+                cfg,
+                sink,
+                detector,
+                faces,
+                embedder,
+                data_root,
+                db_sink,
+                group_stop,
+                loop_file=args.loop_file,
+                realtime=not args.offline,
+            )
+            group.start()
+            log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)
+
+            while not stop_event.is_set() and not group_stop.is_set():
+                if stop_event.wait(5):
+                    break
+                group.watchdog.check()
+                if args.duration and time.time() - started >= args.duration:
+                    stop_event.set()
+                if group.workers and all(not w.is_alive() for w in group.workers):
+                    stop_event.set()
+                if reloadable and config_version(db_sink._session_factory) != cur_ver:  # type: ignore[union-attr]
+                    log.info("config изменился → перезапуск камер")
+                    break
+
+            group.shutdown()
+            if not reloadable:
+                stop_event.set()  # jsonl/loop-file режим: один прогон
     finally:
         stop_event.set()
-        for w in workers:
-            w.join(timeout=15)
-        # рекордеры обязаны пережить terminate ffmpeg-детей ДО выхода интерпретатора,
-        # иначе сироты-ffmpeg держат кольцо и пайпы
-        for r in recorders:
-            r.join(timeout=8)
-        if clip_worker is not None:
-            clip_worker.join(timeout=3)
         if bot is not None:
             bot.stop()
-        total = {
-            "events": sum(w.stats.events for w in workers),
-            "processed": sum(w.stats.frames_processed for w in workers),
-        }
-        log.info("done: %s", total)
+        log.info("done")
 
 
 if __name__ == "__main__":

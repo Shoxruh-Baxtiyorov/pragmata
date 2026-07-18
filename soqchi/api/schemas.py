@@ -18,9 +18,11 @@ class TokenResponse(BaseModel):
 
 
 class ZoneOut(BaseModel):
+    id: uuid.UUID | None = None
     name: str
     type: str
     polygon: list[tuple[float, float]]
+    rules: dict[str, object] = {}
 
 
 class CameraOut(BaseModel):
@@ -29,6 +31,38 @@ class CameraOut(BaseModel):
     online: bool
     snapshot_url: str | None
     zones: list[ZoneOut]
+    enabled: bool = True
+
+
+class CameraIn(BaseModel):
+    id: str
+    name: str
+    url: str
+    process_fps: float = 4.0
+    detect_conf: float = 0.35
+    detect_imgsz: int = 640
+    clips_enabled: bool = False
+
+
+class CameraPatch(BaseModel):
+    name: str | None = None
+    url: str | None = None
+    enabled: bool | None = None
+    process_fps: float | None = None
+    detect_conf: float | None = None
+    detect_imgsz: int | None = None
+    clips_enabled: bool | None = None
+
+
+class ZoneIn(BaseModel):
+    name: str
+    type: str = "restricted"
+    polygon: list[tuple[float, float]]
+    zone_intrusion: bool = True
+    hysteresis_frames: int = 6
+    intrusion_cooldown_s: float = 300.0
+    loitering: bool = False
+    dwell_s: float = 60.0
 
 
 class EventOut(BaseModel):
