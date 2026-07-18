@@ -122,3 +122,19 @@ class FindItem(BaseModel):
 
 class OkOut(BaseModel):
     ok: bool = True
+
+
+class AgentAsk(BaseModel):
+    question: str
+    session_id: str = "web"
+
+
+class MediaEvidence(BaseModel):
+    caption: str
+    photo_url: str | None = None
+    clip_url: str | None = None
+
+
+class AgentAnswer(BaseModel):
+    text: str
+    evidence: list[MediaEvidence]

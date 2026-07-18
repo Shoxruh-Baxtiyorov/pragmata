@@ -12,11 +12,13 @@ import {
   Search,
   Settings,
   ShieldAlert,
+  Sparkles,
   type LucideIcon,
 } from '@/shared/ui/icons'
 
 const nav: { to: string; key: string; icon: LucideIcon }[] = [
   { to: '/overview', key: 'nav.overview', icon: LayoutDashboard },
+  { to: '/assistant', key: 'nav.assistant', icon: Sparkles },
   { to: '/live', key: 'nav.live', icon: MonitorPlay },
   { to: '/events', key: 'nav.events', icon: ShieldAlert },
   { to: '/stats', key: 'nav.stats', icon: BarChart3 },

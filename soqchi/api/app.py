@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from soqchi.api.middleware import SecurityHeadersMiddleware
-from soqchi.api.routers import auth, cameras, events, insights
+from soqchi.api.routers import agent, auth, cameras, events, insights
 from soqchi.config import get_settings
 
 app = FastAPI(
@@ -36,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth.router, cameras.router, events.router, insights.router):
+for r in (auth.router, cameras.router, events.router, insights.router, agent.router):
     app.include_router(r)
 
 

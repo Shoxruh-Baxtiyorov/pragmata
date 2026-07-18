@@ -5,6 +5,7 @@ const ru = {
   app: { title: 'Soqchi AI' },
   nav: {
     overview: 'Обзор',
+    assistant: 'Ассистент',
     live: 'Камеры',
     events: 'События',
     stats: 'Статистика',
@@ -13,6 +14,16 @@ const ru = {
     logout: 'Выход',
   },
   login: { title: 'Вход', password: 'Пароль', submit: 'Войти', error: 'Неверный пароль' },
+  assistant: {
+    title: 'AI-ассистент',
+    subtitle: 'Спросите свои камеры на любом языке',
+    empty: 'Спросите свою камеру',
+    emptyHint: 'Например: «Кто заходил после 18:00?» или «найди человека в чёрной куртке»',
+    placeholder: 'Напишите вопрос…',
+    error: 'Ассистент споткнулся, попробуйте ещё раз.',
+    disabled: 'AI-ассистент выключен на сервере',
+    disabledHint: 'Задайте LLM_API_KEY в .env (локальная Ollama или облако).',
+  },
   overview: {
     title: 'Обзор',
     subtitle: 'Что происходит на объекте прямо сейчас',
@@ -89,6 +100,7 @@ const uz: typeof ru = {
   app: { title: 'Soqchi AI' },
   nav: {
     overview: 'Umumiy',
+    assistant: 'Yordamchi',
     live: 'Kameralar',
     events: 'Hodisalar',
     stats: 'Statistika',
@@ -97,6 +109,16 @@ const uz: typeof ru = {
     logout: 'Chiqish',
   },
   login: { title: 'Kirish', password: 'Parol', submit: 'Kirish', error: "Parol noto'g'ri" },
+  assistant: {
+    title: 'AI-yordamchi',
+    subtitle: 'Kameralaringizdan istalgan tilda so\'rang',
+    empty: "Kamerangizdan so'rang",
+    emptyHint: 'Masalan: «18:00 dan keyin kim kirdi?» yoki «qora kurtkali odamni top»',
+    placeholder: 'Savol yozing…',
+    error: "Yordamchi xato qildi, qayta urinib ko'ring.",
+    disabled: "AI-yordamchi serverda o'chirilgan",
+    disabledHint: '.env da LLM_API_KEY ni bering (lokal Ollama yoki bulut).',
+  },
   overview: {
     title: 'Umumiy ko\'rinish',
     subtitle: 'Obyektda hozir nima bo\'lyapti',

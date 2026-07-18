@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage, useIsAuthed } from '@/features/auth'
 import { OverviewPage } from '@/features/overview'
+import { AssistantPage } from '@/features/assistant'
 import { LivePage } from '@/features/live'
 import { EventsPage } from '@/features/events'
 import { StatsPage } from '@/features/insights'
@@ -24,6 +25,7 @@ export function AppRouter() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
         <Route path="/live" element={<LivePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/stats" element={<StatsPage />} />

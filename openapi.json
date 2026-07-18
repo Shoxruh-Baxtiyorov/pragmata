@@ -1,6 +1,45 @@
 {
   "components": {
     "schemas": {
+      "AgentAnswer": {
+        "properties": {
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/MediaEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "evidence"
+        ],
+        "title": "AgentAnswer",
+        "type": "object"
+      },
+      "AgentAsk": {
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "session_id": {
+            "default": "web",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AgentAsk",
+        "type": "object"
+      },
       "CameraOut": {
         "properties": {
           "id": {
@@ -297,6 +336,41 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "MediaEvidence": {
+        "properties": {
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "clip_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clip Url"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "required": [
+          "caption"
+        ],
+        "title": "MediaEvidence",
         "type": "object"
       },
       "OkOut": {
@@ -645,6 +719,82 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/agent/ask": {
+      "post": {
+        "operationId": "ask_api_v1_agent_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentAsk"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ask",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/api/v1/agent/enabled": {
+      "get": {
+        "operationId": "enabled_api_v1_agent_enabled_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Enabled Api V1 Agent Enabled Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Enabled",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",
@@ -1235,6 +1385,62 @@
         "summary": "Me",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/media": {
+      "get": {
+        "operationId": "media_api_v1_media_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "p",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "P",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "photo",
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Media",
+        "tags": [
+          "agent"
         ]
       }
     },

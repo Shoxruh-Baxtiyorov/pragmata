@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
@@ -24,10 +25,30 @@ log = logging.getLogger("soqchi.agent")
 MAX_TOOL_ROUNDS = 5
 
 
-def parse_inline_tool_call(text: str) -> tuple[str, dict[str, Any]] | None:
-    """Локальные модели иногда пишут tool-call сырым JSON'ом в текст ответа.
+TOOL_NAMES = {"search_events", "stats", "find_person", "classify_people", "camera_status"}
+# псевдокод локальных моделей: stats(hours=24) / printStats(hours=1)["..."]
+_PSEUDO_CALL = re.compile(r"\b(\w+)\s*\(([^()]*)\)")
+_KWARG = re.compile(r"(\w+)\s*=\s*(\"[^\"]*\"|'[^']*'|[\w.\-]+)")
 
-    Ловим `{"name": "...", "arguments": {...}}` и исполняем как настоящий вызов.
+
+def _coerce(v: str) -> Any:
+    v = v.strip().strip("\"'")
+    if v.lower() in ("true", "false"):
+        return v.lower() == "true"
+    try:
+        return int(v)
+    except ValueError:
+        try:
+            return float(v)
+        except ValueError:
+            return v
+
+
+def parse_inline_tool_call(text: str) -> tuple[str, dict[str, Any]] | None:
+    """Локальные модели пишут tool-call текстом. Ловим два формата.
+
+    JSON: `{"name": "...", "arguments": {...}}`.
+    Псевдокод: `stats(hours=24)`, `printStats(hours=1)[...]` — извлекаем имя+kwargs.
     """
     start = text.find("{")
     while start != -1:
@@ -47,12 +68,23 @@ def parse_inline_tool_call(text: str) -> tuple[str, dict[str, Any]] | None:
                         return obj["name"], args if isinstance(args, dict) else {}
                     break
         start = text.find("{", start + 1)
+
+    for m in _PSEUDO_CALL.finditer(text):
+        raw = m.group(1)
+        name = raw.lower()
+        if name.startswith("print"):
+            name = name[5:]
+        if name in TOOL_NAMES:
+            args = {k: _coerce(v) for k, v in _KWARG.findall(m.group(2))}
+            return name, args
     return None
 
 
 SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюдения объекта «{site}».
 Сейчас {now} ({tz}). Отвечай кратко, НА ЯЗЫКЕ ВОПРОСА (узбекский или русский).
 Правила:
+0. НЕ пиши код, псевдокод или имена функций в ответе пользователю. Вызывай
+   инструменты через tool-calling; пользователю давай только человеческий текст.
 1. Факты — ТОЛЬКО из инструментов. Не выдумывай события, числа и время.
 2. Вопрос «сколько/были ли» → вызывай stats и отвечай ЦИФРАМИ из него
    (alerts = тревоги). Списки событий перечисляй только если попросили список.

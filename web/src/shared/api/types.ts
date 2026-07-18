@@ -100,6 +100,17 @@ export interface PersonAppearance {
   photo_url: string | null
 }
 
+export interface MediaEvidence {
+  caption: string
+  photo_url: string | null
+  clip_url: string | null
+}
+
+export interface AgentAnswer {
+  text: string
+  evidence: MediaEvidence[]
+}
+
 export interface Digest {
   text: string
 }
