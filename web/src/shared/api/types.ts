@@ -13,17 +13,49 @@ export type EventType =
   | 'camera_online'
 
 export interface Zone {
+  id: string | null
   name: string
   type: string
   polygon: [number, number][]
+  rules: Record<string, unknown>
 }
 
 export interface Camera {
   id: string
   name: string
   online: boolean
+  enabled: boolean
   snapshot_url: string | null
   zones: Zone[]
+}
+
+export interface CameraInput {
+  id: string
+  name: string
+  url: string
+  process_fps?: number
+  detect_conf?: number
+  detect_imgsz?: number
+  clips_enabled?: boolean
+}
+
+export interface ZoneInput {
+  name: string
+  type?: string
+  polygon: [number, number][]
+  zone_intrusion?: boolean
+  hysteresis_frames?: number
+  loitering?: boolean
+  dwell_s?: number
+}
+
+export interface Person {
+  id: string
+  name: string
+  note: string | null
+  watch: boolean
+  photo_url: string | null
+  seen_count: number
 }
 
 export interface EventItem {

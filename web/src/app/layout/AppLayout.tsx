@@ -5,12 +5,14 @@ import { authActions } from '@/features/auth'
 import { setLang } from '@/shared/i18n'
 import {
   BarChart3,
+  Bell,
   LayoutDashboard,
   LogOut,
   Menu,
   MonitorPlay,
   Search,
   Settings,
+  Settings2,
   ShieldAlert,
   Sparkles,
   type LucideIcon,
@@ -23,6 +25,8 @@ const nav: { to: string; key: string; icon: LucideIcon }[] = [
   { to: '/events', key: 'nav.events', icon: ShieldAlert },
   { to: '/stats', key: 'nav.stats', icon: BarChart3 },
   { to: '/search', key: 'nav.search', icon: Search },
+  { to: '/watchlist', key: 'nav.watchlist', icon: Bell },
+  { to: '/manage', key: 'nav.manage', icon: Settings2 },
   { to: '/system', key: 'nav.system', icon: Settings },
 ]
 

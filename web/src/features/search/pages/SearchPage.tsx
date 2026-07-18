@@ -2,9 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, EmptyState, PageHeader } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
+import { useToast } from '@/shared/ui/toast'
 import { dateTime } from '@/shared/lib/format'
-import { MapPin, Search } from '@/shared/ui/icons'
+import { MapPin, Search, UserPlus } from '@/shared/ui/icons'
 import type { FindItem } from '@/shared/api/types'
+import { useCreatePerson } from '@/features/watchlist'
 import { useSearch } from '../api/searchApi'
 import { TimelineModal } from '../components/TimelineModal'
 
@@ -17,6 +19,19 @@ function ResultCard({ item, onTimeline }: { item: FindItem; onTimeline: (id: str
   const { t } = useTranslation()
   const photo = useAuthedMedia(item.photo_url)
   const trackId = trackIdFromUrl(item.photo_url)
+  const createPerson = useCreatePerson()
+  const toast = useToast()
+
+  function addToWatchlist() {
+    if (!trackId) return
+    const name = window.prompt(t('watchlist.namePrompt'))
+    if (!name) return
+    createPerson.mutate(
+      { name, watch: true, track_id: trackId },
+      { onSuccess: () => toast(t('watchlist.added'), 'ok') },
+    )
+  }
+
   return (
     <Card>
       <div className="aspect-3/4 bg-black">
@@ -33,12 +48,17 @@ function ResultCard({ item, onTimeline }: { item: FindItem; onTimeline: (id: str
         <p className="text-xs text-[var(--color-text-muted)]">
           {dateTime(item.time)} · {t('search.similarity')} {Math.round(item.similarity * 100)}%
         </p>
-        {trackId && (
-          <Button variant="ghost" size="xs" className="mt-1 -ml-1.5" onClick={() => onTimeline(trackId)}>
+      </div>
+      {trackId && (
+        <div className="flex gap-1 px-2 pb-2">
+          <Button variant="ghost" size="xs" className="flex-1" onClick={() => onTimeline(trackId)}>
             <MapPin size={13} /> {t('search.timeline')}
           </Button>
-        )}
-      </div>
+          <Button variant="ghost" size="xs" onClick={addToWatchlist}>
+            <UserPlus size={13} /> {t('watchlist.addToList')}
+          </Button>
+        </div>
+      )}
     </Card>
   )
 }

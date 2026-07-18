@@ -2,10 +2,24 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, EmptyState, PageHeader, Select, Skeleton } from '@/shared/ui'
+import { fetchAuthedBlob } from '@/shared/api/client'
+import { FileDown } from '@/shared/ui/icons'
 import type { EventItem, EventType, Severity } from '@/shared/api/types'
 import { useEvents, type EventFilters } from '../api/eventsApi'
 import { EventCard } from '../components/EventCard'
 import { EventModal } from '../components/EventModal'
+
+async function downloadReport(filters: EventFilters) {
+  const p = new URLSearchParams({ hours: String(filters.hours) })
+  if (filters.camera_id) p.set('camera_id', filters.camera_id)
+  if (filters.severity) p.set('severity', filters.severity)
+  const url = await fetchAuthedBlob(`/api/v1/events/report.pdf?${p.toString()}`)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'soqchi-report.pdf'
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 const TYPES: EventType[] = [
   'zone_intrusion',
@@ -62,6 +76,9 @@ export function EventsPage() {
                 </option>
               ))}
             </Select>
+            <Button variant="outline" size="sm" onClick={() => void downloadReport(filters)}>
+              <FileDown size={15} /> PDF
+            </Button>
           </>
         }
       />

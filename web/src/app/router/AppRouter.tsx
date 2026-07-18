@@ -7,6 +7,8 @@ import { EventsPage } from '@/features/events'
 import { StatsPage } from '@/features/insights'
 import { SearchPage } from '@/features/search'
 import { SystemPage } from '@/features/system'
+import { ManagePage } from '@/features/manage'
+import { WatchlistPage } from '@/features/watchlist'
 import { AppLayout } from '@/app/layout/AppLayout'
 
 export function AppRouter() {
@@ -30,6 +32,8 @@ export function AppRouter() {
         <Route path="/events" element={<EventsPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/watchlist" element={<WatchlistPage />} />
+        <Route path="/manage" element={<ManagePage />} />
         <Route path="/system" element={<SystemPage />} />
         <Route path="*" element={<Navigate to="/overview" replace />} />
       </Route>
