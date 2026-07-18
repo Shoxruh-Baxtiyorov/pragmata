@@ -43,3 +43,93 @@ export interface OverviewOut {
   hourly: HourBucket[]
   recent_alerts: EventOut[]
 }
+
+export type Severity = 'info' | 'warning' | 'alert'
+
+// EventsPage
+export interface EventsResponse {
+  items: EventOut[]
+  total: number
+}
+
+// ZoneOut
+export interface Zone {
+  name: string
+  type: string
+  polygon: [number, number][]
+}
+
+// CameraOut
+export interface Camera {
+  id: string
+  name: string
+  online: boolean
+  snapshot_url: string | null
+  zones: Zone[]
+}
+
+// StatsOut
+export interface Stats {
+  hours: number
+  visitors_entered: number
+  alerts: number
+  false_positives: number
+  by_type: Record<string, number>
+  by_camera: Record<string, number>
+}
+
+// DigestOut
+export interface Digest {
+  text: string
+}
+
+// SystemCamera
+export interface SystemCamera {
+  id: string
+  name: string
+  online: boolean
+  last_event: string | null
+  events_24h: number
+}
+
+// SystemOut
+export interface SystemInfo {
+  site_name: string
+  timezone: string
+  yolo_model: string
+  media_dir: string
+  cameras: SystemCamera[]
+  agent_enabled: boolean
+  vlm_enabled: boolean
+  offline_mode: boolean
+  events_total: number
+}
+
+// FindItem
+export interface FindItem {
+  time: string
+  camera: string
+  similarity: number
+  photo_url: string | null
+}
+
+// PersonAppearance
+export interface PersonAppearance {
+  time: string
+  camera: string
+  type: string
+  photo_url: string | null
+}
+
+// MediaEvidence
+export interface MediaEvidence {
+  caption: string
+  photo_url: string | null
+  clip_url: string | null
+}
+
+// AgentAnswer
+export interface AgentAnswer {
+  text: string
+  evidence: MediaEvidence[]
+}
