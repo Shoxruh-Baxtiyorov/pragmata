@@ -1,14 +1,17 @@
-"""CRUD камер и зон из UI. Каждая правка bump'ает config_version → пайплайн живо перезагружается."""
+"""CRUD камер и зон из UI. Каждая правка bump'ает config_version → пайплайн перезагружается."""
 
 from __future__ import annotations
 
 import uuid  # noqa: TC003 — uuid.UUID в сигнатурах, вызываемых из FastAPI-роутов
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
 
 from soqchi.api.deps import session_factory
-from soqchi.api.schemas import CameraIn, CameraPatch, ZoneIn
 from soqchi.db.config_store import bump_config_version
+
+if TYPE_CHECKING:
+    from soqchi.api.schemas import CameraIn, CameraPatch, ZoneIn
 
 
 def _bump() -> None:

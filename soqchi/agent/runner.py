@@ -25,7 +25,15 @@ log = logging.getLogger("soqchi.agent")
 MAX_TOOL_ROUNDS = 5
 
 
-TOOL_NAMES = {"search_events", "stats", "find_person", "classify_people", "camera_status"}
+TOOL_NAMES = {
+    "search_events",
+    "stats",
+    "find_person",
+    "classify_people",
+    "camera_status",
+    "add_alert_zone",
+    "set_working_hours",
+}
 # псевдокод локальных моделей: stats(hours=24) / printStats(hours=1)["..."]
 _PSEUDO_CALL = re.compile(r"\b(\w+)\s*\(([^()]*)\)")
 _KWARG = re.compile(r"(\w+)\s*=\s*(\"[^\"]*\"|'[^']*'|[\w.\-]+)")
@@ -103,7 +111,11 @@ SYSTEM_PROMPT = """Ты — Soqchi AI, ассистент видеонаблюд
    Пример: «сколько девушек было в запретной зоне» →
    classify_people(categories=["woman","man"], zone_only=true).
    В ответе назови цифры по категориям и добавь, что это оценка по внешности.
-6. Времена в результатах уже локальные — показывай как есть."""
+6. Создание правил по просьбе пользователя:
+   «алертить если кто-то зайдёт на <камеру>» → add_alert_zone(camera="...").
+   «алертить всё что после 22:00» → set_working_hours(open="08:00", close="22:00").
+   После вызова подтверди, что правило создано и действует сразу.
+7. Времена в результатах уже локальные — показывай как есть."""
 
 # инструменты, чьи результаты уходят пользователю как доказательства (фото/клипы)
 EVIDENCE_TOOLS = {"find_person", "search_events", "classify_people"}

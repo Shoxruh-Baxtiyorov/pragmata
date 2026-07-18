@@ -115,6 +115,40 @@ TOOL_SPECS: list[dict[str, Any]] = [
             "parameters": {"type": "object", "properties": {}},
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_alert_zone",
+            "description": (
+                "Создать правило: алертить, когда человек появляется на камере "
+                "(зона на весь кадр). Для «если кто-то зайдёт на склад — тревога». "
+                "camera — имя или id камеры из списка. Изменение вступит в силу сразу."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {"camera": {"type": "string"}, "zone_name": {"type": "string"}},
+                "required": ["camera"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "set_working_hours",
+            "description": (
+                "Задать рабочие часы объекта. Появление человека ВНЕ этих часов → тревога "
+                "(after-hours). Для «алертить всё, что после 22:00». Формат HH:MM."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "open": {"type": "string", "description": "начало, напр. 08:00"},
+                    "close": {"type": "string", "description": "конец, напр. 22:00"},
+                },
+                "required": ["open", "close"],
+            },
+        },
+    },
 ]
 
 
@@ -356,3 +390,45 @@ class AgentTools:
             }
             for c in self.cfg.cameras
         ]
+
+    def _resolve_camera(self, camera: str) -> str | None:
+        for c in self.cfg.cameras:
+            if camera in (c.id, c.name) or camera.lower() in c.name.lower():
+                return c.id
+        return None
+
+    def add_alert_zone(self, camera: str, zone_name: str = "Тревога") -> dict[str, Any]:
+        cam_id = self._resolve_camera(camera)
+        if cam_id is None:
+            return {
+                "error": f"камера '{camera}' не найдена",
+                "cameras": [c.name for c in self.cfg.cameras],
+            }
+        from soqchi.api.schemas import ZoneIn
+        from soqchi.services.config_service import add_zone
+
+        add_zone(
+            cam_id,
+            ZoneIn(
+                name=zone_name,
+                polygon=[(0.02, 0.02), (0.98, 0.02), (0.98, 0.98), (0.02, 0.98)],
+                zone_intrusion=True,
+                hysteresis_frames=6,
+            ),
+        )
+        return {"ok": True, "camera": cam_id, "note": "правило создано, действует сразу"}
+
+    def set_working_hours(self, open: str, close: str) -> dict[str, Any]:  # noqa: A002
+        from soqchi.db.config_store import bump_config_version
+        from soqchi.db.models import Site
+
+        with self.sf() as s:
+            site = s.get(Site, 1)
+            if site is None:
+                return {"error": "site not found"}
+            wh = site.working_hours or {"days": ["mon", "tue", "wed", "thu", "fri", "sat"]}
+            wh["open"], wh["close"] = open, close
+            site.working_hours = wh
+            s.commit()
+        bump_config_version(self.sf)
+        return {"ok": True, "open": open, "close": close, "note": "вне этих часов = тревога"}

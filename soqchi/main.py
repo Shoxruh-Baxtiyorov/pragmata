@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     import uuid
     from pathlib import Path
 
+    from soqchi.watchlist import WatchlistMatcher
+
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
 
 
@@ -85,6 +87,7 @@ class _CameraGroup:
         *,
         loop_file: bool,
         realtime: bool,
+        watchlist: WatchlistMatcher | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -122,6 +125,7 @@ class _CameraGroup:
                 site=cfg.site,
                 embedder=embedder,
                 live_dir=data_root / "live",
+                watchlist=watchlist,
             )
             for cam in cfg.cameras
         ]
@@ -203,6 +207,13 @@ def main() -> None:
     stop_event = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stop_event.set())
     signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
+
+    # watchlist-матчер (именованные люди) — перечитывает эталоны из БД
+    matcher = None
+    if db_sink is not None:
+        from soqchi.watchlist import WatchlistMatcher
+
+        matcher = WatchlistMatcher(db_sink._session_factory)
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -325,6 +336,7 @@ def main() -> None:
                 group_stop,
                 loop_file=args.loop_file,
                 realtime=not args.offline,
+                watchlist=matcher,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

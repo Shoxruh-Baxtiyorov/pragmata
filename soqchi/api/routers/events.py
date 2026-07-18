@@ -5,13 +5,30 @@ from __future__ import annotations
 import uuid  # noqa: TC003 — uuid.UUID в сигнатурах роутов резолвит FastAPI в рантайме
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse  # noqa: TC002 — FastAPI резолвит return-type в рантайме
+from fastapi.responses import FileResponse, Response  # noqa: TC002 — FastAPI резолвит в рантайме
 
 from soqchi.api.schemas import EventsPage, FeedbackIn, OkOut
 from soqchi.api.security import require_auth
 from soqchi.services import events_service as svc
 
 router = APIRouter(prefix="/api/v1", tags=["events"])
+
+
+@router.get("/events/report.pdf")
+def report(
+    hours: float = Query(24, gt=0, le=24 * 30),
+    camera_id: str | None = None,
+    severity: str | None = None,
+    _: str = Depends(require_auth),
+) -> Response:
+    from soqchi.services.report_service import build_report_pdf
+
+    pdf = build_report_pdf(hours, camera_id, severity)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="soqchi-report.pdf"'},
+    )
 
 
 @router.get("/events", response_model=EventsPage)

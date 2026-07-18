@@ -10,6 +10,7 @@ EVENT_TITLES = {
     "person_exited": "🚪 Человек ушёл",
     "camera_offline": "📵 Камера недоступна",
     "camera_online": "✅ Камера снова в сети",
+    "watchlist_match": "🔴 Человек из списка наблюдения",
 }
 
 BTN_CLIP = "🎬 Клип"

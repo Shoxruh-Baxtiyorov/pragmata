@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -174,6 +175,7 @@ class DbSink:
                     best_frame_path=best_path,
                     face_crop_path=face_path,
                     clip_emb=st.clip_emb,
+                    person_id=uuid.UUID(st.person_id) if st.person_id else None,
                     meta={"best_bbox": list(st.best_bbox)},
                 )
             )

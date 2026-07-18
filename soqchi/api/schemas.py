@@ -172,3 +172,25 @@ class MediaEvidence(BaseModel):
 class AgentAnswer(BaseModel):
     text: str
     evidence: list[MediaEvidence]
+
+
+class PersonOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    note: str | None
+    watch: bool
+    photo_url: str | None
+    seen_count: int
+
+
+class PersonCreate(BaseModel):
+    name: str
+    note: str | None = None
+    watch: bool = False
+    track_id: uuid.UUID  # взять эталонный эмбеддинг+фото у этого трека
+
+
+class PersonPatch(BaseModel):
+    name: str | None = None
+    note: str | None = None
+    watch: bool | None = None
