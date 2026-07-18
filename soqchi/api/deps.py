@@ -21,10 +21,15 @@ def session_factory() -> Any:
     return make_session_factory()
 
 
-@lru_cache(maxsize=1)
 def site_config() -> SiteConfig | None:
-    path = get_settings().site_config
-    return load_site_config(path) if Path(path).exists() else None
+    """Конфиг из БД (источник истины; правки из UI видны сразу). Fallback — YAML."""
+    try:
+        from soqchi.db.config_store import load_config_from_db
+
+        return load_config_from_db(session_factory())
+    except Exception:  # noqa: BLE001 — БД пустая/недоступна → пробуем YAML
+        path = get_settings().site_config
+        return load_site_config(path) if Path(path).exists() else None
 
 
 def require_site() -> SiteConfig:

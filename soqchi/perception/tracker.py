@@ -30,6 +30,9 @@ class TrackState:
     entered_emitted: bool = False
     after_hours_emitted: bool = False
     clip_emb: list[float] | None = None  # заполняется при завершении трека
+    person_id: str | None = None  # watchlist-совпадение (имя ниже)
+    person_name: str | None = None
+    person_watch: bool = False
     zone_hits: dict[str, int] = field(default_factory=dict)  # hysteresis-счётчики
     zone_dwell: dict[str, float] = field(default_factory=dict)  # непрерывные секунды в зоне
     zone_miss: dict[str, int] = field(default_factory=dict)  # подряд кадров ВНЕ зоны

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
 
-from soqchi.api.deps import camera_names, data_root, safe_file, session_factory, site_config
+from soqchi.api.deps import camera_names, data_root, safe_file, session_factory
 from soqchi.api.schemas import CameraOut, EventOut, EventsPage, ZoneOut
 from soqchi.config import get_settings
 
@@ -22,28 +22,45 @@ if TYPE_CHECKING:
 ONLINE_STALE_S = 15.0  # снапшот старше — камера офлайн
 
 
-def list_cameras() -> list[CameraOut]:
-    cfg = site_config()
+def list_cameras(include_disabled: bool = False) -> list[CameraOut]:
+    """Камеры + зоны прямо из БД (с id зон и enabled — для UI-управления)."""
+    from sqlalchemy import select
+
+    from soqchi.db.models import Camera, Zone
+
     live_dir = data_root() / "live"
     now = time.time()
-    cams = (
-        [(c.id, c.name, c.zones) for c in cfg.cameras]
-        if cfg is not None
-        else [(cid, name, []) for cid, name in camera_names().items()]
-    )
     out: list[CameraOut] = []
-    for cam_id, name, zones in cams:
-        snap = live_dir / f"{cam_id}.jpg"
-        online = snap.exists() and (now - snap.stat().st_mtime) < ONLINE_STALE_S
-        out.append(
-            CameraOut(
-                id=cam_id,
-                name=name,
-                online=online,
-                snapshot_url=f"/api/v1/cameras/{cam_id}/snapshot" if snap.exists() else None,
-                zones=[ZoneOut(name=z.name, type=z.type, polygon=list(z.polygon)) for z in zones],
+    with session_factory()() as s:
+        q = select(Camera).order_by(Camera.id)
+        if not include_disabled:
+            q = q.where(Camera.enabled)
+        cams = s.execute(q).scalars().all()
+        zones_by_cam: dict[str, list[Any]] = {}
+        for z in s.execute(select(Zone).order_by(Zone.name)).scalars().all():
+            zones_by_cam.setdefault(z.camera_id, []).append(z)
+        for cam in cams:
+            snap = live_dir / f"{cam.id}.jpg"
+            online = snap.exists() and (now - snap.stat().st_mtime) < ONLINE_STALE_S
+            out.append(
+                CameraOut(
+                    id=cam.id,
+                    name=cam.name,
+                    online=online,
+                    enabled=cam.enabled,
+                    snapshot_url=f"/api/v1/cameras/{cam.id}/snapshot" if snap.exists() else None,
+                    zones=[
+                        ZoneOut(
+                            id=z.id,
+                            name=z.name,
+                            type=z.type,
+                            polygon=[(p[0], p[1]) for p in z.polygon],
+                            rules=z.rules or {},
+                        )
+                        for z in zones_by_cam.get(cam.id, [])
+                    ],
+                )
             )
-        )
     return out
 
 

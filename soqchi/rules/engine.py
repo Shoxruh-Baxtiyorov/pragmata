@@ -21,6 +21,7 @@ SEVERITY = {
     "after_hours_presence": "alert",
     "camera_offline": "alert",
     "camera_online": "info",
+    "watchlist_match": "alert",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

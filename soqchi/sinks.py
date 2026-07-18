@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -117,19 +118,14 @@ class DbSink:
         self._ensure_site(site_cfg)
 
     def _ensure_site(self, cfg: SiteConfig) -> None:
-        from soqchi.db.models import Camera, Site
+        # только сам ряд site (для FK событий). Камеры/зоны — через
+        # seed_config_from_yaml (однократно) + UI; апсерт из YAML тут затирал бы правки.
+        from soqchi.db.models import Site
 
         with self._session_factory() as s:
-            site = s.get(Site, 1)
-            if site is None:
+            if s.get(Site, 1) is None:
                 s.add(Site(id=1, name=cfg.site.name, timezone=cfg.site.timezone))
-            for cam in cfg.cameras:
-                existing = s.get(Camera, cam.id)
-                if existing is None:
-                    s.add(Camera(id=cam.id, site_id=1, name=cam.name, url=cam.url))
-                else:
-                    existing.name, existing.url = cam.name, cam.url
-            s.commit()
+                s.commit()
 
     def emit_event(self, ev: RuleEvent) -> None:
         from soqchi.db.models import Event
@@ -179,6 +175,7 @@ class DbSink:
                     best_frame_path=best_path,
                     face_crop_path=face_path,
                     clip_emb=st.clip_emb,
+                    person_id=uuid.UUID(st.person_id) if st.person_id else None,
                     meta={"best_bbox": list(st.best_bbox)},
                 )
             )

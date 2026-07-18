@@ -12,7 +12,7 @@ from soqchi.core.redact import redact_url
 from soqchi.ingest.motion import MotionGate
 from soqchi.ingest.source import make_source
 from soqchi.perception.tracker import TrackManager
-from soqchi.rules.engine import RuleEngine
+from soqchi.rules.engine import RuleEngine, RuleEvent
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from soqchi.perception.faces import FaceCropper
     from soqchi.perception.tracker import TrackState
     from soqchi.sinks import EventSink
+    from soqchi.watchlist import WatchlistMatcher
 
 log = logging.getLogger("soqchi.pipeline")
 
@@ -65,12 +66,14 @@ class CameraWorker(threading.Thread):
         site: SiteInfo | None = None,
         embedder: ClipEmbedder | None = None,
         live_dir: Path | None = None,
+        watchlist: WatchlistMatcher | None = None,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
         self.g = global_rules
         self.embedder = embedder
         self.live_dir = live_dir
+        self.watchlist = watchlist
         self._last_live = 0.0
         self.detector = detector
         self.sink = sink
@@ -165,7 +168,7 @@ class CameraWorker(threading.Thread):
             log.exception("[%s] live frame write failed", self.camera.id)
 
     def _embed_track(self, st: TrackState) -> None:
-        """CLIP-эмбеддинг лучшего кропа — один раз, при завершении трека."""
+        """CLIP-эмбеддинг лучшего кропа + watchlist-матч — при завершении трека."""
         if self.embedder is None or st.best_frame is None:
             return
         x0, y0, x1, y1 = (int(v) for v in st.best_bbox)
@@ -175,3 +178,20 @@ class CameraWorker(threading.Thread):
             st.clip_emb = self.embedder.embed_image(crop)
         except Exception:  # noqa: BLE001 — эмбеддинг не должен ронять камеру
             log.exception("[%s] clip embed failed", self.camera.id)
+            return
+        if self.watchlist is not None and st.clip_emb is not None:
+            hit = self.watchlist.match(st.clip_emb)
+            if hit is not None:
+                st.person_id, st.person_name, st.person_watch = hit
+                if st.person_watch:
+                    ev = RuleEvent(
+                        "watchlist_match",
+                        self.camera.id,
+                        st.first_ts,
+                        st.last_ts,
+                        track=st,
+                        meta={"person": st.person_name, "person_id": st.person_id},
+                    )
+                    ev.frame = st.best_frame
+                    ev.others = []
+                    self.sink.emit_event(ev)
