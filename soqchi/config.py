@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # Облако: пусто = использовать LLM_MODEL (gemini-flash мультимодальна).
     vlm_model: str = "qwen2.5vl:3b"
     vlm_max_per_hour: int = 60
+    # распознавание лица для watchlist (insightface buffalo_s, ~90МБ, CPU-офлайн).
+    # Точнее одежды/фигуры. Модель качается один раз; нет пакета/модели → тихо off.
+    face_recognition: bool = True
     # детекция оружия: VLM проверяет кадр каждого входящего человека (свой бюджет)
     weapon_detection: bool = False
     weapon_max_per_hour: int = 120

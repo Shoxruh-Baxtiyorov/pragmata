@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from soqchi.config import CameraConfig, GlobalRules, SiteInfo
     from soqchi.perception.detector import PersonDetector
     from soqchi.perception.embedder import ClipEmbedder
+    from soqchi.perception.face_recog import FaceRecognizer
     from soqchi.perception.faces import FaceCropper
     from soqchi.perception.tracker import TrackState
     from soqchi.sinks import EventSink
@@ -67,6 +68,7 @@ class CameraWorker(threading.Thread):
         embedder: ClipEmbedder | None = None,
         live_dir: Path | None = None,
         watchlist: WatchlistMatcher | None = None,
+        face_recog: FaceRecognizer | None = None,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
@@ -74,6 +76,7 @@ class CameraWorker(threading.Thread):
         self.embedder = embedder
         self.live_dir = live_dir
         self.watchlist = watchlist
+        self.face_recog = face_recog
         self._last_live = 0.0
         self.detector = detector
         self.sink = sink
@@ -168,7 +171,7 @@ class CameraWorker(threading.Thread):
             log.exception("[%s] live frame write failed", self.camera.id)
 
     def _embed_track(self, st: TrackState) -> None:
-        """CLIP-эмбеддинг лучшего кропа + watchlist-матч — при завершении трека."""
+        """CLIP-эмбеддинг тела + эмбеддинг лица + watchlist-матч — при завершении трека."""
         if self.embedder is None or st.best_frame is None:
             return
         x0, y0, x1, y1 = (int(v) for v in st.best_bbox)
@@ -179,8 +182,11 @@ class CameraWorker(threading.Thread):
         except Exception:  # noqa: BLE001 — эмбеддинг не должен ронять камеру
             log.exception("[%s] clip embed failed", self.camera.id)
             return
-        if self.watchlist is not None and st.clip_emb is not None:
-            hit = self.watchlist.match(st.clip_emb)
+        # лицо (insightface) — точный канал watchlist; degradation-first внутри
+        if self.face_recog is not None:
+            st.face_emb = self.face_recog.embed(st.best_frame, st.best_bbox)
+        if self.watchlist is not None and (st.clip_emb is not None or st.face_emb is not None):
+            hit = self.watchlist.match(st.clip_emb, st.face_emb)
             if hit is not None:
                 st.person_id, st.person_name, st.person_watch = hit
                 if st.person_watch:

@@ -176,6 +176,7 @@ class DbSink:
                     best_frame_path=best_path,
                     face_crop_path=face_path,
                     clip_emb=st.clip_emb,
+                    face_emb=st.face_emb,
                     person_id=uuid.UUID(st.person_id) if st.person_id else None,
                     meta={"best_bbox": list(st.best_bbox)},
                 )

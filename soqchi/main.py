@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     import numpy as np
 
+    from soqchi.perception.face_recog import FaceRecognizer
     from soqchi.watchlist import WatchlistMatcher
 
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
@@ -90,6 +91,7 @@ class _CameraGroup:
         loop_file: bool,
         realtime: bool,
         watchlist: WatchlistMatcher | None = None,
+        face_recog: FaceRecognizer | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -128,6 +130,7 @@ class _CameraGroup:
                 embedder=embedder,
                 live_dir=data_root / "live",
                 watchlist=watchlist,
+                face_recog=face_recog,
             )
             for cam in cfg.cameras
         ]
@@ -216,6 +219,16 @@ def main() -> None:
         from soqchi.watchlist import WatchlistMatcher
 
         matcher = WatchlistMatcher(db_sink._session_factory)
+
+    # распознавание лица (insightface) — точный канал watchlist; ленивая загрузка
+    face_recog = None
+    if db_sink is not None and settings.face_recognition:
+        from soqchi.perception.face_recog import FaceRecognizer
+
+        face_recog = FaceRecognizer(settings.models_dir, enabled=True)
+        log.info("face recognition: включено (модель загрузится при первом лице)")
+    else:
+        log.info("face recognition: off")
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -369,6 +382,7 @@ def main() -> None:
                 loop_file=args.loop_file,
                 realtime=not args.offline,
                 watchlist=matcher,
+                face_recog=face_recog,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

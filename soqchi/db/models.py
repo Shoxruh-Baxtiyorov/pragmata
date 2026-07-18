@@ -88,6 +88,8 @@ class Person(Base):
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)
     watch: Mapped[bool] = mapped_column(default=False)  # алертить при появлении
     clip_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
+    # эталон лица (insightface ArcFaceONNX, L2-норма) — точнее одежды/фигуры
+    face_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
     ref_photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -107,6 +109,8 @@ class Track(Base):
     face_crop_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     # CLIP ViT-B/32 эмбеддинг лучшего кропа — поиск человека по текстовому описанию
     clip_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
+    # эмбеддинг лица трека (insightface) — watchlist по лицу, если лицо видно
+    face_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
     # watchlist-совпадение (L2): к какому именованному человеку отнесён трек
     person_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("persons.id", ondelete="SET NULL"), nullable=True

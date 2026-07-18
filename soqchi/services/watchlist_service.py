@@ -42,13 +42,14 @@ def create_person(payload: PersonCreate) -> uuid.UUID:
 
     with session_factory()() as s:
         track = s.get(Track, payload.track_id)
-        if track is None or track.clip_emb is None:
+        if track is None or (track.clip_emb is None and track.face_emb is None):
             raise HTTPException(404, "у трека нет эмбеддинга — выберите другой")
         p = Person(
             name=payload.name,
             note=payload.note,
             watch=payload.watch,
-            clip_emb=list(track.clip_emb),
+            clip_emb=list(track.clip_emb) if track.clip_emb is not None else None,
+            face_emb=list(track.face_emb) if track.face_emb is not None else None,
             ref_photo_path=track.best_frame_path,
         )
         s.add(p)
