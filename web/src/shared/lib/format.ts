@@ -1,53 +1,34 @@
-import type { Severity } from '@/shared/api/types'
-
-export function timeHMS(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
-
-export function dateTime(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
-
-export const severityColor: Record<Severity, string> = {
-  alert: 'var(--color-danger)',
-  warning: 'var(--color-warning)',
-  info: 'var(--color-text-subtle)',
-}
-
-export const severityTone: Record<Severity, 'danger' | 'warning' | 'neutral'> = {
-  alert: 'danger',
-  warning: 'warning',
-  info: 'neutral',
-}
-
-const EVENT_LABEL: Record<string, { ru: string; uz: string }> = {
-  zone_intrusion: { ru: 'Вход в зону', uz: 'Zonaga kirish' },
-  loitering: { ru: 'Долгое присутствие', uz: 'Uzoq turish' },
-  after_hours_presence: { ru: 'Нерабочее время', uz: 'Ish vaqtidan tashqari' },
-  person_entered: { ru: 'Человек вошёл', uz: 'Odam kirdi' },
-  person_exited: { ru: 'Человек вышел', uz: 'Odam chiqdi' },
-  camera_offline: { ru: 'Камера офлайн', uz: 'Kamera oflayn' },
-  camera_online: { ru: 'Камера в сети', uz: 'Kamera onlayn' },
-}
-
-export function eventLabel(type: string, lang: string): string {
-  const l = EVENT_LABEL[type]
-  return l ? (lang === 'uz' ? l.uz : l.ru) : type
-}
-
-/** Интервалы поллинга — одно место (заменим при появлении WebSocket). */
+// Интервалы поллинга (мс) — единая точка замены на WebSocket в будущем
 export const POLL = {
   snapshots: 3000,
   events: 5000,
   stats: 30000,
 } as const
+
+export type EventType =
+  | 'zone_intrusion'
+  | 'loitering'
+  | 'after_hours_presence'
+  | 'person_entered'
+  | 'person_exited'
+  | 'camera_offline'
+  | 'camera_online'
+
+// Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
+const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
+  zone_intrusion: { ru: 'Вход в зону', uz: 'Zonaga kirish', en: 'Entered zone' },
+  loitering: { ru: 'Задержка в зоне', uz: 'Zonada qolish', en: 'Lingering' },
+  after_hours_presence: {
+    ru: 'Присутствие в нерабочее время',
+    uz: 'Ish vaqtidan tashqari',
+    en: 'After-hours presence',
+  },
+  person_entered: { ru: 'Человек появился', uz: 'Odam keldi', en: 'Person arrived' },
+  person_exited: { ru: 'Человек ушёл', uz: 'Odam ketdi', en: 'Person left' },
+  camera_offline: { ru: 'Камера offline', uz: 'Kamera offline', en: 'Camera offline' },
+  camera_online: { ru: 'Камера online', uz: 'Kamera online', en: 'Camera online' },
+}
+
+export function eventLabel(type: string, lang: 'ru' | 'uz' | 'en'): string {
+  return EVENT_LABELS[type as EventType]?.[lang] ?? type
+}

@@ -1,44 +1,40 @@
-# Soqchi AI — веб-дашборд
+# Soqchi AI — web dashboard
 
-Рабочее место охранника/директора: живая стена камер, лента событий с
-доказательствами, статистика, поиск по описанию. React 19 + Vite + TS +
-Tailwind v4 + react-query + i18next (uz/ru). Бэкенд — `soqchi.api` (см. корневой README).
+Скаффолд архитектуры фронта. Дизайн-система — по скиллам `iqbola-design`
+(style-system-builder, variable-tokenizer, component-builder): токены в
+`src/index.css`, светлая + тёмная тема (обязательна), 4pt-сетка, радиусы
+button/input 12 / card 16 / modal 24 / pill, тени S/M/L, иконки 16/20/24/32.
 
-## Запуск (3 команды)
+## Запуск
 
 ```bash
 npm install
-# API бэкенда должен работать: (из корня) make api  → http://127.0.0.1:8088
-npm run dev            # http://localhost:5175
+echo 'VITE_API_URL=http://127.0.0.1:8088' > .env.local   # опционально, это дефолт
+npm run dev        # :5175
 ```
 
-`.env`: `VITE_API_URL=http://127.0.0.1:8088`. Логин — пароль `ADMIN_PASSWORD` из `.env` бэкенда.
+Бэкенд: `make api` в корне репо (нужны `SECRET_KEY`/`ADMIN_PASSWORD` в `.env`).
+Пароль логина = `ADMIN_PASSWORD`.
 
-## Архитектура (feature-module, как в imaktab-front)
+## Структура
 
-`app/` (composition root: providers/router/layout) → `features/<domain>/`
-(auth · live · events · insights · search; каждая с `api/ pages/ components/ model/`
-+ barrel `index.ts`) → `shared/` (`api/` клиент+типы, `ui/` DS, `lib/`, `i18n/`, `hooks/`).
-Импорт чужой фичи — только через её barrel `@/features/<x>`.
+```
+src/
+  app/         # композиция: providers (QueryClient, 401-мост), router (auth-гейт), layout
+  features/    # feature-sliced: <domain>/{index.ts, api/, pages/, components/, model/}
+  shared/
+    api/       # client.ts (fetch + Bearer + 401), types.ts (ручные, сверять с openapi.json)
+    ui/        # примитивы DS: button/input/card/badge/modal + icons (только отсюда)
+    hooks/     # useAuthedMedia (медиа требует Bearer), useTheme (data-theme)
+    i18n/      # ru канонический, uz: typeof ru
+    lib/       # cn, POLL (точка замены на WS), eventLabel
+```
+
+Правила: кросс-фичевые импорты только через барели `@/features/<x>`;
+иконки только из `@/shared/ui/icons`; цвета/радиусы/тени только токенами
+(никаких hex в компонентах). Реализована фича `auth` (эталон), остальные —
+заглушки `PlaceholderPage`.
 
 ## Команды
 
-| | |
-|---|---|
-| `npm run dev` | dev-сервер (Vite, :5175) |
-| `npm run typecheck` | `tsc -b` — чисто перед хендоффом |
-| `npm run lint` | oxlint |
-| `npm run build` | прод-сборка |
-
-## Контракт API
-
-Источник истины — `openapi.json` бэкенда (`http://127.0.0.1:8088/docs`).
-Типы в `src/shared/api/types.ts` (TODO: генерировать через `openapi-typescript`).
-Медиа (фото/клипы) требуют Bearer → грузятся через `useAuthedMedia` (fetch→blob→objectURL).
-
-## Осознанные решения
-
-- Только снапшоты камер (поллинг 3с), НЕ видеопотоки — WebRTC/HLS отложены.
-- Поллинг вместо WebSocket (интервалы в `shared/lib/format.ts` POLL — заменим одним местом).
-- Тёмная security-ops тема, единственная в MVP.
-- Порт 5175 (5173/5174 заняты фронтом Iqbola на dev-машине).
+`npm run dev` · `build` · `typecheck` (tsc -b) · `lint` (oxlint)

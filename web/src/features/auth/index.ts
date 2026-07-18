@@ -1,2 +1,2 @@
 export { LoginPage } from './pages/LoginPage'
-export { useIsAuthed, authActions } from './model/authStore'
+export { authActions, useIsAuthed } from './model/authStore'

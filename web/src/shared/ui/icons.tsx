@@ -1,75 +1,54 @@
-// Единый иконочный слой (lucide — тонкий-штриховой стиль, как Hugeicons в imaktab-front).
+// Единый слой иконок (правило DS: иконки только отсюда, не из lucide напрямую).
+// Размеры — только 16/20/24/32.
+import type { LucideIcon } from 'lucide-react'
 import {
-  AlertTriangle,
-  BarChart3,
-  Check,
-  Clock,
-  Cpu,
-  Database,
+  Bot,
+  Camera,
+  CameraOff,
   DoorOpen,
-  Film,
   LayoutDashboard,
-  LogIn,
   LogOut,
-  MapPin,
-  Menu,
   Moon,
-  MonitorPlay,
   Search,
-  Send,
   Settings,
   ShieldAlert,
-  ShieldCheck,
-  Sparkles,
+  Sun,
   Timer,
-  User,
-  Users,
+  TrendingUp,
+  UserRound,
+  UserRoundX,
   Video,
-  VideoOff,
-  WifiOff,
-  X,
-  type LucideIcon,
 } from 'lucide-react'
-import type { EventType } from '@/shared/api/types'
+import type { EventType } from '@/shared/lib/format'
+
+export {
+  Bot,
+  Camera,
+  CameraOff,
+  DoorOpen,
+  LayoutDashboard,
+  LogOut,
+  Moon,
+  Search,
+  Settings,
+  ShieldAlert,
+  Sun,
+  Timer,
+  TrendingUp,
+  UserRound,
+  UserRoundX,
+  Video,
+}
+export type { LucideIcon }
+
+export const ICON_SIZE = { sm: 16, md: 20, lg: 24, xl: 32 } as const
 
 export const eventIcon: Record<EventType, LucideIcon> = {
   zone_intrusion: ShieldAlert,
   loitering: Timer,
   after_hours_presence: Moon,
-  person_entered: LogIn,
-  person_exited: LogOut,
-  camera_offline: VideoOff,
-  camera_online: Video,
+  person_entered: UserRound,
+  person_exited: UserRoundX,
+  camera_offline: CameraOff,
+  camera_online: Camera,
 }
-
-export {
-  AlertTriangle,
-  BarChart3,
-  Check,
-  Clock,
-  Cpu,
-  Database,
-  DoorOpen,
-  Film,
-  LayoutDashboard,
-  LogIn,
-  LogOut,
-  MapPin,
-  Menu,
-  MonitorPlay,
-  Moon,
-  Search,
-  Send,
-  Settings,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-  Timer,
-  User,
-  Users,
-  Video,
-  VideoOff,
-  WifiOff,
-  X,
-}
-export type { LucideIcon }

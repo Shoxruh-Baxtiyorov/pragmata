@@ -1,134 +1,109 @@
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent, EmptyState, PageHeader, Skeleton, StatTile, StatusBadge } from '@/shared/ui'
-import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { eventLabel, timeHMS } from '@/shared/lib/format'
-import { eventIcon, ShieldAlert, Users, Video, WifiOff } from '@/shared/ui/icons'
-import type { EventItem, HourBucket } from '@/shared/api/types'
-import { useOverview } from '../api/overviewApi'
-
-function ActivityChart({ data }: { data: HourBucket[] }) {
-  const max = Math.max(1, ...data.map((d) => d.events))
-  return (
-    <div className="flex h-32 items-end gap-1">
-      {data.map((b, i) => (
-        <div key={i} className="group relative flex flex-1 flex-col items-center gap-1">
-          <div className="flex w-full flex-col justify-end" style={{ height: 96 }}>
-            {b.alerts > 0 && (
-              <div
-                className="w-full rounded-t bg-[var(--color-danger)]"
-                style={{ height: `${(b.alerts / max) * 96}px` }}
-              />
-            )}
-            <div
-              className="w-full rounded-t bg-[var(--color-brand-300)]"
-              style={{ height: `${((b.events - b.alerts) / max) * 96}px` }}
-            />
-          </div>
-          {i % 4 === 0 && (
-            <span className="text-[9px] text-[var(--color-text-subtle)]">{b.hour.slice(0, 2)}</span>
-          )}
-          <div className="pointer-events-none absolute -top-8 hidden whitespace-nowrap rounded bg-[var(--color-ink)] px-1.5 py-0.5 text-[10px] text-white group-hover:block">
-            {b.hour}: {b.events} · {b.alerts}⚠
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function AlertRow({ event, onClick }: { event: EventItem; onClick: () => void }) {
-  const { i18n } = useTranslation()
-  const thumb = useAuthedMedia(event.photo_url)
-  const Icon = eventIcon[event.type]
-  return (
-    <button
-      onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-[var(--color-muted-bg)]"
-    >
-      <div className="h-11 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-black">
-        {thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-medium">
-          <Icon size={14} className="text-[var(--color-danger)]" />
-          {eventLabel(event.type, i18n.language)}
-        </p>
-        <p className="truncate text-xs text-[var(--color-text-muted)]">{event.camera}</p>
-      </div>
-      <span className="font-mono text-xs text-[var(--color-text-subtle)]">{timeHMS(event.t_start)}</span>
-    </button>
-  )
-}
+import { api } from '@/shared/api/client'
+import { POLL, eventLabel, type EventType } from '@/shared/lib/format'
+import type { OverviewOut } from '@/shared/api/types'
+import { PageHeader, StatTile, EmptyState, Spinner, Card, Badge, Button } from '@/shared/ui'
+import { Camera, CameraOff, ShieldAlert, eventIcon } from '@/shared/ui/icons'
+import { HourlyBars } from '@/features/overview/ui/HourlyBars'
 
 export function OverviewPage() {
-  const { t } = useTranslation()
-  const nav = useNavigate()
-  const { data, isLoading, isError } = useOverview()
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['overview'],
+    queryFn: () => api.get<OverviewOut>('/api/v1/overview'),
+    refetchInterval: POLL.stats,
+  })
 
   if (isLoading)
     return (
-      <>
-        <PageHeader title={t('overview.title')} subtitle={t('overview.subtitle')} />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20" />
-          ))}
-        </div>
-      </>
+      <div className="flex justify-center py-16">
+        <Spinner />
+      </div>
     )
-  if (isError || !data) return <EmptyState title={t('common.noConnection')} />
+  if (isError || !data) return <EmptyState text={t('overview.error')} />
+
+  // язык гарантированно из известного набора — иначе fallback uz
+  const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'
+  const allOk = data.cameras_online === data.cameras_total
+  const noActivity = data.hourly.every((b) => b.events === 0 && b.alerts === 0)
 
   return (
-    <>
-      <PageHeader title={t('overview.title')} subtitle={t('overview.subtitle')} />
+    <div className="space-y-4">
+      <PageHeader title={t('nav.overview')} actions={<Badge tone="neutral">{t('overview.today')}</Badge>} />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile icon={Users} tone="brand" label={t('overview.visitors')} value={data.visitors_today} />
-        <StatTile icon={ShieldAlert} tone="error" label={t('overview.alerts')} value={data.alerts_today} />
-        <StatTile
-          icon={data.cameras_online === data.cameras_total ? Video : WifiOff}
-          tone={data.cameras_online === data.cameras_total ? 'success' : 'warning'}
-          label={t('overview.cameras')}
-          value={`${data.cameras_online}/${data.cameras_total}`}
-        />
-        <StatTile icon={ShieldAlert} tone="neutral" label={t('overview.fp')} value={data.false_positives_today} />
+      <Card>
+        <div className="flex items-center gap-3">
+          {allOk ? (
+            <Camera size={20} className="text-success" />
+          ) : (
+            <CameraOff size={20} className="text-error" />
+          )}
+          <Badge tone={allOk ? 'success' : 'error'}>
+            {allOk
+              ? t('overview.status.allOk')
+              : t('overview.status.offline', { count: data.cameras_total - data.cameras_online })}
+          </Badge>
+        </div>
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label={t('overview.tile.people')} value={data.visitors_today} />
+        <StatTile label={t('overview.tile.alerts')} value={data.alerts_today} />
+        <StatTile label={t('overview.tile.falseAlarms')} value={data.false_positives_today} />
+        <StatTile label={t('overview.tile.cameras')} value={`${data.cameras_online}/${data.cameras_total}`} />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardContent>
-            <h2 className="mb-4 text-sm font-bold">{t('overview.activity')}</h2>
-            <ActivityChart data={data.hourly} />
-            <div className="mt-3 flex gap-4 text-xs text-[var(--color-text-muted)]">
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-brand-300)]" /> {t('nav.events')}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-danger-500)]" /> {t('overview.alerts')}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      <Card>
+        <h2 className="text-h4">{t('overview.chart.title')}</h2>
+        <div className="mt-4">
+          <HourlyBars
+            data={data.hourly}
+            ariaLabel={t('overview.chart.title')}
+            titleFormat={(b) => t('overview.chart.tooltip', { hour: b.hour, events: b.events, alerts: b.alerts })}
+          />
+        </div>
+        {noActivity && (
+          <p className="mt-2 text-caption text-text-secondary">{t('overview.chart.empty')}</p>
+        )}
+      </Card>
 
-        <Card>
-          <CardContent>
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-bold">{t('overview.recentAlerts')}</h2>
-              <StatusBadge tone="error">{data.recent_alerts.length}</StatusBadge>
-            </div>
-            {data.recent_alerts.length === 0 ? (
-              <p className="py-6 text-center text-sm text-[var(--color-text-muted)]">{t('overview.noAlerts')}</p>
-            ) : (
-              <div className="-mx-2 flex flex-col">
-                {data.recent_alerts.map((a) => (
-                  <AlertRow key={a.id} event={a} onClick={() => nav(`/events?camera_id=${a.camera_id}`)} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </>
+      <Card>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-h4">{t('overview.recent.title')}</h2>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/events')}>
+            {t('overview.recent.viewAll')}
+          </Button>
+        </div>
+        {data.recent_alerts.length === 0 ? (
+          <EmptyState text={t('overview.recent.empty')} />
+        ) : (
+          <ul className="divide-y divide-border-default">
+            {data.recent_alerts.map((ev) => {
+              const Icon = eventIcon[ev.type as EventType] ?? ShieldAlert
+              const time = new Date(ev.t_start).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+              return (
+                <li key={ev.id} className="flex items-center gap-3 py-3">
+                  <Icon size={20} className="shrink-0 text-text-secondary" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-body">{eventLabel(ev.type, lang)}</div>
+                    <div className="text-caption text-text-secondary">
+                      {ev.camera}
+                      {ev.zone ? ` · ${ev.zone}` : ''}
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-mono text-caption text-text-secondary">{time}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
+    </div>
   )
 }

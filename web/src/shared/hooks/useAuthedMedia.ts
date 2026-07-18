@@ -1,32 +1,26 @@
 import { useEffect, useState } from 'react'
 import { fetchAuthedBlob } from '@/shared/api/client'
 
-/** Грузит защищённое Bearer'ом медиа как objectURL. null = ещё грузится/нет. */
-export function useAuthedMedia(path: string | null | undefined): string | null {
+// objectURL с корректным жизненным циклом (revoke на cleanup, StrictMode-safe)
+export function useAuthedMedia(path: string | null): string | null {
   const [url, setUrl] = useState<string | null>(null)
-
   useEffect(() => {
-    if (!path) {
-      setUrl(null)
-      return
-    }
-    let revoked: string | null = null
+    if (!path) return
     let active = true
+    let objectUrl: string | null = null
     fetchAuthedBlob(path)
-      .then((objectUrl) => {
-        if (active) {
-          revoked = objectUrl
-          setUrl(objectUrl)
-        } else {
-          URL.revokeObjectURL(objectUrl)
-        }
+      .then((u) => {
+        objectUrl = u
+        if (active) setUrl(u)
+        else URL.revokeObjectURL(u)
       })
-      .catch(() => setUrl(null))
+      .catch(() => {
+        if (active) setUrl(null)
+      })
     return () => {
       active = false
-      if (revoked) URL.revokeObjectURL(revoked)
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [path])
-
   return url
 }

@@ -1,6 +1,4 @@
-// Тонкий fetch-клиент с Bearer-токеном и 401-интерсептором.
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8088'
+const BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8088'
 const TOKEN_KEY = 'soqchi_token'
 
 export const auth = {
@@ -9,58 +7,57 @@ export const auth = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 }
 
-/** Вызывается интерсептором при 401 — навигацию вешает провайдер. */
-let onUnauthorized: (() => void) | null = null
-export function setUnauthorizedHandler(fn: () => void) {
+// Мост к роутеру: 401 → logout + redirect (подключается в AppProviders)
+let onUnauthorized: (() => void) | undefined
+export function setOnUnauthorized(fn: () => void): void {
   onUnauthorized = fn
 }
 
 export class ApiError extends Error {
-  status: number
-  constructor(status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message)
-    this.status = status
   }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   const token = auth.get()
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  })
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (res.status === 401) {
     auth.clear()
     onUnauthorized?.()
-    throw new ApiError(401, 'Не авторизован')
+    throw new ApiError(401, 'unauthorized')
   }
   if (!res.ok) {
-    const detail = await res
-      .json()
-      .then((d) => d?.detail as string)
-      .catch(() => null)
-    throw new ApiError(res.status, detail ?? `Ошибка ${res.status}`)
+    let detail = res.statusText
+    try {
+      const body = (await res.json()) as { detail?: string }
+      if (body.detail) detail = body.detail
+    } catch {
+      /* не-JSON тело — оставляем statusText */
+    }
+    throw new ApiError(res.status, detail)
   }
-  return res.json() as Promise<T>
+  return (await res.json()) as T
 }
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  url: (path: string) => `${API_URL}${path}`,
+  url: (path: string) => `${BASE}${path}`,
 }
 
-/** Медиа требуют Bearer → грузим blob и отдаём objectURL (см. useAuthedMedia). */
+// Медиа-эндпоинты требуют Bearer — обычный <img src> не сработает
 export async function fetchAuthedBlob(path: string): Promise<string> {
   const token = auth.get()
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${BASE}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
-  if (!res.ok) throw new ApiError(res.status, `media ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status, res.statusText)
   return URL.createObjectURL(await res.blob())
 }

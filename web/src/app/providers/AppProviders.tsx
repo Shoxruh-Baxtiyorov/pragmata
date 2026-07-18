@@ -1,14 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { setUnauthorizedHandler } from '@/shared/api/client'
+import { setOnUnauthorized } from '@/shared/api/client'
 import { authActions } from '@/features/auth'
-import { ToastProvider } from '@/shared/ui/toast'
 
+// 401 из api-клиента → logout + redirect на /login
 function UnauthorizedBridge() {
   const nav = useNavigate()
   useEffect(() => {
-    setUnauthorizedHandler(() => {
+    setOnUnauthorized(() => {
       authActions.logout()
       nav('/login')
     })
@@ -17,16 +17,13 @@ function UnauthorizedBridge() {
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [qc] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: { queries: { retry: 1, staleTime: 2000 } },
-      }),
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 2000 } } }),
   )
   return (
-    <QueryClientProvider client={qc}>
+    <QueryClientProvider client={client}>
       <UnauthorizedBridge />
-      <ToastProvider>{children}</ToastProvider>
+      {children}
     </QueryClientProvider>
   )
 }

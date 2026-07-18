@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { AppLayout } from '@/app/layout/AppLayout'
 import { LoginPage, useIsAuthed } from '@/features/auth'
 import { OverviewPage } from '@/features/overview'
 import { AssistantPage } from '@/features/assistant'
@@ -7,11 +8,10 @@ import { EventsPage } from '@/features/events'
 import { StatsPage } from '@/features/insights'
 import { SearchPage } from '@/features/search'
 import { SystemPage } from '@/features/system'
-import { AppLayout } from '@/app/layout/AppLayout'
 
+// Гейт авторизации — одна развилка на верхнем уровне, не per-route guards
 export function AppRouter() {
   const authed = useIsAuthed()
-
   if (!authed) {
     return (
       <Routes>
@@ -20,7 +20,6 @@ export function AppRouter() {
       </Routes>
     )
   }
-
   return (
     <Routes>
       <Route element={<AppLayout />}>

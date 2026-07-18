@@ -1,150 +1,127 @@
 @import 'tailwindcss';
 @source './**/*.{ts,tsx}';
 
-@import '@fontsource/plus-jakarta-sans/400.css';
-@import '@fontsource/plus-jakarta-sans/500.css';
-@import '@fontsource/plus-jakarta-sans/600.css';
-@import '@fontsource/plus-jakarta-sans/700.css';
-@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import '@fontsource/jetbrains-mono/500.css';
 
-/* Дизайн-система перенесена 1:1 из imaktab-front (src/styles/tailwind.css @theme).
-   Свой домен — только видео-плашки тёмные; всё остальное — их токены и компоненты. */
-@theme static {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-heading: var(--font-sans);
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-  /* Brand */
-  --color-brand-50: #eef3ff;
-  --color-brand-100: #e4edff;
-  --color-brand-200: #dbe6ff;
-  --color-brand-300: #9ab8ff;
-  --color-brand-400: #5b8bff;
-  --color-brand-500: #2f6bff;
-  --color-brand-600: #1f5ae8;
-  --color-brand-700: #164bd2;
-  --color-brand-800: #123ca8;
-  --color-brand-900: #1f2940;
-  --color-brand-text: var(--color-brand-500);
-  --color-brand-text-hover: var(--color-brand-600);
-  --color-brand-ring: rgba(47, 107, 255, 0.12);
-
-  /* Semantic */
-  --color-success-50: rgba(23, 198, 83, 0.12);
-  --color-success-500: #17c653;
-  --color-success-600: #129a45;
-  --color-success-bg: var(--color-success-50);
-  --color-success-text: var(--color-success-600);
-  --color-warning-50: rgba(246, 177, 0, 0.14);
-  --color-warning-500: #f6b100;
-  --color-warning-700: #7c5b00;
-  --color-warning-bg: var(--color-warning-50);
-  --color-warning-text: var(--color-warning-700);
-  --color-info-50: rgba(0, 163, 180, 0.12);
-  --color-info-500: #00a3b4;
-  --color-info-600: #087f8c;
-  --color-info-bg: var(--color-info-50);
-  --color-info-text: var(--color-info-600);
-  --color-violet-50: rgba(114, 57, 234, 0.1);
-  --color-violet-500: #7239ea;
-  --color-violet-text: var(--color-violet-500);
-  --color-danger-50: rgba(248, 40, 90, 0.1);
-  --color-danger-500: #f8285a;
-  --color-danger-600: #e11d48;
-  --color-danger-bg: var(--color-danger-50);
-  --color-danger-text: var(--color-danger-600);
-
-  /* Status tones */
-  --color-status-success-bg: var(--color-success-bg);
-  --color-status-success-text: var(--color-success-text);
-  --color-status-success-border: color-mix(in srgb, var(--color-success-500) 36%, transparent);
-  --color-status-warning-bg: var(--color-warning-bg);
-  --color-status-warning-text: var(--color-warning-text);
-  --color-status-warning-border: color-mix(in srgb, var(--color-warning-500) 40%, transparent);
-  --color-status-info-bg: var(--color-info-bg);
-  --color-status-info-text: var(--color-info-text);
-  --color-status-info-border: color-mix(in srgb, var(--color-info-500) 36%, transparent);
-  --color-status-error-bg: var(--color-danger-bg);
-  --color-status-error-text: var(--color-danger-text);
-  --color-status-error-border: color-mix(in srgb, var(--color-danger-500) 38%, transparent);
-  --color-status-neutral-bg: var(--color-neutral-100);
-  --color-status-neutral-text: var(--color-neutral-700);
-  --color-status-neutral-border: var(--color-border-soft);
-
-  /* Neutral & surfaces */
-  --color-neutral-50: #f7f8fa;
-  --color-neutral-100: #eef0f3;
-  --color-neutral-200: #e2e6ec;
-  --color-neutral-400: #99a1b7;
-  --color-neutral-500: #78808f;
-  --color-neutral-600: #5b6472;
-  --color-neutral-700: #4a5160;
-  --color-neutral-900: #1f2530;
-  --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-700);
-  --color-text-muted: var(--color-neutral-500);
-  --color-text-subtle: var(--color-neutral-400);
-  --color-text-on-brand: #ffffff;
-  --color-border-soft: var(--color-neutral-100);
-  --color-border-strong: var(--color-neutral-200);
-  --color-bg-app: var(--color-neutral-50);
-  --color-bg-surface: #ffffff;
-  --color-bg-muted: #f4f5f7;
-  --color-row-alt: #fafbfc;
-
-  /* Category tints for charts/avatars */
-  --color-subject-blue: var(--color-brand-500);
-  --color-subject-green: var(--color-success-500);
-  --color-subject-purple: var(--color-violet-500);
-  --color-subject-amber: var(--color-warning-500);
-  --color-subject-cyan: var(--color-info-500);
-  --color-subject-pink: var(--color-danger-500);
-
-  /* Radius */
-  --radius-sm: 7px;
-  --radius-md: 11px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 40px;
-  --radius: var(--radius-md);
-
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(20, 30, 50, 0.04);
-  --shadow-sm: 0 4px 12px rgba(20, 30, 50, 0.08);
-  --shadow-md: 0 12px 32px rgba(20, 30, 50, 0.14);
-  --shadow-lg: 0 30px 70px rgba(15, 23, 42, 0.22);
-  --shadow-popover: var(--shadow-md);
-  --shadow-modal: var(--shadow-lg);
-  --shadow-brand: none;
-  --shadow-danger: none;
-
-  /* Spacing / motion */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --dur-fast: 120ms;
-  --dur-normal: 180ms;
-  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+/*
+ * Дизайн-токены по iqbola-design (style-system-builder + variable-tokenizer):
+ * - наборы цветов: Main (Brand/Dark/White), Greys 1-4, System, Secondary (brand с прозрачностью)
+ * - тёмная тема обязательна: семантические переменные ниже, переключение — data-theme на <html>
+ * - spacing: 4pt-сетка (дефолтная шкала Tailwind = 4px-инкременты, ничего не переопределяем)
+ * - радиусы: button/input 12, card 16, modal 24, pill 999
+ * - тени: S/M/L
+ */
+:root {
+  /* Main */
+  --brand: #2563eb; /* Soqchi brand blue — единственная точка замены брендового цвета */
+  --brand-pressed: #1d4ed8;
+  --on-brand: #ffffff;
+  /* Greys 1-4 (светлая тема) */
+  --grey-1: #f5f5f5;
+  --grey-2: #e0e0e0;
+  --grey-3: #9e9e9e;
+  --grey-4: #616161;
+  /* Семантические */
+  --bg-app: #f7f8fa;
+  --bg-surface: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text-primary: #1a1a1a;
+  --text-secondary: #616161;
+  --text-placeholder: #9e9e9e;
+  --border-default: #e0e0e0;
+  --border-focused: var(--brand);
+  /* System */
+  --error: #e53935;
+  --success: #43a047;
+  --warning: #fb8c00;
+  /* Secondary: brand с прозрачностью (на цвете, не на слое) */
+  --brand-10: color-mix(in srgb, var(--brand) 10%, transparent);
+  --brand-20: color-mix(in srgb, var(--brand) 20%, transparent);
 }
 
-html,
-body,
-#root {
-  height: 100%;
+[data-theme='dark'] {
+  --brand: #3b82f6;
+  --brand-pressed: #2563eb;
+  --bg-app: #121212;
+  --bg-surface: #1e1e1e;
+  --bg-secondary: #1e1e1e;
+  --text-primary: #ffffff;
+  --text-secondary: #ababab;
+  --text-placeholder: #757575;
+  --border-default: #2c2c2c;
+  --error: #ef5350;
+  --success: #66bb6a;
+  --warning: #ffa726;
 }
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-brand: var(--brand);
+  --color-brand-pressed: var(--brand-pressed);
+  --color-on-brand: var(--on-brand);
+  --color-brand-10: var(--brand-10);
+  --color-brand-20: var(--brand-20);
+  --color-grey-1: var(--grey-1);
+  --color-grey-2: var(--grey-2);
+  --color-grey-3: var(--grey-3);
+  --color-grey-4: var(--grey-4);
+  --color-bg-app: var(--bg-app);
+  --color-surface: var(--bg-surface);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-placeholder: var(--text-placeholder);
+  --color-border-default: var(--border-default);
+  --color-border-focused: var(--border-focused);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  /* Радиусы (component/radius/*) */
+  --radius-button: 12px;
+  --radius-input: 12px;
+  --radius-card: 16px;
+  --radius-modal: 24px;
+  --radius-pill: 999px;
+
+  /* Тени S/M/L */
+  --shadow-s: 0 2px 6px rgb(0 0 0 / 0.07);
+  --shadow-m: 0 4px 12px rgb(0 0 0 / 0.1);
+  --shadow-l: 0 8px 24px rgb(0 0 0 / 0.14);
+
+  /* Типографическая шкала: H1-H4 / Body / UI */
+  --text-h1: 28px;
+  --text-h1--line-height: 34px;
+  --text-h1--font-weight: 700;
+  --text-h2: 22px;
+  --text-h2--line-height: 28px;
+  --text-h2--font-weight: 700;
+  --text-h3: 18px;
+  --text-h3--line-height: 24px;
+  --text-h3--font-weight: 600;
+  --text-h4: 16px;
+  --text-h4--line-height: 22px;
+  --text-h4--font-weight: 600;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-label: 13px;
+  --text-label--line-height: 18px;
+  --text-label--font-weight: 500;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+}
+
 body {
-  margin: 0;
-  background: var(--color-bg-app);
-  color: var(--color-text-primary);
   font-family: var(--font-sans);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 22px;
   -webkit-font-smoothing: antialiased;
-}
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) transparent;
 }

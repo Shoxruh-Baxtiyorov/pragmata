@@ -1,17 +1,19 @@
 import { useSyncExternalStore } from 'react'
 import { auth } from '@/shared/api/client'
 
-let listeners: (() => void)[] = []
-function emit() {
-  listeners.forEach((l) => l())
+// Своё микро-хранилище на useSyncExternalStore — без zustand/context (YAGNI)
+const listeners = new Set<() => void>()
+
+function emit(): void {
+  listeners.forEach((cb) => cb())
 }
 
 export const authActions = {
-  login: (token: string) => {
+  login(token: string): void {
     auth.set(token)
     emit()
   },
-  logout: () => {
+  logout(): void {
     auth.clear()
     emit()
   },
@@ -20,10 +22,8 @@ export const authActions = {
 export function useIsAuthed(): boolean {
   return useSyncExternalStore(
     (cb) => {
-      listeners.push(cb)
-      return () => {
-        listeners = listeners.filter((l) => l !== cb)
-      }
+      listeners.add(cb)
+      return () => listeners.delete(cb)
     },
     () => auth.get() !== null,
   )
