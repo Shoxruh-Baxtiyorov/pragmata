@@ -22,6 +22,10 @@ if TYPE_CHECKING:
     import uuid
     from pathlib import Path
 
+    import numpy as np
+
+    from soqchi.perception.face_recog import FaceRecognizer
+    from soqchi.vehicles import VehicleWatcher
     from soqchi.watchlist import WatchlistMatcher
 
 OFFLINE_AFTER_S = 30.0  # нет кадров дольше — camera_offline
@@ -88,6 +92,8 @@ class _CameraGroup:
         loop_file: bool,
         realtime: bool,
         watchlist: WatchlistMatcher | None = None,
+        face_recog: FaceRecognizer | None = None,
+        vehicle_watcher: VehicleWatcher | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -126,6 +132,8 @@ class _CameraGroup:
                 embedder=embedder,
                 live_dir=data_root / "live",
                 watchlist=watchlist,
+                face_recog=face_recog,
+                vehicle_watcher=vehicle_watcher,
             )
             for cam in cfg.cameras
         ]
@@ -214,6 +222,28 @@ def main() -> None:
         from soqchi.watchlist import WatchlistMatcher
 
         matcher = WatchlistMatcher(db_sink._session_factory)
+
+    # распознавание лица (insightface) — точный канал watchlist; ленивая загрузка
+    face_recog = None
+    if db_sink is not None and settings.face_recognition:
+        from soqchi.perception.face_recog import FaceRecognizer
+
+        face_recog = FaceRecognizer(settings.models_dir, enabled=True)
+        log.info("face recognition: включено (модель загрузится при первом лице)")
+    else:
+        log.info("face recognition: off")
+
+    # учёт транспорта + ANPR (best-effort) — отдельный YOLO-проход, дросселируется
+    vehicle_watcher = None
+    if settings.vehicle_detection:
+        from soqchi.perception.plates import PlateReader
+        from soqchi.vehicles import VehicleWatcher
+
+        plate_reader = PlateReader(enabled=True)
+        vehicle_watcher = VehicleWatcher(detector, settings.vehicle_conf, 640, plate_reader)
+        log.info("vehicle detection: on (номер — best-effort, если OCR доступен)")
+    else:
+        log.info("vehicle detection: off")
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -311,6 +341,36 @@ def main() -> None:
     else:
         log.info("vlm: off")
 
+    # --- детекция оружия: та же VLM проверяет кадр каждого входящего человека ----
+    if settings.weapon_detection and settings.llm_api_key and settings.vlm_model:
+        from soqchi.alerts import WeaponSink
+        from soqchi.vlm import HourBudget, VlmDescriber, WeaponWorker
+
+        def emit_weapon_alert(camera_id: str, frames: list[np.ndarray], kind: str) -> None:
+            now = time.time()
+            sink.emit_event(
+                RuleEvent(
+                    "weapon_detected",
+                    camera_id,
+                    now,
+                    now,
+                    meta={"weapon_type": kind} if kind else {},
+                    frame=frames[0] if frames else None,
+                )
+            )
+
+        weapon_worker = WeaponWorker(
+            VlmDescriber(settings.llm_base_url, settings.llm_api_key, settings.vlm_model),
+            HourBudget(settings.weapon_max_per_hour),
+            emit_alert=emit_weapon_alert,
+            stop_event=stop_event,
+        )
+        weapon_worker.start()
+        sink.sinks.append(WeaponSink(weapon_worker))
+        log.info("weapon detection: on (лимит %d/час)", settings.weapon_max_per_hour)
+    else:
+        log.info("weapon detection: off")
+
     # --- камеры: перезапускаемая группа с hot-reload по config_version --------
     reloadable = db_sink is not None and not args.loop_file
     started = time.time()
@@ -337,6 +397,8 @@ def main() -> None:
                 loop_file=args.loop_file,
                 realtime=not args.offline,
                 watchlist=matcher,
+                face_recog=face_recog,
+                vehicle_watcher=vehicle_watcher,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

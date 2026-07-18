@@ -30,6 +30,7 @@ class TrackState:
     entered_emitted: bool = False
     after_hours_emitted: bool = False
     clip_emb: list[float] | None = None  # заполняется при завершении трека
+    face_emb: list[float] | None = None  # эмбеддинг лица (insightface), если видно
     person_id: str | None = None  # watchlist-совпадение (имя ниже)
     person_name: str | None = None
     person_watch: bool = False

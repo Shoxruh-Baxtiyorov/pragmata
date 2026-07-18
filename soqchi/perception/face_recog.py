@@ -1,0 +1,92 @@
+"""L1: распознавание лица — insightface (buffalo_s, ArcFaceONNX, 512-d L2).
+
+Отдельно от FaceCropper (YuNet, L0): тот ДЕТЕКТИРУЕТ лицо для доказательства,
+этот считает ЭМБЕДДИНГ для watchlist по лицу (точнее одежды/фигуры). Модель
+качается один раз (~90МБ) в models/insightface и дальше работает офлайн на CPU.
+
+Degradation-first: нет insightface / модель не скачалась / не загрузилась →
+available=False, пайплайн молча падает обратно на CLIP-эмбеддинг тела.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+log = logging.getLogger("soqchi.face")
+
+# insightface-кроп берём с полями вокруг бокса человека: детектору лиц нужен
+# контекст, тугой кроп по плечи режет recall.
+_BBOX_MARGIN = 0.15
+
+
+class FaceRecognizer:
+    """Ленивая обёртка над insightface FaceAnalysis. Потокобезопасность не нужна:
+    один экземпляр дергается из потоков камер по очереди через GIL на короткий
+    ONNX-инференс; при желании вынести в свой воркер — интерфейс это позволит.
+    """
+
+    def __init__(self, models_dir: Path, *, enabled: bool = True):
+        self._models_dir = models_dir
+        self._enabled = enabled
+        self._app: object | None = None
+        self._tried = False
+
+    def _ensure(self) -> None:
+        if self._tried or not self._enabled:
+            return
+        self._tried = True
+        try:
+            from insightface.app import FaceAnalysis
+
+            root = str((self._models_dir / "insightface").resolve())
+            app = FaceAnalysis(
+                name="buffalo_s", root=root, providers=["CPUExecutionProvider"]
+            )
+            app.prepare(ctx_id=-1, det_size=(320, 320))
+            self._app = app
+            log.info("face recognizer: on (insightface buffalo_s, CPU)")
+        except Exception:  # noqa: BLE001 — нет пакета/модели/сети → graceful off
+            log.warning("face recognizer: off (insightface недоступен или модель не загрузилась)")
+            self._app = None
+
+    @property
+    def available(self) -> bool:
+        self._ensure()
+        return self._app is not None
+
+    def embed(
+        self, frame: np.ndarray, bbox: tuple[float, float, float, float]
+    ) -> list[float] | None:
+        """Эмбеддинг самого крупного лица в области человека → 512-d L2 или None."""
+        self._ensure()
+        app = self._app
+        if app is None:
+            return None
+        h, w = frame.shape[:2]
+        x0, y0, x1, y1 = bbox
+        bw, bh = x1 - x0, y1 - y0
+        cx0 = max(int(x0 - bw * _BBOX_MARGIN), 0)
+        cy0 = max(int(y0 - bh * _BBOX_MARGIN), 0)
+        cx1 = min(int(x1 + bw * _BBOX_MARGIN), w)
+        cy1 = min(int(y1 + bh * _BBOX_MARGIN), h)
+        crop = frame[cy0:cy1, cx0:cx1]
+        if crop.size == 0 or crop.shape[0] < 48 or crop.shape[1] < 48:
+            return None
+        try:
+            faces = app.get(crop)  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001 — инференс не должен ронять камеру
+            log.exception("face embed failed")
+            return None
+        if not faces:
+            return None
+        best = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+        emb = getattr(best, "normed_embedding", None)
+        if emb is None:
+            return None
+        return [float(x) for x in np.asarray(emb, dtype=np.float32).ravel()]

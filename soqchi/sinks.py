@@ -24,7 +24,8 @@ def render_event_image(ev: RuleEvent) -> np.ndarray | None:
     """Единый рендер доказательства для БД и Telegram: кадр момента + все люди."""
     st = ev.track
     if st is None:
-        return None
+        # событие без трека (напр. weapon_detected из отдельного воркера) — сам кадр
+        return ev.frame
     label = f"{ev.type}" + (f" @{ev.zone}" if ev.zone else "")
     if ev.frame is not None:
         return annotate_many(ev.frame, (st.bbox, label), ev.others)
@@ -175,6 +176,7 @@ class DbSink:
                     best_frame_path=best_path,
                     face_crop_path=face_path,
                     clip_emb=st.clip_emb,
+                    face_emb=st.face_emb,
                     person_id=uuid.UUID(st.person_id) if st.person_id else None,
                     meta={"best_bbox": list(st.best_bbox)},
                 )

@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import logging
 import queue
@@ -123,6 +124,29 @@ class VlmDescriber:
             "false_positive": bool(verdict.get("false_positive", False)),
         }
 
+    def check_weapon(self, frames: list[np.ndarray]) -> tuple[bool, str]:
+        """Есть ли на кадрах оружие? → (found, тип). Vision-модель, офлайн."""
+        content: list[dict[str, Any]] = [{"type": "text", "text": WEAPON_PROMPT}]
+        content += [
+            {"type": "image_url", "image_url": {"url": _to_data_uri(f)}} for f in frames[:2]
+        ]
+        resp = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": content}],  # type: ignore[list-item, misc]
+            temperature=0.0,
+        )
+        verdict = extract_json(resp.choices[0].message.content or "")
+        if verdict is None:
+            return False, ""
+        return bool(verdict.get("weapon", False)), str(verdict.get("type", ""))[:40]
+
+
+WEAPON_PROMPT = """Внимательно осмотри кадры с камеры. Есть ли у людей ОРУЖИЕ в руках:
+пистолет, ружьё, нож, топор, бита? Обычные предметы (телефон, сумка, зонт) — НЕ оружие.
+Ответь ТОЛЬКО JSON без пояснений:
+{"weapon": true|false, "type": "пистолет|нож|..."}
+weapon=true ТОЛЬКО если оружие явно видно. Сомневаешься — false."""
+
 
 class VlmWorker(threading.Thread):
     """Очередь описаний: alert → (кадры) → описание → БД + дописать caption в TG."""
@@ -178,3 +202,42 @@ class VlmWorker(threading.Thread):
             if self.notify is not None:
                 self.notify(event_id, verdict["description"], verdict["false_positive"])
             log.info("vlm: %s → %.120s", event_id, verdict["description"])
+
+
+class WeaponWorker(threading.Thread):
+    """Проверяет кадры входящих людей на оружие; нашёл → колбэк emit_alert."""
+
+    def __init__(
+        self,
+        describer: VlmDescriber,
+        budget: HourBudget,
+        emit_alert: Callable[[str, list[np.ndarray], str], None],
+        stop_event: threading.Event,
+    ):
+        super().__init__(name="weapon-worker", daemon=True)
+        self.describer = describer
+        self.budget = budget
+        self.emit_alert = emit_alert
+        self.stop_event = stop_event
+        self._q: queue.Queue[tuple[str, list[np.ndarray]]] = queue.Queue(maxsize=32)
+
+    def enqueue(self, camera_id: str, frames: list[np.ndarray]) -> None:
+        if not self.budget.allow():
+            return
+        with contextlib.suppress(queue.Full):
+            self._q.put_nowait((camera_id, frames))
+
+    def run(self) -> None:
+        while not self.stop_event.is_set():
+            try:
+                camera_id, frames = self._q.get(timeout=1)
+            except queue.Empty:
+                continue
+            try:
+                found, kind = self.describer.check_weapon(frames)
+            except Exception:  # noqa: BLE001 — сбой VLM не должен ничего ронять
+                log.exception("weapon check failed cam=%s", camera_id)
+                continue
+            if found:
+                log.warning("weapon detected cam=%s type=%s", camera_id, kind)
+                self.emit_alert(camera_id, frames, kind)
