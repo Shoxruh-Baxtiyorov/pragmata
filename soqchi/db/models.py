@@ -79,18 +79,38 @@ class Zone(Base):
 
 
 class Person(Base):
-    """Watchlist: именованный человек с эталонным CLIP-эмбеддингом (L2)."""
+    """Реестр известных людей: сотрудник/гость/наблюдение/бан. Эталон лица
+    (усреднён по нескольким фото) → камеры узнают по имени. watch=алертить."""
 
     __tablename__ = "persons"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200))
+    # employee | visitor | contractor | watchlist | banned | other
+    category: Mapped[str] = mapped_column(String(32), default="other")
+    position: Mapped[str | None] = mapped_column(String(200), nullable=True)  # должность/отдел
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)
     watch: Mapped[bool] = mapped_column(default=False)  # алертить при появлении
     clip_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
-    # эталон лица (insightface ArcFaceONNX, L2-норма) — точнее одежды/фигуры
+    # эталон лица (insightface, L2): усреднённый по всем фото person_photos
     face_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
     ref_photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class PersonPhoto(Base):
+    """Фото человека при регистрации; per-фото эмбеддинг лица → усредняем в Person."""
+
+    __tablename__ = "person_photos"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    person_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("persons.id", ondelete="CASCADE"), index=True
+    )
+    path: Mapped[str] = mapped_column(String(500))
+    face_emb: Mapped[list[float] | None] = mapped_column(Vector(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

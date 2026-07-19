@@ -40,6 +40,77 @@
         "title": "AgentAsk",
         "type": "object"
       },
+      "Body_add_photos_api_v1_persons__person_id__photos_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_add_photos_api_v1_persons__person_id__photos_post",
+        "type": "object"
+      },
+      "Body_enroll_api_v1_persons_enroll_post": {
+        "properties": {
+          "category": {
+            "default": "employee",
+            "title": "Category",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "watch": {
+            "default": false,
+            "title": "Watch",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "files"
+        ],
+        "title": "Body_enroll_api_v1_persons_enroll_post",
+        "type": "object"
+      },
       "CameraIn": {
         "properties": {
           "clips_enabled": {
@@ -637,6 +708,11 @@
       },
       "PersonCreate": {
         "properties": {
+          "category": {
+            "default": "watchlist",
+            "title": "Category",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -651,6 +727,17 @@
               }
             ],
             "title": "Note"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "track_id": {
             "format": "uuid",
@@ -672,6 +759,10 @@
       },
       "PersonOut": {
         "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -692,6 +783,10 @@
             ],
             "title": "Note"
           },
+          "photo_count": {
+            "title": "Photo Count",
+            "type": "integer"
+          },
           "photo_url": {
             "anyOf": [
               {
@@ -702,6 +797,17 @@
               }
             ],
             "title": "Photo Url"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "seen_count": {
             "title": "Seen Count",
@@ -715,9 +821,12 @@
         "required": [
           "id",
           "name",
+          "category",
+          "position",
           "note",
           "watch",
           "photo_url",
+          "photo_count",
           "seen_count"
         ],
         "title": "PersonOut",
@@ -725,6 +834,17 @@
       },
       "PersonPatch": {
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
           "name": {
             "anyOf": [
               {
@@ -747,6 +867,17 @@
             ],
             "title": "Note"
           },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
           "watch": {
             "anyOf": [
               {
@@ -760,6 +891,25 @@
           }
         },
         "title": "PersonPatch",
+        "type": "object"
+      },
+      "PersonPhotoOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ],
+        "title": "PersonPhotoOut",
         "type": "object"
       },
       "StatsOut": {
@@ -2591,6 +2741,24 @@
     "/api/v1/persons": {
       "get": {
         "operationId": "persons_api_v1_persons_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2605,6 +2773,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -2614,7 +2792,7 @@
         ],
         "summary": "Persons",
         "tags": [
-          "watchlist"
+          "people"
         ]
       },
       "post": {
@@ -2660,7 +2838,149 @@
         ],
         "summary": "Create",
         "tags": [
-          "watchlist"
+          "people"
+        ]
+      }
+    },
+    "/api/v1/persons/enroll": {
+      "post": {
+        "operationId": "enroll_api_v1_persons_enroll_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_enroll_api_v1_persons_enroll_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Enroll Api V1 Persons Enroll Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Enroll",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/persons/photos/{photo_id}": {
+      "delete": {
+        "operationId": "delete_photo_api_v1_persons_photos__photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Photo",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/persons/photos/{photo_id}/image": {
+      "get": {
+        "operationId": "photo_image_api_v1_persons_photos__photo_id__image_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Photo Image",
+        "tags": [
+          "people"
         ]
       }
     },
@@ -2708,7 +3028,7 @@
         ],
         "summary": "Remove",
         "tags": [
-          "watchlist"
+          "people"
         ]
       },
       "patch": {
@@ -2764,7 +3084,7 @@
         ],
         "summary": "Patch",
         "tags": [
-          "watchlist"
+          "people"
         ]
       }
     },
@@ -2810,7 +3130,117 @@
         ],
         "summary": "Photo",
         "tags": [
-          "watchlist"
+          "people"
+        ]
+      }
+    },
+    "/api/v1/persons/{person_id}/photos": {
+      "get": {
+        "operationId": "photos_api_v1_persons__person_id__photos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "person_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Person Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PersonPhotoOut"
+                  },
+                  "title": "Response Photos Api V1 Persons  Person Id  Photos Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Photos",
+        "tags": [
+          "people"
+        ]
+      },
+      "post": {
+        "operationId": "add_photos_api_v1_persons__person_id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "person_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Person Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_photos_api_v1_persons__person_id__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Add Photos Api V1 Persons  Person Id  Photos Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Photos",
+        "tags": [
+          "people"
         ]
       }
     },

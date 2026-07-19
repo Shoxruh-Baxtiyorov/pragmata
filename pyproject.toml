@@ -28,6 +28,7 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "pyotp>=2.10.0",
     "segno>=1.6.6",
+    "python-multipart>=0.0.32",
 ]
 
 [project.optional-dependencies]
@@ -75,8 +76,8 @@ runtime-evaluated-base-classes = [
 ]
 
 [tool.ruff.lint.flake8-bugbear]
-# FastAPI DI: Depends/Query в дефолтах — канонический паттерн, не мутабельный дефолт
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+# FastAPI DI: Depends/Query/Form/File в дефолтах — канонический паттерн, не мутабельный дефолт
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Form", "fastapi.File"]
 
 [tool.mypy]
 python_version = "3.12"

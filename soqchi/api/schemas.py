@@ -230,14 +230,19 @@ class AgentAnswer(BaseModel):
 class PersonOut(BaseModel):
     id: uuid.UUID
     name: str
+    category: str
+    position: str | None
     note: str | None
     watch: bool
     photo_url: str | None
+    photo_count: int
     seen_count: int
 
 
 class PersonCreate(BaseModel):
     name: str
+    category: str = "watchlist"  # завели из кадра → по умолчанию под наблюдение
+    position: str | None = None
     note: str | None = None
     watch: bool = False
     track_id: uuid.UUID  # взять эталонный эмбеддинг+фото у этого трека
@@ -245,5 +250,12 @@ class PersonCreate(BaseModel):
 
 class PersonPatch(BaseModel):
     name: str | None = None
+    category: str | None = None
+    position: str | None = None
     note: str | None = None
     watch: bool | None = None
+
+
+class PersonPhotoOut(BaseModel):
+    id: uuid.UUID
+    url: str

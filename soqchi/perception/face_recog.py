@@ -60,6 +60,11 @@ class FaceRecognizer:
         self._ensure()
         return self._app is not None
 
+    def embed_largest(self, image: np.ndarray) -> list[float] | None:
+        """Эмбеддинг самого крупного лица на ВСЁМ изображении (регистрация по фото)."""
+        h, w = image.shape[:2]
+        return self.embed(image, (0.0, 0.0, float(w), float(h)))
+
     def embed(
         self, frame: np.ndarray, bbox: tuple[float, float, float, float]
     ) -> list[float] | None:
