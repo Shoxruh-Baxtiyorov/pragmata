@@ -81,7 +81,7 @@ export function EventsPage() {
       },
       { replace: true },
     )
-    window.scrollTo({ top: 0 })
+    document.querySelector('main')?.scrollTo({ top: 0 })
   }
 
   const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Bot,
   Camera,
+  Database,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -46,6 +47,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: '/assistant', key: 'nav.assistant', icon: Bot },
       { to: '/search', key: 'nav.search', icon: Search },
+      { to: '/archive', key: 'nav.archive', icon: Database },
       { to: '/watchlist', key: 'nav.watchlist', icon: Users },
     ],
   },
@@ -77,19 +79,20 @@ export function AppLayout() {
     )
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {open && (
         <button
           aria-label={t('common.close')}
-          className="fixed inset-0 z-20 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          'fixed z-30 flex h-screen w-64 flex-col border-r border-border-default bg-surface p-3 transition-transform',
-          'lg:static lg:h-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border-default bg-surface p-3',
+          'transition-transform duration-200 ease-out will-change-transform',
+          'lg:static lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -128,7 +131,7 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-border-default bg-surface/90 px-4 backdrop-blur">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border-default bg-surface px-4">
           <button
             className="rounded-button p-2 text-text-secondary hover:bg-bg-secondary lg:hidden"
             aria-label={t('nav.overview')}
@@ -172,7 +175,7 @@ export function AppLayout() {
           )}
         </header>
 
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

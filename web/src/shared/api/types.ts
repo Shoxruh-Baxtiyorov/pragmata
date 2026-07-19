@@ -10,6 +10,18 @@ export interface LoginResponse {
   mfa_required: boolean
 }
 
+export interface ArchiveJob {
+  id: string
+  filename: string
+  camera_id: string
+  recorded_at: string
+  status: 'pending' | 'running' | 'done' | 'error'
+  progress: number
+  events_found: number
+  error: string | null
+  created_at: string
+}
+
 export interface TotpSetup {
   secret: string
   otpauth_uri: string
