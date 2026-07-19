@@ -1,9 +1,9 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/shared/api/client'
 import { POLL } from '@/shared/lib/format'
 import type { EventsResponse } from '@/shared/api/types'
 
-const LIMIT = 30
+export const EVENTS_PER_PAGE = 25
 
 export interface EventFilters {
   hours: number
@@ -12,27 +12,23 @@ export interface EventFilters {
   severity?: string
 }
 
-// Лента событий: постранично (offset), докрутка через loaded<total, поллинг POLL.events
-export function useEvents(filters: EventFilters) {
-  return useInfiniteQuery({
-    queryKey: ['events', filters],
-    queryFn: ({ pageParam }) => {
+// Лента событий: настоящая постраничность (page → offset). keepPreviousData —
+// чтобы при переключении страниц список не мигал пустотой. Поллинг POLL.events.
+export function useEvents(filters: EventFilters, page: number) {
+  return useQuery({
+    queryKey: ['events', filters, page],
+    queryFn: () => {
       const p = new URLSearchParams({
         hours: String(filters.hours),
-        limit: String(LIMIT),
-        offset: String(pageParam),
+        limit: String(EVENTS_PER_PAGE),
+        offset: String((page - 1) * EVENTS_PER_PAGE),
       })
       if (filters.camera_id) p.set('camera_id', filters.camera_id)
       if (filters.type) p.set('type', filters.type)
       if (filters.severity) p.set('severity', filters.severity)
       return api.get<EventsResponse>(`/api/v1/events?${p.toString()}`)
     },
-    initialPageParam: 0,
-    getNextPageParam: (_last, pages) => {
-      const loaded = pages.reduce((n, pg) => n + pg.items.length, 0)
-      const total = pages[0]?.total ?? 0
-      return loaded < total ? loaded : undefined
-    },
+    placeholderData: keepPreviousData,
     refetchInterval: POLL.events,
   })
 }

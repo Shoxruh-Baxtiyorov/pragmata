@@ -193,6 +193,12 @@ const ru = {
   'people.cat.watchlist': 'Наблюдение',
   'people.cat.banned': 'Бан',
   'people.cat.other': 'Другое',
+  'common.prev': 'Назад',
+  'common.next': 'Вперёд',
+  'common.page': 'Стр. {{page}} из {{total}}',
+  'navGroup.monitoring': 'Мониторинг',
+  'navGroup.investigate': 'Расследование',
+  'navGroup.admin': 'Управление',
 }
 
 const uz: typeof ru = {
@@ -384,6 +390,12 @@ const uz: typeof ru = {
   'people.cat.watchlist': 'Kuzatuv',
   'people.cat.banned': 'Taqiq',
   'people.cat.other': 'Boshqa',
+  'common.prev': 'Orqaga',
+  'common.next': 'Oldinga',
+  'common.page': '{{page}}-sahifa / {{total}}',
+  'navGroup.monitoring': 'Monitoring',
+  'navGroup.investigate': 'Tekshiruv',
+  'navGroup.admin': 'Boshqaruv',
 }
 
 const en: typeof ru = {
@@ -575,6 +587,12 @@ const en: typeof ru = {
   'people.cat.watchlist': 'Watchlist',
   'people.cat.banned': 'Banned',
   'people.cat.other': 'Other',
+  'common.prev': 'Back',
+  'common.next': 'Next',
+  'common.page': 'Page {{page}} of {{total}}',
+  'navGroup.monitoring': 'Monitoring',
+  'navGroup.investigate': 'Investigate',
+  'navGroup.admin': 'Manage',
 }
 
 void i18n.use(initReactI18next).init({

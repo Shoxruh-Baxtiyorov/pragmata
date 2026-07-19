@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, EmptyState, PageHeader, Select, Skeleton } from '@/shared/ui'
+import { Pagination } from '@/shared/ui/pagination'
 import { FileDown } from '@/shared/ui/icons'
 import { fetchAuthedBlob } from '@/shared/api/client'
 import { eventLabel, type EventType } from '@/shared/lib/format'
 import type { EventOut, Severity } from '@/shared/api/types'
-import { useEvents, type EventFilters } from '../api/eventsApi'
+import { EVENTS_PER_PAGE, useEvents, type EventFilters } from '../api/eventsApi'
 import { EventCard } from '../components/EventCard'
 import { EventModal } from '../components/EventModal'
 
@@ -53,18 +54,34 @@ export function EventsPage() {
   const hours = Number.isFinite(n) && n > 0 ? n : 24
   const type = sp.get('type') ?? ''
   const severity = sp.get('severity') ?? ''
+  const page = Math.max(1, Number(sp.get('page')) || 1)
 
-  // Фильтры живут в URL — переживают навигацию/назад-вперёд (replace, чтобы не засорять историю)
+  // Фильтры живут в URL — переживают навигацию/назад-вперёд (replace, чтобы не засорять историю).
+  // Смена фильтра сбрасывает страницу на первую.
   function setParam(key: string, value: string) {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev)
         if (value) next.set(key, value)
         else next.delete(key)
+        next.delete('page')
         return next
       },
       { replace: true },
     )
+  }
+
+  function setPage(p: number) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (p > 1) next.set('page', String(p))
+        else next.delete('page')
+        return next
+      },
+      { replace: true },
+    )
+    window.scrollTo({ top: 0 })
   }
 
   const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'
@@ -74,8 +91,9 @@ export function EventsPage() {
     type: type || undefined,
     severity: severity || undefined,
   }
-  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useEvents(filters)
-  const items = data ? [...new Map(data.pages.flatMap((p) => p.items).map((e) => [e.id, e])).values()] : []
+  const { data, isLoading, isError, refetch } = useEvents(filters, page)
+  const items = data?.items ?? []
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / EVENTS_PER_PAGE))
 
   return (
     <div className="space-y-4">
@@ -127,18 +145,7 @@ export function EventsPage() {
           {items.map((ev) => (
             <EventCard key={ev.id} event={ev} onClick={() => setSelected(ev)} />
           ))}
-          {hasNextPage && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => void fetchNextPage()}
-                disabled={isFetchingNextPage}
-              >
-                {t('events.more')}
-              </Button>
-            </div>
-          )}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       )}
 
