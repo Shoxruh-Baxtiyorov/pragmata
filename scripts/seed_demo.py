@@ -4,7 +4,7 @@
   uv run python scripts/seed_demo.py --force     # пересидить: удалить данные сидера и залить снова
 
 Сидит camera/zone-таблицы в БД — это ровно то, что читает GET /api/v1/cameras
-(soqchi/services/events_service.list_cameras), а не YAML. Без этого /system
+(pragmata/services/events_service.list_cameras), а не YAML. Без этого /system
 (fallback на config/dev.yaml) и /cameras (всегда из БД) расходятся.
 
 Гарантии безопасности:
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))  # пакет не устанавливается (tool.uv.package=false)
 
-from soqchi.config import (  # noqa: E402
+from pragmata.config import (  # noqa: E402
     ClipConfig,
     LoiteringRule,
     MotionConfig,
@@ -49,8 +49,8 @@ from soqchi.config import (  # noqa: E402
     ZoneRules,
     get_settings,
 )
-from soqchi.db.session import make_session_factory  # noqa: E402
-from soqchi.media import MediaStore  # noqa: E402
+from pragmata.db.session import make_session_factory  # noqa: E402
+from pragmata.media import MediaStore  # noqa: E402
 
 TZ = ZoneInfo("Asia/Tashkent")
 DAY_START, DAY_END = 7, 21  # часы с повышенным весом — посетители заметнее днём
@@ -155,7 +155,7 @@ def make_placeholder(color: tuple[int, int, int], camera_name: str, ts: datetime
 
 
 def force_delete(session_factory: sessionmaker[Session]) -> None:
-    from soqchi.db.models import Camera, Event, Track
+    from pragmata.db.models import Camera, Event, Track
 
     with session_factory() as s:
         s.execute(delete(Event).where(Event.camera_id.in_(SEEDED_CAMERA_IDS)))
@@ -165,7 +165,7 @@ def force_delete(session_factory: sessionmaker[Session]) -> None:
 
 
 def seed_config(session_factory: sessionmaker[Session]) -> tuple[bool, int, dict[str, str]]:
-    from soqchi.db.models import Camera, Site, Zone
+    from pragmata.db.models import Camera, Site, Zone
 
     site_created = False
     cameras_created = 0
@@ -175,7 +175,7 @@ def seed_config(session_factory: sessionmaker[Session]) -> tuple[bool, int, dict
             s.add(
                 Site(
                     id=1,
-                    name="Soqchi Demo",
+                    name="Pragmata Demo",
                     timezone="Asia/Tashkent",
                     working_hours=WorkingHours().model_dump(),
                     digest_time="20:00",
@@ -220,7 +220,7 @@ def seed_config(session_factory: sessionmaker[Session]) -> tuple[bool, int, dict
 def seed_tracks(
     session_factory: sessionmaker[Session], media: MediaStore, now: datetime
 ) -> list[TrackSpec]:
-    from soqchi.db.models import Track
+    from pragmata.db.models import Track
 
     counters = dict.fromkeys(SEEDED_CAMERA_IDS, 0)
     tracks: list[TrackSpec] = []
@@ -370,8 +370,8 @@ def seed_events(
     tracks: list[TrackSpec],
     now: datetime,
 ) -> Counter[str]:
-    from soqchi.db.models import Event
-    from soqchi.rules.engine import SEVERITY
+    from pragmata.db.models import Event
+    from pragmata.rules.engine import SEVERITY
 
     events = _build_events(zone_by_camera, tracks, now)
 
@@ -421,7 +421,7 @@ def main() -> int:
     guard_local_db(settings.database_url)
 
     session_factory = make_session_factory()
-    from soqchi.db.models import Event
+    from pragmata.db.models import Event
 
     with session_factory() as s:
         n_events = s.execute(select(func.count()).select_from(Event)).scalar_one()

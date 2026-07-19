@@ -1,4 +1,4 @@
-# Soqchi AI — Vizyon va kelajak rejalari
+# Pragmata AI — Vizyon va kelajak rejalari
 
 > `DESIGN.uz.md` MVP **nima qilishini** aytadi. Bu hujjat — **nega** va **keyin nima bo'lishini**.
 > Holat: 2026-07-13. Ufq: 24+ oy.
@@ -11,7 +11,7 @@ O'zbekistonda millionlab kamera bor, lekin ular faqat **yozadi** — hech kim ko
 
 Bizning vizyon: **har bir kamera aqlli qorovulga aylanadi.** Besh yil ichida Markaziy Osiyoda «kamerangdan so'ra» odatiy ishga aylanadi: direktor Telegramda «bugun nima bo'ldi?» deb yozadi va 20 soniyada javob oladi — fotosi, klipi, vaqti bilan.
 
-Soqchi AI shu qatlamning standarti bo'ladi: **mavjud kameralar ustidagi AI-tahlilchi** — kamera brendidan qat'i nazar, ma'lumot binodan chiqmagan holda.
+Pragmata AI shu qatlamning standarti bo'ladi: **mavjud kameralar ustidagi AI-tahlilchi** — kamera brendidan qat'i nazar, ma'lumot binodan chiqmagan holda.
 
 Kategoriya: biz «video analytics» sotmaymiz — O'zbekistonda **Physical Security Copilot** kategoriyasini birinchi bo'lib egallaymiz.
 
@@ -53,12 +53,12 @@ Maqsad: **pulli mijozlar va kanal.**
 - **ANPR** (avto raqamlari) + transport/parking moduli
 - Retail-analitika moduli (ochered, kirim oqimi, heatmap) — xavfsizlikdan biznes-analitikaga upsell
 - Tashqi API + webhooklar (uchinchi tizimlarga integratsiya)
-- **Pultli qo'riqlash kompaniyalari integratsiyasi** — ularning monitoring-markazlariga Soqchi oqimi (bitta operator 10x obyekt kuzatadi)
+- **Pultli qo'riqlash kompaniyalari integratsiyasi** — ularning monitoring-markazlariga Pragmata oqimi (bitta operator 10x obyekt kuzatadi)
 - **To'liq offline rejim:** lokal VLM/LLM box ichida — davlat/bank uchun internetga umuman chiqmasdan
 
 ### v3.0 — «Region» (2028)
 - Markaziy Osiyo: KZ, KG, TJ (ruscha tayyor; qozoq/qirg'iz lokalizatsiyasi)
-- **«Soqchi Box»** — o'zimizning tayyor edge-hardware liniyamiz (marja + o'rnatish soddaligi)
+- **«Pragmata Box»** — o'zimizning tayyor edge-hardware liniyamiz (marja + o'rnatish soddaligi)
 - Lokal kontekstga fine-tune qilingan VLM
 - **Anomaliya-AI:** har obyektning «normal kuni» o'rganiladi, og'ishlar qoidasiz aniqlanadi
 - **Proaktiv agent-patrul:** agent o'zi shubhali paternlarni qidirib, haftalik xavfsizlik-audit hisobotini beradi
@@ -100,7 +100,7 @@ Har paket = tayyor qoidalar to'plami + o'z digest-shabloni + o'z KPI-paneli. Sot
 3. **Pultli qo'riqlash kompaniyalari:** ularning monitoring-markazlari uchun ko'paytirgich — bitta operator 10 barobar ko'p obyektni sifatli kuzatadi
 4. Davlat tenderlari — sertifikatlash va to'liq offline rejimdan keyin (2027+)
 
-**Narx evolyutsiyasi:** kameraga oylik podpiska (kichiklar 30–50 ming so'mdan, o'rta segment yuqoriroq) → enterprise litsenziya + yillik support → hardware-bundle marjasi (Soqchi Box) → vertikal paket qo'shimchalari → API-tariflar.
+**Narx evolyutsiyasi:** kameraga oylik podpiska (kichiklar 30–50 ming so'mdan, o'rta segment yuqoriroq) → enterprise litsenziya + yillik support → hardware-bundle marjasi (Pragmata Box) → vertikal paket qo'shimchalari → API-tariflar.
 
 **Jamoa:** hozir 3 kishi (konkurs sharti — shu haftada yopiladi). Keyin: +1 CV-injener (konkursdan keyin), +1 sotuv/BD (2027 H1), +support (birinchi ~20 mijozdan keyin).
 
@@ -153,6 +153,6 @@ Marralar: **2026 oxiri** — 3–5 pilot, 30–50 kamera · **2027 oxiri** — 2
 - **2027 Q1:** v1.5 — billing, birinchi pulli mijozlar, IT Park rezidentligi
 - **2027 Q2:** integrator-dastur ishga tushadi, 100+ kamera
 - **2027 H2:** v2.0 platform, pultli qo'riqlash integratsiyasi, 500+ kamera, seed-suhbatlar
-- **2028:** v3.0 — region (KZ/KG), Soqchi Box, anomaliya-AI, 5000+ kamera
+- **2028:** v3.0 — region (KZ/KG), Pragmata Box, anomaliya-AI, 5000+ kamera
 
 > Eslatma: v1.0 dan keyingi hamma sanalar — maqsad-mo'ljal, dogma emas. Har chorak oxirida reja fakt bilan solishtirilib yangilanadi.

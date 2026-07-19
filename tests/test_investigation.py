@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from soqchi.investigation import build_query_prompt, rank_candidates
+from pragmata.investigation import build_query_prompt, rank_candidates
 
 # 2-мерные "эмбеддинги" для наглядности: query по оси x, baseline по оси y
 QUERY = [1.0, 0.0]
@@ -40,7 +40,7 @@ def test_query_prompt_template() -> None:
 
 
 def test_negation_detected() -> None:
-    from soqchi.investigation import has_negation
+    from pragmata.investigation import has_negation
 
     assert has_negation("man with no hair")
     assert has_negation("man without jacket")

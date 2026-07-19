@@ -1,4 +1,4 @@
-# Soqchi AI (ishchi nom / рабочее название)
+# Pragmata AI (ishchi nom / рабочее название)
 
 AI Security Copilot — mavjud kameralar ustidagi AI-agent: o'zi kuzatadi, Telegramga o'zi doklad qiladi, uz/ru savollarga javob beradi, odamni tavsif bo'yicha topadi.
 
@@ -19,13 +19,13 @@ Loyiha President AI Award 2026 uchun. Muddatlar: early bird **15.08.2026**, fina
 uv sync                          # зависимости (torch CPU; для GPU см. pyproject → pytorch index)
 ./scripts/dev_stand.sh           # сэмпл-видео + YuNet + docker (postgres:5433, mediamtx:8554) + миграции
 ./scripts/publish_sample.sh &    # зацикленный сэмпл → rtsp://127.0.0.1:8554/cam1
-uv run python -m soqchi.main --config config/dev.yaml
+uv run python -m pragmata.main --config config/dev.yaml
 ```
 
 События падают в Postgres (`events`, `tracks`) + кропы в `data/media/`. Без БД:
 `--sink jsonl` (события в `data/events.jsonl`). Тесты: `uv run pytest`.
 
-**Dashboard API**: `uv run uvicorn soqchi.api.app:app --port 8088`
+**Dashboard API**: `uv run uvicorn pragmata.api.app:app --port 8088`
 → OpenAPI на `/docs`. Нужны `SECRET_KEY` и `ADMIN_PASSWORD` в `.env` (fail-closed).
 Промт для будущего фронта: [docs/FRONTEND_PROMPT.md](docs/FRONTEND_PROMPT.md).
 

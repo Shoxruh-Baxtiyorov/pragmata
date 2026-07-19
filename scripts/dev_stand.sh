@@ -44,5 +44,5 @@ cat <<'EOF'
 
 Стенд готов. Дальше в двух терминалах:
   1) ./scripts/publish_sample.sh          # цикл публикации сэмпла в rtsp://127.0.0.1:8554/cam1
-  2) uv run python -m soqchi.main --config config/dev.yaml
+  2) uv run python -m pragmata.main --config config/dev.yaml
 EOF

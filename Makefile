@@ -1,4 +1,4 @@
-# Soqchi AI — команды разработки (всегда uv, никогда pip). Стандарт: iqbola-backend.
+# Pragmata AI — команды разработки (всегда uv, никогда pip). Стандарт: iqbola-backend.
 .PHONY: install dev lint format typecheck test golden migrate migration heads api-schema api-schema-check api pipeline stand front-dev help
 
 help:
@@ -10,11 +10,11 @@ dev:  # зависимости + dev-инструменты
 	uv sync --dev
 
 lint:  # ruff check
-	uv run ruff check soqchi/ tests/ scripts/
+	uv run ruff check pragmata/ tests/ scripts/
 format:  # ruff format
-	uv run ruff format soqchi/ tests/ scripts/
+	uv run ruff format pragmata/ tests/ scripts/
 typecheck:  # mypy
-	uv run mypy soqchi/
+	uv run mypy pragmata/
 test:  # быстрые тесты (без golden)
 	APP_ENV=test uv run pytest -q
 golden:  # полный пайплайн на эталонном клипе (медленно)
@@ -33,9 +33,9 @@ api-schema-check:  # CI: openapi.json актуален
 	uv run python scripts/generate_openapi.py --check
 
 api:  # Dashboard API :8088
-	uv run uvicorn soqchi.api.app:app --host 127.0.0.1 --port 8088 --reload
+	uv run uvicorn pragmata.api.app:app --host 127.0.0.1 --port 8088 --reload
 pipeline:  # пайплайн камер (config=... по умолчанию dev-multi)
-	uv run python -m soqchi.main --config $(or $(config),config/dev-multi.yaml) --sink db
+	uv run python -m pragmata.main --config $(or $(config),config/dev-multi.yaml) --sink db
 stand:  # dev-стенд: 6 камер-паблишеров
 	./scripts/publish_samples.sh
 front-dev:  # веб-фронт (Vite)

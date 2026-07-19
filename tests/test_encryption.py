@@ -8,8 +8,8 @@ import pytest
 
 os.environ.setdefault("APP_ENV", "test")
 
-from soqchi.core.encryption import decrypt_str, encrypt_str  # noqa: E402
-from soqchi.core.redact import redact_url  # noqa: E402
+from pragmata.core.encryption import decrypt_str, encrypt_str  # noqa: E402
+from pragmata.core.redact import redact_url  # noqa: E402
 
 
 def test_roundtrip() -> None:

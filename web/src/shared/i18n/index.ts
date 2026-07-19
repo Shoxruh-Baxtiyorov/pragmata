@@ -1,7 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
-const LANG_KEY = 'soqchi_lang'
+const LANG_KEY = 'pragmata_lang'
 
 // ru — канонический словарь; uz/en типизированы как typeof ru → паритет ключей на компиляции
 const ru = {
@@ -14,7 +14,7 @@ const ru = {
   'nav.system': 'Система',
   'nav.manage': 'Камеры и зоны',
   'nav.watchlist': 'Люди',
-  'login.title': 'Soqchi AI',
+  'login.title': 'Pragmata AI',
   'login.password': 'Пароль администратора',
   'login.submit': 'Войти',
   'login.error': 'Неверный пароль',
@@ -205,7 +205,7 @@ const uz: typeof ru = {
   'nav.system': 'Tizim',
   'nav.manage': 'Kamera va zonalar',
   'nav.watchlist': 'Odamlar',
-  'login.title': 'Soqchi AI',
+  'login.title': 'Pragmata AI',
   'login.password': 'Administrator paroli',
   'login.submit': 'Kirish',
   'login.error': "Parol noto'g'ri",
@@ -396,7 +396,7 @@ const en: typeof ru = {
   'nav.system': 'System',
   'nav.manage': 'Cameras & zones',
   'nav.watchlist': 'People',
-  'login.title': 'Soqchi AI',
+  'login.title': 'Pragmata AI',
   'login.password': 'Admin password',
   'login.submit': 'Sign in',
   'login.error': 'Wrong password',

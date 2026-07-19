@@ -18,7 +18,7 @@ from sqlalchemy.engine import make_url
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))  # пакет не устанавливается (tool.uv.package=false)
 
-from soqchi.config import get_settings  # noqa: E402
+from pragmata.config import get_settings  # noqa: E402
 
 
 def main() -> int:
@@ -41,8 +41,8 @@ def main() -> int:
         print("отказ: пароль минимум 8 символов", file=sys.stderr)
         return 2
 
-    from soqchi.api.schemas import UserCreate
-    from soqchi.services import user_service
+    from pragmata.api.schemas import UserCreate
+    from pragmata.services import user_service
 
     try:
         uid = user_service.create_user(

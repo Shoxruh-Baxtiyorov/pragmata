@@ -1,7 +1,7 @@
 [project]
-name = "soqchi"
+name = "pragmata"
 version = "0.1.0"
-description = "Soqchi AI — AI Security Copilot over existing CCTV"
+description = "Pragmata AI — AI Security Copilot over existing CCTV"
 requires-python = ">=3.12"
 dependencies = [
     "ultralytics>=8.3",
@@ -71,7 +71,7 @@ select = ["E", "F", "I", "N", "UP", "B", "SIM", "TC"]
 # SQLAlchemy и pydantic резолвят аннотации в рантайме — их импорты нельзя уносить в TYPE_CHECKING
 runtime-evaluated-base-classes = [
     "sqlalchemy.orm.DeclarativeBase",
-    "soqchi.db.models.Base",
+    "pragmata.db.models.Base",
     "pydantic.BaseModel",
 ]
 

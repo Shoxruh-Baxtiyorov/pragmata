@@ -1,4 +1,4 @@
-# Soqchi AI — web dashboard
+# Pragmata AI — web dashboard
 
 Скаффолд архитектуры фронта. Дизайн-система — по скиллам `iqbola-design`
 (style-system-builder, variable-tokenizer, component-builder): токены в

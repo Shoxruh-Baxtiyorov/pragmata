@@ -1,5 +1,5 @@
 # Стресс-тест качества видео: один исходник в 5 состояниях, одинаковые зоны.
-# Запуск: uv run python -m soqchi.main --config config/dev-degraded.yaml \
+# Запуск: uv run python -m pragmata.main --config config/dev-degraded.yaml \
 #           --sink jsonl --offline --no-bot --duration 300
 site:
   name: "Degradation Test"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from soqchi.core.passwords import hash_password, needs_rehash, verify_password
+from pragmata.core.passwords import hash_password, needs_rehash, verify_password
 
 
 def test_hash_verify_roundtrip() -> None:

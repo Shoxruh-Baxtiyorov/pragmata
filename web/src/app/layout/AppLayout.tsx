@@ -53,7 +53,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-col border-r border-border-default bg-surface p-4">
-        <div className="mb-6 px-2 text-h3 text-brand">Soqchi AI</div>
+        <div className="mb-6 px-2 text-h3 text-brand">Pragmata AI</div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map(({ to, key, icon: Icon }) => (
             <NavLink

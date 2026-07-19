@@ -1,8 +1,8 @@
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from soqchi.config import get_settings
-from soqchi.db.models import Base
+from pragmata.config import get_settings
+from pragmata.db.models import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", get_settings().database_url)

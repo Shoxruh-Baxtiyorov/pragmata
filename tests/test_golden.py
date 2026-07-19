@@ -36,7 +36,7 @@ def test_full_pipeline_on_golden_clip(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "soqchi.main",
+            "pragmata.main",
             "--config",
             "config/golden.yaml",
             "--sink",

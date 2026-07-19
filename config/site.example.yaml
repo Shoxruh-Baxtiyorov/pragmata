@@ -1,5 +1,5 @@
 # Пример конфига реального объекта — скопируй, поправь, запусти:
-#   uv run python -m soqchi.main --config config/my-site.yaml
+#   uv run python -m pragmata.main --config config/my-site.yaml
 site:
   name: "My Object"
   timezone: "Asia/Tashkent"

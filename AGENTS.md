@@ -1,4 +1,4 @@
-# Soqchi AI — agent guide
+# Pragmata AI — agent guide
 
 Правила и карта для любого агента/разработчика в этом репо. Читай ПЕРЕД правкой.
 Стандарт качества и раскладка — по образцу `iqbola-backend`, адаптированы к нашему
@@ -25,7 +25,7 @@ LLM/VLM — любой OpenAI-совместимый endpoint (Ollama локал
 > выигрыша при нашем профиле. Если появится многопользовательский real-time —
 > пересмотреть.
 
-## Раскладка (`soqchi/`)
+## Раскладка (`pragmata/`)
 
 - `ingest/` — источники видео (RTSP/файл/MJPEG, реконнект) + motion gate
 - `perception/` — detector (YOLO), tracker (ByteTrack + best-frame + L0-лицо),

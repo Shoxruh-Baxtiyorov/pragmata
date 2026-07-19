@@ -19,7 +19,7 @@ async function downloadReport(filters: EventFilters) {
     const url = await fetchAuthedBlob(`/api/v1/events/report.pdf?${p.toString()}`)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'soqchi-report.pdf'
+    a.download = 'pragmata-report.pdf'
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   } catch (err) {

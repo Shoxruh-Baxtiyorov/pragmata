@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from soqchi.config import (
+from pragmata.config import (
     CameraConfig,
     GlobalRules,
     LoiteringRule,
@@ -10,8 +10,8 @@ from soqchi.config import (
     ZoneIntrusionRule,
     ZoneRules,
 )
-from soqchi.perception.tracker import TrackState
-from soqchi.rules.engine import RuleEngine
+from pragmata.perception.tracker import TrackState
+from pragmata.rules.engine import RuleEngine
 
 FRAME = (100, 100, 3)  # h, w — зона в долях от этого
 

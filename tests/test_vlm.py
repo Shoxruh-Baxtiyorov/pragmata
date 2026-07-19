@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from soqchi.vlm import HourBudget, VlmDescriber, extract_json
+from pragmata.vlm import HourBudget, VlmDescriber, extract_json
 
 
 def _describer_with_reply(reply: str) -> VlmDescriber:
@@ -63,8 +63,8 @@ def test_check_weapon_negative_and_garbage() -> None:
 
 
 def test_weapon_sink_only_fires_on_person_entered() -> None:
-    from soqchi.alerts import WeaponSink
-    from soqchi.rules.engine import RuleEvent
+    from pragmata.alerts import WeaponSink
+    from pragmata.rules.engine import RuleEvent
 
     seen: list[tuple[str, int]] = []
     worker = SimpleNamespace(enqueue=lambda cam, frames: seen.append((cam, len(frames))))

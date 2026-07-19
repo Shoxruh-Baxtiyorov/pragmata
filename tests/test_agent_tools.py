@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from soqchi.agent.tools import TOOL_SPECS, AgentTools
+from pragmata.agent.tools import TOOL_SPECS, AgentTools
 
 
 def test_tool_specs_are_valid_json() -> None:
@@ -25,7 +25,7 @@ def test_unknown_tool_returns_error_not_crash() -> None:
 
 
 def test_parse_inline_tool_call() -> None:
-    from soqchi.agent.runner import parse_inline_tool_call
+    from pragmata.agent.runner import parse_inline_tool_call
 
     # локальная модель пишет вызов сырым JSON'ом в текст (баг qwen на узбекском вопросе)
     assert parse_inline_tool_call('ronics\n{"name": "stats", "arguments": {"hours": 24}}') == (

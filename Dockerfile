@@ -18,16 +18,16 @@ RUN mkdir -p /app/models \
     && curl -fsSL -o /app/models/face_detection_yunet_2023mar.onnx \
         "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 
-COPY soqchi/ soqchi/
+COPY pragmata/ pragmata/
 COPY alembic/ alembic/
 COPY alembic.ini conftest.py ./
 
-RUN useradd -m -u 1000 soqchi && mkdir -p /app/data && chown -R soqchi:soqchi /app/data
-USER soqchi
+RUN useradd -m -u 1000 pragmata && mkdir -p /app/data && chown -R pragmata:pragmata /app/data
+USER pragmata
 
 ENV PATH="/app/.venv/bin:$PATH" \
     MODELS_DIR=/app/models \
     MEDIA_DIR=/app/data/media
 
 # Миграции идемпотентны и fail-closed: не накатились — контейнер не стартует.
-CMD ["sh", "-c", "alembic upgrade head && exec python -m soqchi.main --config ${SITE_CONFIG:-config/dev.yaml}"]
+CMD ["sh", "-c", "alembic upgrade head && exec python -m pragmata.main --config ${SITE_CONFIG:-config/dev.yaml}"]

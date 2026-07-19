@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import supervision as sv
 
-from soqchi.vehicles import COOLDOWN_S, VehicleWatcher
+from pragmata.vehicles import COOLDOWN_S, VehicleWatcher
 
 
 class _StubDetector:

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
 // Тёмная тема обязательна (iqbola-design). Переключение — data-theme на <html>.
-const THEME_KEY = 'soqchi_theme'
+const THEME_KEY = 'pragmata_theme'
 type Theme = 'light' | 'dark'
 
 const listeners = new Set<() => void>()

@@ -21,7 +21,7 @@ OUT = ROOT / "openapi.json"
 
 
 def current_schema() -> str:
-    from soqchi.api.app import app
+    from pragmata.api.app import app
 
     return json.dumps(app.openapi(), indent=2, ensure_ascii=False, sort_keys=True) + "\n"
 

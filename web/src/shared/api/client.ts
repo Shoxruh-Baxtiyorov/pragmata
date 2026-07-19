@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8088'
-const TOKEN_KEY = 'soqchi_token'
-const ROLE_KEY = 'soqchi_role'
-const NAME_KEY = 'soqchi_username'
+const TOKEN_KEY = 'pragmata_token'
+const ROLE_KEY = 'pragmata_role'
+const NAME_KEY = 'pragmata_username'
 
 export const auth = {
   get: () => localStorage.getItem(TOKEN_KEY),

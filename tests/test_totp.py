@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pyotp
 
-from soqchi.core import totp
+from pragmata.core import totp
 
 
 def test_new_secret_is_base32() -> None:
@@ -32,6 +32,6 @@ def test_provisioning_uri_and_qr() -> None:
     secret = totp.new_secret()
     uri = totp.provisioning_uri(secret, "guard1")
     assert uri.startswith("otpauth://totp/")
-    assert "Soqchi%20AI" in uri or "Soqchi+AI" in uri or "Soqchi AI" in uri
+    assert "Pragmata%20AI" in uri or "Pragmata+AI" in uri or "Pragmata AI" in uri
     qr = totp.qr_svg_data_uri(uri)
     assert qr.startswith("data:image/svg+xml;base64,")

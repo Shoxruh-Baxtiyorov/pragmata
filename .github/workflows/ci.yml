@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  APP_ENV: test  # encryption падает на детерминированный dev-ключ (soqchi/core/encryption.py)
+  APP_ENV: test  # encryption падает на детерминированный dev-ключ (pragmata/core/encryption.py)
 
 jobs:
   lint:
@@ -18,8 +18,8 @@ jobs:
         with:
           version: "latest"
       - run: uv sync --dev
-      - run: uv run ruff check soqchi/ tests/
-      - run: uv run ruff format --check soqchi/ tests/
+      - run: uv run ruff check pragmata/ tests/
+      - run: uv run ruff format --check pragmata/ tests/
 
   typecheck:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
         with:
           version: "latest"
       - run: uv sync --dev
-      - run: uv run mypy soqchi/
+      - run: uv run mypy pragmata/
 
   schema:
     runs-on: ubuntu-latest

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from soqchi.watchlist import WatchlistMatcher
+from pragmata.watchlist import WatchlistMatcher
 
 Ref = tuple[str, str, bool, list[float] | None, list[float] | None]
 

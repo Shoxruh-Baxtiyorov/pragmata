@@ -1,4 +1,4 @@
-# «Soqchi AI» (ishchi nom) — MVP dizayn-hujjati · President AI Award 2026
+# «Pragmata AI» (ishchi nom) — MVP dizayn-hujjati · President AI Award 2026
 
 > Holat: reja 2026-07-13 da kelishilgan. Muddatlar: early bird 15.08, final 30.09.
 > Jamoa: Shoxruh + Otabek + uchinchi ishtirokchi (TBD — usiz ariza qabul qilinmaydi).
@@ -223,7 +223,7 @@ Mushtlashish/chekish/qurol detektsiyasi; transport va raqamlar (ANPR); nomlangan
 
 ## 9. Nom
 
-Ishchi nom — **«Soqchi AI»** (soqchi = qorovul/posbon): qisqa, lokal, soqchi.uz/ai domeni katta ehtimol bo'sh. Muqobillar: Nazorat Copilot, Kuzatuv AI. Qaror sizlarniki; dastlabki commitlar uchun repo nomi neytral bo'lishi mumkin.
+Ishchi nom — **«Pragmata AI»** (soqchi = qorovul/posbon): qisqa, lokal, soqchi.uz/ai domeni katta ehtimol bo'sh. Muqobillar: Nazorat Copilot, Kuzatuv AI. Qaror sizlarniki; dastlabki commitlar uchun repo nomi neytral bo'lishi mumkin.
 
 ## 10. Keyingi qadamlar
 

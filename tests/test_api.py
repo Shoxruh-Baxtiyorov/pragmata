@@ -33,11 +33,11 @@ def _fake_user(**over: Any) -> SimpleNamespace:
 
 @pytest.fixture()
 def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    from soqchi.config import get_settings
+    from pragmata.config import get_settings
 
     monkeypatch.setenv("SECRET_KEY", "test-secret-key-for-api-tests-0123456789")
     get_settings.cache_clear()
-    from soqchi.api.app import app
+    from pragmata.api.app import app
 
     yield TestClient(app)
     get_settings.cache_clear()
@@ -45,7 +45,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
 
 @pytest.fixture()
 def _throttle_clean() -> Any:
-    from soqchi.api.routers.auth import _throttle
+    from pragmata.api.routers.auth import _throttle
 
     _throttle.reset("testclient")  # TestClient использует host "testclient"
     yield _throttle
@@ -53,8 +53,8 @@ def _throttle_clean() -> Any:
 
 
 def _patch_auth_ok(monkeypatch: pytest.MonkeyPatch, user: SimpleNamespace) -> None:
-    from soqchi.api import security
-    from soqchi.services import user_service
+    from pragmata.api import security
+    from pragmata.services import user_service
 
     monkeypatch.setattr(user_service, "authenticate", lambda u, p: user)
     monkeypatch.setattr(user_service, "mark_login", lambda uid: None)
@@ -68,7 +68,7 @@ def _patch_auth_ok(monkeypatch: pytest.MonkeyPatch, user: SimpleNamespace) -> No
 def test_login_wrong_password(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, _throttle_clean: Any
 ) -> None:
-    from soqchi.services import user_service
+    from pragmata.services import user_service
 
     def _deny(u: str, p: str) -> SimpleNamespace:
         raise HTTPException(401, "неверный логин или пароль")
@@ -86,7 +86,7 @@ def test_login_empty_username_rejected(client: TestClient, _throttle_clean: Any)
 def test_login_lockout_after_5_failures(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, _throttle_clean: Any
 ) -> None:
-    from soqchi.services import user_service
+    from pragmata.services import user_service
 
     def _deny(u: str, p: str) -> SimpleNamespace:
         raise HTTPException(401, "неверный логин или пароль")
@@ -134,8 +134,8 @@ def test_mfa_required_step_keeps_throttle(
 def test_totp_wrong_code_hits_account_lockout(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, _throttle_clean: Any
 ) -> None:
-    from soqchi.core import totp
-    from soqchi.services import user_service
+    from pragmata.core import totp
+    from pragmata.services import user_service
 
     _patch_auth_ok(monkeypatch, _fake_user(totp_enabled=True, totp_secret="S"))
     monkeypatch.setattr(totp, "verify_once", lambda s, c, k: False)
@@ -169,12 +169,12 @@ def test_garbage_token_rejected(client: TestClient) -> None:
 
 
 def test_login_fail_closed_without_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    from soqchi.config import get_settings
+    from pragmata.config import get_settings
 
     # .env юзера может задавать значения — форсим пустые
     monkeypatch.setenv("SECRET_KEY", "")
     get_settings.cache_clear()
-    from soqchi.api.app import app
+    from pragmata.api.app import app
 
     c = TestClient(app)
     r = c.post("/api/v1/auth/login", json={"username": "admin", "password": "x"})

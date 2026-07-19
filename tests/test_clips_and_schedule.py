@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from soqchi.clips import pick_segments
-from soqchi.config import WorkingHours
-from soqchi.rules.engine import is_outside_hours
+from pragmata.clips import pick_segments
+from pragmata.config import WorkingHours
+from pragmata.rules.engine import is_outside_hours
 
 # --- клипы -------------------------------------------------------------------
 
@@ -59,21 +59,21 @@ def test_open_boundary_inclusive_close_exclusive() -> None:
 
 
 def test_seconds_until_today() -> None:
-    from soqchi.digest import seconds_until
+    from pragmata.digest import seconds_until
 
     # сейчас пн 12:00 Ташкент → до 20:00 сегодня ровно 8 часов
     assert seconds_until("20:00", TZ, MON_NOON_UTC) == 8 * 3600
 
 
 def test_seconds_until_rolls_to_tomorrow() -> None:
-    from soqchi.digest import seconds_until
+    from pragmata.digest import seconds_until
 
     # сейчас 12:00 → 08:00 уже прошло → до завтрашних 08:00 20 часов
     assert seconds_until("08:00", TZ, MON_NOON_UTC) == 20 * 3600
 
 
 def test_digest_labels_langs() -> None:
-    from soqchi.digest import _digest_labels
+    from pragmata.digest import _digest_labels
 
     ru = _digest_labels("ru")
     uz = _digest_labels("uz")
