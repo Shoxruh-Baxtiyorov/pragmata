@@ -59,16 +59,27 @@ def authenticate(username: str, password: str) -> User:
         if not user.is_active:
             raise HTTPException(403, "аккаунт отключён")
 
-        # успех: сбрасываем счётчики, обновляем хеш при устаревших параметрах
+        # пароль верный: сбрасываем счётчики, обновляем хеш при устаревших параметрах.
+        # last_login_at НЕ здесь — ставим mark_login() после полного входа (в т.ч. 2FA).
         user.failed_attempts = 0
         user.locked_until = None
-        user.last_login_at = _now()
         if needs_rehash(user.password_hash):
             user.password_hash = hash_password(password)
         s.commit()
         s.refresh(user)
         s.expunge(user)
         return user
+
+
+def mark_login(user_id: uuid.UUID) -> None:
+    """Отметить успешный ПОЛНЫЙ вход (после 2FA, если включена)."""
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is not None:
+            user.last_login_at = _now()
+            s.commit()
 
 
 def create_user(payload: UserCreate) -> uuid.UUID:
@@ -156,3 +167,65 @@ def count_users() -> int:
 
     with session_factory()() as s:
         return int(s.execute(select(func.count()).select_from(User)).scalar_one())
+
+
+# --- TOTP-2FA ---------------------------------------------------------------
+
+
+def totp_status(user_id: uuid.UUID) -> bool:
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        return bool(user is not None and user.totp_enabled)
+
+
+def setup_totp(user_id: uuid.UUID) -> tuple[str, str, str]:
+    """Сгенерировать секрет (ещё НЕ активен) → (secret, otpauth_uri, qr_svg)."""
+    from soqchi.core import totp
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            raise HTTPException(404, "нет такого пользователя")
+        if user.totp_enabled:
+            raise HTTPException(409, "2FA уже включена — сначала отключите")
+        secret = totp.new_secret()
+        user.totp_secret = secret
+        s.commit()
+        uri = totp.provisioning_uri(secret, user.username)
+    return secret, uri, totp.qr_svg_data_uri(uri)
+
+
+def enable_totp(user_id: uuid.UUID, code: str) -> None:
+    """Подтвердить код из приложения → включить 2FA."""
+    from soqchi.core import totp
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            raise HTTPException(404, "нет такого пользователя")
+        if not user.totp_secret:
+            raise HTTPException(400, "сначала /me/2fa/setup")
+        if not totp.verify(user.totp_secret, code):
+            raise HTTPException(401, "неверный код")
+        user.totp_enabled = True
+        s.commit()
+
+
+def disable_totp(user_id: uuid.UUID, code: str) -> None:
+    """Отключить 2FA (нужен действующий код — чтобы не снял чужой с угнанным токеном)."""
+    from soqchi.core import totp
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            raise HTTPException(404, "нет такого пользователя")
+        if not (user.totp_enabled and user.totp_secret and totp.verify(user.totp_secret, code)):
+            raise HTTPException(401, "неверный код")
+        user.totp_enabled = False
+        user.totp_secret = None
+        s.commit()

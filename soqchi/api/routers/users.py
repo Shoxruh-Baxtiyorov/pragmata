@@ -10,9 +10,25 @@ import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута рез
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from soqchi.api.schemas import OkOut, PasswordChange, UserCreate, UserOut, UserPatch
+from soqchi.api.schemas import (
+    OkOut,
+    PasswordChange,
+    TotpCode,
+    TotpSetupOut,
+    TotpStatus,
+    UserCreate,
+    UserOut,
+    UserPatch,
+)
 from soqchi.api.security import BOOTSTRAP_SUB, Principal, current_principal, require_admin
 from soqchi.services import user_service as svc
+
+
+def _self_id(p: Principal) -> uuid.UUID:
+    """id текущего юзера; break-glass admin (нет строки в users) → 400."""
+    if p.sub == BOOTSTRAP_SUB:
+        raise HTTPException(400, "break-glass admin не имеет профиля — войдите как пользователь")
+    return uuid.UUID(p.sub)
 
 router = APIRouter(prefix="/api/v1", tags=["users"])
 
@@ -50,4 +66,30 @@ def change_own_password(
     if p.sub == BOOTSTRAP_SUB:
         raise HTTPException(400, "пароль break-glass admin меняется в .env (ADMIN_PASSWORD)")
     svc.change_password(uuid.UUID(p.sub), payload.new_password)
+    return OkOut()
+
+
+# --- TOTP-2FA (self-service, любой аутентифицированный реальный юзер) --------
+
+
+@router.get("/me/2fa", response_model=TotpStatus)
+def totp_status(p: Principal = Depends(current_principal)) -> TotpStatus:
+    return TotpStatus(enabled=svc.totp_status(_self_id(p)))
+
+
+@router.post("/me/2fa/setup", response_model=TotpSetupOut)
+def totp_setup(p: Principal = Depends(current_principal)) -> TotpSetupOut:
+    secret, uri, qr = svc.setup_totp(_self_id(p))
+    return TotpSetupOut(secret=secret, otpauth_uri=uri, qr_svg=qr)
+
+
+@router.post("/me/2fa/enable", response_model=OkOut)
+def totp_enable(payload: TotpCode, p: Principal = Depends(current_principal)) -> OkOut:
+    svc.enable_totp(_self_id(p), payload.code)
+    return OkOut()
+
+
+@router.post("/me/2fa/disable", response_model=OkOut)
+def totp_disable(payload: TotpCode, p: Principal = Depends(current_principal)) -> OkOut:
+    svc.disable_totp(_self_id(p), payload.code)
     return OkOut()

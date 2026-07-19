@@ -189,9 +189,10 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(16), default="user")  # user | admin
     is_active: Mapped[bool] = mapped_column(default=True)
     full_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    # задел под 2FA/Google (пока не используются)
+    # 2FA (TOTP): секрет base32 (Fernet-шифрован), enabled=подтверждён кодом и активен
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     totp_secret: Mapped[str | None] = mapped_column(EncryptedString(255), nullable=True)
+    totp_enabled: Mapped[bool] = mapped_column(default=False)
     # per-account brute-force
     failed_attempts: Mapped[int] = mapped_column(default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

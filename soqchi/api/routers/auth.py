@@ -31,7 +31,18 @@ def login(payload: LoginRequest, request: Request) -> TokenResponse:
         except HTTPException:
             _throttle.record_failure(ip)
             raise
+        # 2FA: пароль верный, но нужен TOTP-код второго фактора
+        if user.totp_enabled:
+            if not payload.code:
+                _throttle.reset(ip)  # пароль верный — не копим фейлы за отсутствие кода
+                return TokenResponse(access_token="", mfa_required=True, role="", username="")
+            from soqchi.core import totp
+
+            if not totp.verify(user.totp_secret or "", payload.code):
+                _throttle.record_failure(ip)
+                raise HTTPException(401, "неверный код")
         _throttle.reset(ip)
+        user_service.mark_login(user.id)
         return TokenResponse(
             access_token=create_token(str(user.id), user.role, user.username),
             role=user.role,
