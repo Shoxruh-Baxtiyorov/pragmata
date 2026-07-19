@@ -4,7 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { api } from '@/shared/api/client'
 import { POLL, eventLabel, type EventType } from '@/shared/lib/format'
 import type { OverviewOut } from '@/shared/api/types'
-import { PageHeader, StatTile, EmptyState, Spinner, Card, Badge, Button } from '@/shared/ui'
+import {
+  PageHeader,
+  StatTile,
+  EmptyState,
+  Skeleton,
+  SkeletonTiles,
+  Card,
+  Badge,
+  Button,
+} from '@/shared/ui'
 import { Camera, CameraOff, ShieldAlert, eventIcon } from '@/shared/ui/icons'
 import { HourlyBars } from '@/features/overview/ui/HourlyBars'
 
@@ -19,8 +28,10 @@ export function OverviewPage() {
 
   if (isLoading)
     return (
-      <div className="flex justify-center py-16">
-        <Spinner />
+      <div className="space-y-4">
+        <SkeletonTiles />
+        <Skeleton className="h-64" />
+        <Skeleton className="h-48" />
       </div>
     )
   if (isError || !data) return <EmptyState text={t('overview.error')} onRetry={refetch} />

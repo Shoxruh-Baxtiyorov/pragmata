@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Select, Spinner } from '@/shared/ui'
+import { Badge, Button, Card, EmptyState, Input, PageHeader, Select, SkeletonList } from '@/shared/ui'
 import { ApiError } from '@/shared/api/client'
 import { dateTime } from '@/shared/lib/format'
 import { Database, Search } from '@/shared/ui/icons'
@@ -100,7 +100,7 @@ function AnalyzeForm() {
 function ArchiveEvents({ cameraId }: { cameraId: string }) {
   const { t } = useTranslation()
   const { data, isLoading } = useArchiveEvents(cameraId)
-  if (isLoading) return <Spinner />
+  if (isLoading) return <SkeletonList rows={3} className="h-14" />
   const items = data?.items ?? []
   if (items.length === 0) return <EmptyState text={t('archive.noEvents')} />
   return (
@@ -165,7 +165,7 @@ export function ArchivePage() {
       <PageHeader title={t('archive.title')} subtitle={t('archive.subtitle')} />
       <AnalyzeForm />
       {jobs.isLoading ? (
-        <Spinner />
+        <SkeletonList rows={3} />
       ) : !jobs.data || jobs.data.length === 0 ? (
         <EmptyState text={t('archive.empty')} />
       ) : (

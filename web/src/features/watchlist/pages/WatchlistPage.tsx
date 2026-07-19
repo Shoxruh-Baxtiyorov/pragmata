@@ -8,7 +8,7 @@ import {
   Input,
   PageHeader,
   Select,
-  Spinner,
+  SkeletonGrid,
 } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
 import { ApiError } from '@/shared/api/client'
@@ -231,7 +231,7 @@ export function WatchlistPage() {
       </div>
 
       {isLoading ? (
-        <Spinner />
+        <SkeletonGrid />
       ) : isError ? (
         <EmptyState text={t('common.noConnection')} onRetry={refetch} />
       ) : !data || data.length === 0 ? (

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Select, Spinner } from '@/shared/ui'
+import { Badge, Button, Card, EmptyState, Input, PageHeader, Select, SkeletonList } from '@/shared/ui'
 import { ApiError } from '@/shared/api/client'
 import { KeyRound, Plus, ShieldCheck, UserCog, UserRound } from '@/shared/ui/icons'
 import type { UserOut } from '@/shared/api/types'
@@ -165,7 +165,7 @@ export function UsersPage() {
       />
 
       {users.isLoading ? (
-        <Spinner />
+        <SkeletonList rows={4} />
       ) : users.isError || !users.data ? (
         <EmptyState text={t('common.noConnection')} onRetry={() => users.refetch()} />
       ) : users.data.length === 0 ? (

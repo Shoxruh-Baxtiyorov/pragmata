@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Spinner } from '@/shared/ui'
+import { Badge, Button, Card, EmptyState, Input, PageHeader, SkeletonList } from '@/shared/ui'
 import { MapPin, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
 import type { Camera, CameraInput } from '@/shared/api/types'
 import {
@@ -172,7 +172,7 @@ export function ManagePage() {
       <PageHeader title={t('manage.title')} subtitle={t('manage.subtitle')} actions={<AddCameraForm />} />
 
       {cams.isLoading ? (
-        <Spinner />
+        <SkeletonList rows={4} />
       ) : cams.isError || !cams.data ? (
         <EmptyState text={t('common.noConnection')} onRetry={cams.refetch} />
       ) : (

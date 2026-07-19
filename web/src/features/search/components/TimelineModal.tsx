@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/shared/api/client'
-import { Modal, Spinner } from '@/shared/ui'
+import { Modal, SkeletonList } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
 import { dateTime } from '@/shared/lib/format'
 import { MapPin, X } from '@/shared/ui/icons'
@@ -50,7 +50,7 @@ export function TimelineModal({ trackId, onClose }: { trackId: string; onClose: 
         </button>
       </div>
       {isLoading ? (
-        <Spinner />
+        <SkeletonList rows={4} className="h-12" />
       ) : !data || data.length === 0 ? (
         <p className="py-8 text-center text-body text-text-secondary">{t('search.empty')}</p>
       ) : (

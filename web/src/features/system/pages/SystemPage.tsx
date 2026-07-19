@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Badge, Card, EmptyState, PageHeader, Spinner } from '@/shared/ui'
+import { Badge, Card, EmptyState, PageHeader, Skeleton, SkeletonList } from '@/shared/ui'
 import { dateTime } from '@/shared/lib/format'
 import { Cpu, Database, MonitorPlay, ShieldCheck, Video, VideoOff } from '@/shared/ui/icons'
 import { useSystem } from '../api/systemApi'
@@ -19,8 +19,12 @@ export function SystemPage() {
 
   if (isLoading)
     return (
-      <div className="flex justify-center py-16">
-        <Spinner />
+      <div className="space-y-4">
+        <SkeletonList rows={4} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
       </div>
     )
   if (isError || !data) return <EmptyState text={t('common.noConnection')} onRetry={refetch} />

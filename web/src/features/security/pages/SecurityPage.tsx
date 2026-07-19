@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, Input, PageHeader, Spinner } from '@/shared/ui'
+import { Badge, Button, Card, Input, PageHeader, Skeleton } from '@/shared/ui'
 import { ApiError } from '@/shared/api/client'
 import { ShieldCheck } from '@/shared/ui/icons'
 import type { TotpSetup } from '@/shared/api/types'
@@ -128,7 +128,7 @@ export function SecurityPage() {
           <ShieldCheck size={20} className="text-brand" /> {t('security.2faTitle')}
         </h2>
         {status.isLoading ? (
-          <Spinner />
+          <Skeleton className="h-40" />
         ) : status.isError ? (
           <p className="text-label text-error">
             {status.error instanceof ApiError && status.error.status === 400

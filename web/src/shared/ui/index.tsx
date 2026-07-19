@@ -65,6 +65,45 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn('animate-pulse rounded-card bg-bg-secondary', className)} />
 }
 
+// Скелетоны под форму контента — вместо спиннера на каждой странице
+export function SkeletonList({ rows = 5, className = 'h-16' }: { rows?: number; className?: string }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className={className} />
+      ))}
+    </div>
+  )
+}
+
+export function SkeletonGrid({
+  count = 8,
+  item = 'aspect-[3/4]',
+  cols = 'grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5',
+}: {
+  count?: number
+  item?: string
+  cols?: string
+}) {
+  return (
+    <div className={cn('grid', cols)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className={item} />
+      ))}
+    </div>
+  )
+}
+
+export function SkeletonTiles({ count = 4 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-24" />
+      ))}
+    </div>
+  )
+}
+
 export function StatTile({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-card bg-surface p-4 shadow-s">

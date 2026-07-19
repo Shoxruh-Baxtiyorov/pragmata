@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Card, EmptyState, PageHeader, Spinner, StatTile } from '@/shared/ui'
+import { Card, EmptyState, PageHeader, Skeleton, SkeletonTiles, StatTile } from '@/shared/ui'
 import { eventLabel, type EventType } from '@/shared/lib/format'
 import { eventIcon } from '@/shared/ui/icons'
 import { useDigest, useStats } from '../api/insightsApi'
@@ -37,8 +37,12 @@ export function StatsPage() {
 
   if (stats.isLoading)
     return (
-      <div className="flex justify-center py-16">
-        <Spinner />
+      <div className="space-y-4">
+        <SkeletonTiles count={3} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skeleton className="h-56" />
+          <Skeleton className="h-56" />
+        </div>
       </div>
     )
   if (stats.isError || !stats.data) return <EmptyState text={t('common.noConnection')} onRetry={stats.refetch} />
@@ -71,7 +75,7 @@ export function StatsPage() {
         ) : digest.data ? (
           <pre className="whitespace-pre-wrap text-body text-text-secondary">{digest.data.text}</pre>
         ) : (
-          <Spinner />
+          <Skeleton className="h-40" />
         )}
       </Card>
     </div>
