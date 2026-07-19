@@ -45,11 +45,16 @@ def test_security_headers_present(client: TestClient) -> None:
 
 
 def test_login_and_me(client: TestClient) -> None:
-    token = client.post("/api/v1/auth/login", json={"password": "correct-horse"}).json()[
-        "access_token"
-    ]
-    r = client.get("/api/v1/me", headers={"Authorization": f"Bearer {token}"})
-    assert r.status_code == 200 and r.json()["sub"] == "admin"
+    body = client.post("/api/v1/auth/login", json={"password": "correct-horse"}).json()
+    assert body["role"] == "admin" and body["username"] == "admin"  # break-glass admin
+    r = client.get("/api/v1/me", headers={"Authorization": f"Bearer {body['access_token']}"})
+    assert r.status_code == 200
+    assert r.json()["sub"] == "admin" and r.json()["role"] == "admin"
+
+
+def test_users_endpoint_requires_auth(client: TestClient) -> None:
+    # без токена — 401; admin-гейт проверяется на живой БД (см. ручную проверку)
+    assert client.get("/api/v1/users").status_code == 401
 
 
 def test_protected_without_token(client: TestClient) -> None:

@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from soqchi.api.middleware import SecurityHeadersMiddleware
-from soqchi.api.routers import agent, auth, cameras, events, insights, watchlist
+from soqchi.api.routers import agent, auth, cameras, events, insights, users, watchlist
 from soqchi.config import get_settings
 
 app = FastAPI(
@@ -43,6 +43,7 @@ for r in (
     insights.router,
     agent.router,
     watchlist.router,
+    users.router,
 ):
     app.include_router(r)
 

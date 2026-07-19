@@ -9,12 +9,45 @@ from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
+    # username пуст → break-glass вход по ADMIN_PASSWORD (совместимость + бутстрап)
+    username: str | None = None
     password: str
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: str = "admin"
+    username: str = "admin"
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = "user"  # user | admin
+    full_name: str | None = None
+    email: str | None = None
+
+
+class UserOut(BaseModel):
+    id: uuid.UUID
+    username: str
+    role: str
+    is_active: bool
+    full_name: str | None
+    email: str | None
+    last_login_at: datetime | None
+    locked: bool
+
+
+class UserPatch(BaseModel):
+    role: str | None = None
+    full_name: str | None = None
+    is_active: bool | None = None
+
+
+class PasswordChange(BaseModel):
+    new_password: str
 
 
 class ZoneOut(BaseModel):
