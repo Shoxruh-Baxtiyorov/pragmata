@@ -7,6 +7,17 @@ export interface LoginResponse {
   token_type: string
   role: string
   username: string
+  mfa_required: boolean
+}
+
+export interface TotpSetup {
+  secret: string
+  otpauth_uri: string
+  qr_svg: string
+}
+
+export interface TotpStatus {
+  enabled: boolean
 }
 
 export interface MeResponse {

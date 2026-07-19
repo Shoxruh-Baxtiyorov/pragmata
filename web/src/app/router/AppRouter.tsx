@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/app/layout/AppLayout'
 import { LoginPage, useIsAdmin, useIsAuthed } from '@/features/auth'
 import { UsersPage } from '@/features/users'
+import { SecurityPage } from '@/features/security'
 import { OverviewPage } from '@/features/overview'
 import { AssistantPage } from '@/features/assistant'
 import { LivePage } from '@/features/live'
@@ -36,6 +37,7 @@ export function AppRouter() {
         <Route path="/system" element={<SystemPage />} />
         <Route path="/manage" element={<ManagePage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
+        <Route path="/security" element={<SecurityPage />} />
         {isAdmin && <Route path="/users" element={<UsersPage />} />}
         <Route path="*" element={<Navigate to="/overview" replace />} />
       </Route>

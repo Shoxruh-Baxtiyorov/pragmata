@@ -8,6 +8,7 @@ import {
   Search,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   Sun,
   TrendingUp,
   UserCog,
@@ -38,6 +39,7 @@ const NAV: { to: string; key: string; icon: LucideIcon; admin?: boolean }[] = [
   { to: '/system', key: 'nav.system', icon: Settings },
   { to: '/manage', key: 'nav.manage', icon: Video },
   { to: '/watchlist', key: 'nav.watchlist', icon: Users },
+  { to: '/security', key: 'nav.security', icon: ShieldCheck },
   { to: '/users', key: 'nav.users', icon: UserCog, admin: true },
 ]
 
