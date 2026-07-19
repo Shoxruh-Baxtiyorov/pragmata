@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from '@/shared/ui/icons'
 import { Button } from '@/shared/ui'
+import { Logo } from '@/shared/ui/Logo'
 import { cn } from '@/shared/lib/utils'
 import { setLang } from '@/shared/i18n'
 import { useTheme } from '@/shared/hooks/useTheme'
@@ -53,7 +54,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-col border-r border-border-default bg-surface p-4">
-        <div className="mb-6 px-2 text-h3 text-brand">Pragmata AI</div>
+        <Logo size={24} className="mb-6 px-2" />
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map(({ to, key, icon: Icon }) => (
             <NavLink

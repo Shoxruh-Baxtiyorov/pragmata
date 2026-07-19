@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Input } from '@/shared/ui'
+import { Logo } from '@/shared/ui/Logo'
 import { ApiError } from '@/shared/api/client'
 import { useLogin } from '../api/authApi'
 import { authActions } from '../model/authStore'
@@ -42,7 +43,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm p-6">
-        <h1 className="mb-1 text-h2 text-brand">{t('login.title')}</h1>
+        <Logo size={32} className="mb-2" />
         <p className="mb-6 text-label text-text-secondary">
           {mfaStep ? t('login.mfaSubtitle') : t('login.subtitle')}
         </p>
