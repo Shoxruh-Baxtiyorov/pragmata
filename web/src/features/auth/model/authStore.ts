@@ -9,8 +9,8 @@ function emit(): void {
 }
 
 export const authActions = {
-  login(token: string): void {
-    auth.set(token)
+  login(token: string, role = 'user', username = ''): void {
+    auth.set(token, role, username)
     emit()
   },
   logout(): void {
@@ -19,12 +19,19 @@ export const authActions = {
   },
 }
 
+function subscribe(cb: () => void): () => void {
+  listeners.add(cb)
+  return () => listeners.delete(cb)
+}
+
 export function useIsAuthed(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb)
-      return () => listeners.delete(cb)
-    },
-    () => auth.get() !== null,
-  )
+  return useSyncExternalStore(subscribe, () => auth.get() !== null)
+}
+
+export function useIsAdmin(): boolean {
+  return useSyncExternalStore(subscribe, () => auth.role() === 'admin')
+}
+
+export function useUsername(): string {
+  return useSyncExternalStore(subscribe, () => auth.username())
 }

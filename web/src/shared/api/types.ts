@@ -5,10 +5,33 @@
 export interface LoginResponse {
   access_token: string
   token_type: string
+  role: string
+  username: string
 }
 
 export interface MeResponse {
   sub: string
+  username: string
+  role: string
+}
+
+export interface UserOut {
+  id: string
+  username: string
+  role: string
+  is_active: boolean
+  full_name: string | null
+  email: string | null
+  last_login_at: string | null
+  locked: boolean
+}
+
+export interface UserCreate {
+  username: string
+  password: string
+  role: string
+  full_name?: string | null
+  email?: string | null
 }
 
 export interface HourBucket {
