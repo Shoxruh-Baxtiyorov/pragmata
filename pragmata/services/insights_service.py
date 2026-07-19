@@ -55,7 +55,9 @@ def overview() -> OverviewOut:
         by_type = {
             r[0]: r[1]
             for r in s.execute(
-                select(Event.type, func.count()).where(Event.t_start >= since).group_by(Event.type)
+                select(Event.type, func.count())
+                .where(Event.t_start >= since, Event.source == "live")
+                .group_by(Event.type)
             ).all()
         }
         fp = s.execute(
@@ -66,7 +68,7 @@ def overview() -> OverviewOut:
         recent = (
             s.execute(
                 select(Event)
-                .where(Event.t_start >= since, Event.severity == "alert")
+                .where(Event.t_start >= since, Event.severity == "alert", Event.source == "live")
                 .order_by(Event.t_start.desc())
                 .limit(6)
             )
@@ -74,7 +76,11 @@ def overview() -> OverviewOut:
             .all()
         )
         # почасовые бакеты за 24ч
-        rows = s.execute(select(Event.t_start, Event.severity).where(Event.t_start >= since)).all()
+        rows = s.execute(
+            select(Event.t_start, Event.severity).where(
+                Event.t_start >= since, Event.source == "live"
+            )
+        ).all()
 
     buckets: dict[int, dict[str, int]] = {}
     for t_start, severity in rows:
@@ -113,18 +119,22 @@ def system_status() -> SystemOut:
     now = time.time()
 
     with session_factory()() as s:
-        total = s.execute(select(func.count()).select_from(Event)).scalar_one()
+        total = s.execute(
+            select(func.count()).select_from(Event).where(Event.source == "live")
+        ).scalar_one()
         last_by_cam = {
             r[0]: r[1]
             for r in s.execute(
-                select(Event.camera_id, func.max(Event.t_start)).group_by(Event.camera_id)
+                select(Event.camera_id, func.max(Event.t_start))
+                .where(Event.source == "live")
+                .group_by(Event.camera_id)
             ).all()
         }
         cnt_by_cam = {
             r[0]: r[1]
             for r in s.execute(
                 select(Event.camera_id, func.count())
-                .where(Event.t_start >= since)
+                .where(Event.t_start >= since, Event.source == "live")
                 .group_by(Event.camera_id)
             ).all()
         }

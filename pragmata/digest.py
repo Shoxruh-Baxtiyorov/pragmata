@@ -116,13 +116,15 @@ def build_digest_text(
         by_type: dict[str, int] = {
             row[0]: row[1]
             for row in s.execute(
-                select(Event.type, func.count()).where(Event.t_start >= since).group_by(Event.type)
+                select(Event.type, func.count())
+                .where(Event.t_start >= since, Event.source == "live")
+                .group_by(Event.type)
             ).all()
         }
         alerts = (
             s.execute(
                 select(Event)
-                .where(Event.t_start >= since, Event.severity == "alert")
+                .where(Event.t_start >= since, Event.severity == "alert", Event.source == "live")
                 .order_by(Event.t_start.desc())
                 .limit(8)
             )

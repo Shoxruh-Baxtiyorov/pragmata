@@ -44,7 +44,9 @@ def build_report_pdf(hours: float, camera_id: str | None, severity: str | None) 
 
     # акт — про людей, не про сетевые сбои камер
     q = select(Event).where(
-        Event.t_start >= since, Event.type.notin_(["camera_offline", "camera_online"])
+        Event.t_start >= since,
+        Event.source == "live",
+        Event.type.notin_(["camera_offline", "camera_online"]),
     )
     if camera_id:
         q = q.where(Event.camera_id == camera_id)

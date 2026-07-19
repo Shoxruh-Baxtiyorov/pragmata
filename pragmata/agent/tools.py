@@ -229,7 +229,7 @@ class AgentTools:
                 r[0]: r[1]
                 for r in s.execute(
                     select(Event.type, func.count())
-                    .where(Event.t_start >= since)
+                    .where(Event.t_start >= since, Event.source == "live")
                     .group_by(Event.type)
                 ).all()
             }
@@ -237,7 +237,7 @@ class AgentTools:
                 self.cam_names.get(r[0], r[0]): r[1]
                 for r in s.execute(
                     select(Event.camera_id, func.count())
-                    .where(Event.t_start >= since)
+                    .where(Event.t_start >= since, Event.source == "live")
                     .group_by(Event.camera_id)
                 ).all()
             }

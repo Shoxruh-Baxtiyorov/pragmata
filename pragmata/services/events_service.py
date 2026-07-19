@@ -112,8 +112,8 @@ def list_events(
         q = q.where(Event.severity == severity)
     if zone:
         q = q.where(Event.zone == zone)
-    if source:
-        q = q.where(Event.source == source)
+    # по умолчанию — только live; архив/форензику показываем лишь по source=archive
+    q = q.where(Event.source == (source or "live"))
     names = camera_names()
     with session_factory()() as s:
         total = s.execute(select(func.count()).select_from(q.subquery())).scalar_one()
