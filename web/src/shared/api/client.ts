@@ -1,10 +1,22 @@
 const BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8088'
 const TOKEN_KEY = 'soqchi_token'
+const ROLE_KEY = 'soqchi_role'
+const NAME_KEY = 'soqchi_username'
 
 export const auth = {
   get: () => localStorage.getItem(TOKEN_KEY),
-  set: (t: string) => localStorage.setItem(TOKEN_KEY, t),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
+  role: () => localStorage.getItem(ROLE_KEY) ?? '',
+  username: () => localStorage.getItem(NAME_KEY) ?? '',
+  set: (token: string, role = 'user', username = '') => {
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(ROLE_KEY, role)
+    localStorage.setItem(NAME_KEY, username)
+  },
+  clear: () => {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(ROLE_KEY)
+    localStorage.removeItem(NAME_KEY)
+  },
 }
 
 // Мост к роутеру: 401 → logout + redirect (подключается в AppProviders)

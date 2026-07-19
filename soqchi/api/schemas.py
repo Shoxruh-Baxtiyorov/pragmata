@@ -9,12 +9,62 @@ from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
+    # username пуст → break-glass вход по ADMIN_PASSWORD (совместимость + бутстрап)
+    username: str | None = None
     password: str
+    code: str | None = None  # TOTP-код второго фактора (если 2FA включена)
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: str = "admin"
+    username: str = "admin"
+    # True → пароль верный, но нужен TOTP-код: клиент повторяет логин с code
+    mfa_required: bool = False
+
+
+class TotpSetupOut(BaseModel):
+    secret: str  # для ручного ввода, если QR не отсканировать
+    otpauth_uri: str
+    qr_svg: str  # data:image/svg+xml;base64,... — можно сразу в <img src>
+
+
+class TotpCode(BaseModel):
+    code: str
+
+
+class TotpStatus(BaseModel):
+    enabled: bool
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = "user"  # user | admin
+    full_name: str | None = None
+    email: str | None = None
+
+
+class UserOut(BaseModel):
+    id: uuid.UUID
+    username: str
+    role: str
+    is_active: bool
+    full_name: str | None
+    email: str | None
+    last_login_at: datetime | None
+    locked: bool
+
+
+class UserPatch(BaseModel):
+    role: str | None = None
+    full_name: str | None = None
+    is_active: bool | None = None
+
+
+class PasswordChange(BaseModel):
+    new_password: str
 
 
 class ZoneOut(BaseModel):

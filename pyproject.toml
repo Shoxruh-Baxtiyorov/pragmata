@@ -25,6 +25,9 @@ dependencies = [
     "weasyprint>=69.0",
     "insightface>=1.0.1",
     "onnxruntime>=1.27.0",
+    "argon2-cffi>=25.1.0",
+    "pyotp>=2.10.0",
+    "segno>=1.6.6",
 ]
 
 [project.optional-dependencies]

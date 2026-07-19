@@ -171,3 +171,32 @@ class Event(Base):
         Index("ix_events_type_tstart", "type", "t_start"),
         Index("ix_events_severity_tstart", "severity", "t_start"),
     )
+
+
+class User(Base):
+    """Пользователь дашборда. Заводит админ; логин по username (не email).
+
+    Задел под Google 2FA: поля email/totp_secret nullable — заполнятся, когда
+    привяжем внешний вход, без новой миграции. Локаут per-account (в дополнение
+    к IP-throttle): failed_attempts + locked_until.
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # хранится в lower
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(16), default="user")  # user | admin
+    is_active: Mapped[bool] = mapped_column(default=True)
+    full_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # 2FA (TOTP): секрет base32 (Fernet-шифрован), enabled=подтверждён кодом и активен
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    totp_secret: Mapped[str | None] = mapped_column(EncryptedString(255), nullable=True)
+    totp_enabled: Mapped[bool] = mapped_column(default=False)
+    # per-account brute-force
+    failed_attempts: Mapped[int] = mapped_column(default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
