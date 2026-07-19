@@ -1,8 +1,8 @@
-"""JWT-аутентификация Dashboard API: пользователи (login+argon2) + break-glass admin.
+"""JWT-аутентификация Dashboard API: пользователи (login+argon2).
 
-HS256, fail-closed без ключей. Токен несёт sub (id юзера или "admin"), role,
-username. current_principal на каждый запрос проверяет, что реальный юзер не
-деактивирован (мгновенная блокировка без ожидания истечения токена).
+HS256, fail-closed без ключей. Токен несёт только sub (id юзера); role и
+username на каждый запрос берутся из БД — понижение роли или деактивация
+действуют мгновенно, не дожидаясь истечения токена (аудит: revocation lag).
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from soqchi.config import get_settings
 
 ALGO = "HS256"
 TTL_HOURS = 12
-BOOTSTRAP_SUB = "admin"  # вход по ADMIN_PASSWORD (break-glass, без строки в users)
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -58,8 +57,13 @@ def create_token(sub: str, role: str, username: str) -> str:
     )
 
 
-def _assert_active(sub: str) -> None:
-    """Реальный юзер деактивирован/удалён → мгновенный отказ, не ждём exp токена."""
+def ensure_configured() -> None:
+    """Явная fail-closed проверка для роутов, где токен ещё не создаётся."""
+    _secret()
+
+
+def _load_principal(sub: str) -> Principal:
+    """role/username из БД, не из токена: понижение/блокировка действуют сразу."""
     from soqchi.api.deps import session_factory
     from soqchi.db.models import User
 
@@ -71,6 +75,7 @@ def _assert_active(sub: str) -> None:
         user = s.get(User, uid)
     if user is None or not user.is_active:
         raise HTTPException(401, "аккаунт отключён")
+    return Principal(sub=sub, role=user.role, username=user.username)
 
 
 def current_principal(
@@ -86,13 +91,7 @@ def current_principal(
     sub = str(payload.get("sub", ""))
     if not sub:
         raise HTTPException(401, "токен невалиден")
-    if sub != BOOTSTRAP_SUB:
-        _assert_active(sub)
-    return Principal(
-        sub=sub,
-        role=str(payload.get("role", "user")),
-        username=str(payload.get("username", "")),
-    )
+    return _load_principal(sub)
 
 
 def require_auth(p: Principal = Depends(current_principal)) -> str:

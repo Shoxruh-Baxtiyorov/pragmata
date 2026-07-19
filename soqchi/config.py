@@ -21,11 +21,10 @@ class Settings(BaseSettings):
     # обязателен при первом обращении к шифрованию — см. soqchi/core/encryption.py.
     encryption_key: str = ""
     # --- Dashboard API (soqchi.api) ---
-    # Пустой secret/пароль = API-логин отвечает 503 (fail-closed, как encryption)
+    # Пустой secret = API-логин отвечает 503 (fail-closed, как encryption)
     secret_key: str = (
         ""  # JWT HS256; сгенерировать: python -c "import secrets;print(secrets.token_urlsafe(48))"
     )
-    admin_password: str = ""
     site_config: Path = Path("config/dev.yaml")  # откуда API берёт имена камер/зоны
     api_cors_origins: str = (
         "http://localhost:5175,http://127.0.0.1:5175,http://localhost:5173,http://127.0.0.1:5173"

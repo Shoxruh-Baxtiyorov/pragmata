@@ -1,14 +1,11 @@
-"""Авторизация: логин юзера (username+argon2) или break-glass admin по паролю."""
+"""Авторизация: логин юзера (username+argon2), опционально TOTP второй фактор."""
 
 from __future__ import annotations
-
-import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from soqchi.api.schemas import LoginRequest, TokenResponse
-from soqchi.api.security import BOOTSTRAP_SUB, Principal, create_token, current_principal
-from soqchi.config import get_settings
+from soqchi.api.security import Principal, create_token, current_principal, ensure_configured
 from soqchi.core.rate_limit import LoginThrottle
 from soqchi.services import user_service
 
@@ -18,49 +15,38 @@ _throttle = LoginThrottle()
 
 @router.post("/auth/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request) -> TokenResponse:
+    ensure_configured()  # fail-closed: без SECRET_KEY вход выключен (503)
     ip = request.client.host if request.client else "unknown"
     locked = _throttle.locked_for(ip)
     if locked > 0:
         raise HTTPException(429, f"слишком много попыток, подождите {int(locked)} с")
 
     username = (payload.username or "").strip()
-    if username:
-        # обычный пользователь — user_service сам ведёт per-account lockout
-        try:
-            user = user_service.authenticate(username, payload.password)
-        except HTTPException:
-            _throttle.record_failure(ip)
-            raise
-        # 2FA: пароль верный, но нужен TOTP-код второго фактора
-        if user.totp_enabled:
-            if not payload.code:
-                _throttle.reset(ip)  # пароль верный — не копим фейлы за отсутствие кода
-                return TokenResponse(access_token="", mfa_required=True, role="", username="")
-            from soqchi.core import totp
-
-            if not totp.verify(user.totp_secret or "", payload.code):
-                _throttle.record_failure(ip)
-                raise HTTPException(401, "неверный код")
-        _throttle.reset(ip)
-        user_service.mark_login(user.id)
-        return TokenResponse(
-            access_token=create_token(str(user.id), user.role, user.username),
-            role=user.role,
-            username=user.username,
-        )
-
-    # break-glass: пустой username → вход по ADMIN_PASSWORD (бутстрап/совместимость)
-    admin_password = get_settings().admin_password
-    if not admin_password:
-        raise HTTPException(503, "ADMIN_PASSWORD не задан в .env — вход выключен")
-    if not secrets.compare_digest(payload.password, admin_password):
+    if not username:
+        raise HTTPException(401, "неверный логин или пароль")
+    try:
+        user = user_service.authenticate(username, payload.password)
+    except HTTPException:
         _throttle.record_failure(ip)
-        raise HTTPException(401, "неверный пароль")
+        raise
+    # 2FA: пароль верный, но нужен TOTP-код второго фактора.
+    # IP-троттлинг здесь НЕ сбрасываем: сброс позволял обнулять счётчик
+    # между попытками подбора кода (аудит: brute-force второго фактора).
+    if user.totp_enabled:
+        if not payload.code:
+            return TokenResponse(access_token="", mfa_required=True, role="", username="")
+        from soqchi.core import totp
+
+        if not totp.verify_once(user.totp_secret or "", payload.code, str(user.id)):
+            _throttle.record_failure(ip)
+            user_service.record_totp_failure(user.id)
+            raise HTTPException(401, "неверный код")
     _throttle.reset(ip)
+    user_service.mark_login(user.id)
     return TokenResponse(
-        access_token=create_token(BOOTSTRAP_SUB, "admin", "admin"),
-        role="admin",
-        username="admin",
+        access_token=create_token(str(user.id), user.role, user.username),
+        role=user.role,
+        username=user.username,
     )
 
 

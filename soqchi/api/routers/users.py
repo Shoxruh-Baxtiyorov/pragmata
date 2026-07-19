@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута резолвит FastAPI в рантайме
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from soqchi.api.schemas import (
     OkOut,
@@ -20,14 +20,11 @@ from soqchi.api.schemas import (
     UserOut,
     UserPatch,
 )
-from soqchi.api.security import BOOTSTRAP_SUB, Principal, current_principal, require_admin
+from soqchi.api.security import Principal, current_principal, require_admin
 from soqchi.services import user_service as svc
 
 
 def _self_id(p: Principal) -> uuid.UUID:
-    """id текущего юзера; break-glass admin (нет строки в users) → 400."""
-    if p.sub == BOOTSTRAP_SUB:
-        raise HTTPException(400, "break-glass admin не имеет профиля — войдите как пользователь")
     return uuid.UUID(p.sub)
 
 router = APIRouter(prefix="/api/v1", tags=["users"])
@@ -63,9 +60,7 @@ def reset_password(
 def change_own_password(
     payload: PasswordChange, p: Principal = Depends(current_principal)
 ) -> OkOut:
-    if p.sub == BOOTSTRAP_SUB:
-        raise HTTPException(400, "пароль break-glass admin меняется в .env (ADMIN_PASSWORD)")
-    svc.change_password(uuid.UUID(p.sub), payload.new_password)
+    svc.change_password(_self_id(p), payload.new_password)
     return OkOut()
 
 

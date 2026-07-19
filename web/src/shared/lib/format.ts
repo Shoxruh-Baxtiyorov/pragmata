@@ -15,6 +15,9 @@ export type EventType =
   | 'person_exited'
   | 'camera_offline'
   | 'camera_online'
+  | 'watchlist_match'
+  | 'weapon_detected'
+  | 'vehicle_seen'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -29,6 +32,13 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
   person_exited: { ru: 'Человек ушёл', uz: 'Odam ketdi', en: 'Person left' },
   camera_offline: { ru: 'Камера offline', uz: 'Kamera offline', en: 'Camera offline' },
   camera_online: { ru: 'Камера online', uz: 'Kamera online', en: 'Camera online' },
+  watchlist_match: {
+    ru: 'Человек из списка наблюдения',
+    uz: 'Kuzatuv roʻyxatidagi odam',
+    en: 'Person from the watchlist',
+  },
+  weapon_detected: { ru: 'Обнаружено оружие', uz: 'Qurol aniqlandi', en: 'Weapon detected' },
+  vehicle_seen: { ru: 'Транспорт', uz: 'Transport', en: 'Vehicle' },
 }
 
 export function eventLabel(type: string, lang: 'ru' | 'uz' | 'en'): string {

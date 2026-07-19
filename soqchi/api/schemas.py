@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
-    # username пуст → break-glass вход по ADMIN_PASSWORD (совместимость + бутстрап)
+    # бутстрап первого админа — scripts/create_user.py (env-входа больше нет)
     username: str | None = None
     password: str
     code: str | None = None  # TOTP-код второго фактора (если 2FA включена)

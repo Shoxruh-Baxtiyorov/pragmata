@@ -36,3 +36,18 @@ def verify(secret: str, code: str) -> bool:
     if not secret or not code:
         return False
     return pyotp.TOTP(secret).verify(code.strip().replace(" ", ""), valid_window=VALID_WINDOW)
+
+
+# ponytail: in-memory анти-replay, однопроцессный API; при мультипроцессе — в БД
+_last_used: dict[str, str] = {}
+
+
+def verify_once(secret: str, code: str, key: str) -> bool:
+    """verify + защита от повтора: один и тот же код дважды не проходит."""
+    c = code.strip().replace(" ", "")
+    if not verify(secret, c):
+        return False
+    if _last_used.get(key) == c:
+        return False
+    _last_used[key] = c
+    return True

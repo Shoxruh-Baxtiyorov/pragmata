@@ -34,6 +34,9 @@ const TYPES: EventType[] = [
   'person_entered',
   'person_exited',
   'camera_offline',
+  'watchlist_match',
+  'weapon_detected',
+  'vehicle_seen',
 ]
 const SEVERITIES: { value: Severity; key: string }[] = [
   { value: 'alert', key: 'events.sevAlert' },

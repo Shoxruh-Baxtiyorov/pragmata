@@ -59,10 +59,10 @@ def authenticate(username: str, password: str) -> User:
         if not user.is_active:
             raise HTTPException(403, "аккаунт отключён")
 
-        # пароль верный: сбрасываем счётчики, обновляем хеш при устаревших параметрах.
-        # last_login_at НЕ здесь — ставим mark_login() после полного входа (в т.ч. 2FA).
-        user.failed_attempts = 0
-        user.locked_until = None
+        # пароль верный, но счётчики НЕ сбрасываем: при включённой 2FA неверные
+        # коды копятся в failed_attempts, и сброс здесь позволял бы обнулять их
+        # каждым повторным логином (аудит: brute-force кода). Полный сброс —
+        # только в mark_login() после завершённого входа.
         if needs_rehash(user.password_hash):
             user.password_hash = hash_password(password)
         s.commit()
@@ -72,14 +72,31 @@ def authenticate(username: str, password: str) -> User:
 
 
 def mark_login(user_id: uuid.UUID) -> None:
-    """Отметить успешный ПОЛНЫЙ вход (после 2FA, если включена)."""
+    """Отметить успешный ПОЛНЫЙ вход (после 2FA, если включена) + сброс счётчиков."""
     from soqchi.db.models import User
 
     with session_factory()() as s:
         user = s.get(User, user_id)
         if user is not None:
             user.last_login_at = _now()
+            user.failed_attempts = 0
+            user.locked_until = None
             s.commit()
+
+
+def record_totp_failure(user_id: uuid.UUID) -> None:
+    """Неверный TOTP-код бьёт по тому же per-account lockout, что и пароль."""
+    from soqchi.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            return
+        user.failed_attempts += 1
+        if user.failed_attempts >= MAX_FAILED:
+            user.locked_until = _now() + timedelta(minutes=LOCK_MINUTES)
+            user.failed_attempts = 0
+        s.commit()
 
 
 def create_user(payload: UserCreate) -> uuid.UUID:
@@ -88,6 +105,8 @@ def create_user(payload: UserCreate) -> uuid.UUID:
     uname = payload.username.strip().lower()
     if not uname:
         raise HTTPException(422, "username не может быть пустым")
+    if len(payload.password) < 8:
+        raise HTTPException(422, "пароль минимум 8 символов")
     role = payload.role if payload.role in ("user", "admin") else "user"
     with session_factory()() as s:
         exists = s.execute(select(User.id).where(User.username == uname)).first()
@@ -133,6 +152,16 @@ def patch_user(user_id: uuid.UUID, patch: UserPatch) -> None:
         user = s.get(User, user_id)
         if user is None:
             raise HTTPException(404, "нет такого пользователя")
+        demoting = patch.role is not None and patch.role != "admin"
+        deactivating = patch.is_active is False
+        if user.role == "admin" and (demoting or deactivating):
+            others = s.execute(
+                select(func.count())
+                .select_from(User)
+                .where(User.role == "admin", User.is_active.is_(True), User.id != user.id)
+            ).scalar_one()
+            if int(others) == 0:
+                raise HTTPException(409, "нельзя убрать последнего администратора")
         if patch.role is not None:
             if patch.role not in ("user", "admin"):
                 raise HTTPException(422, "role: user | admin")

@@ -85,7 +85,7 @@ Investigation (`investigation.py`): CLIP contrast margin — candidate passes on
 ## Gotchas
 
 **Fail-closed secrets (exact behavior):**
-- `SECRET_KEY` empty → every authed endpoint 503. `ADMIN_PASSWORD` empty → login 503. **No test escape hatch for either** — tests must set them (and `get_settings.cache_clear()` before AND after; the user's real `.env` leaks into tests otherwise, see `tests/test_api.py`).
+- `SECRET_KEY` empty → every authed endpoint 503, **no test escape hatch** — tests must set it (and `get_settings.cache_clear()` before AND after; the user's real `.env` leaks into tests otherwise, see `tests/test_api.py`). Login is DB users only (username+argon2, optional TOTP 2FA); the old `ADMIN_PASSWORD` break-glass path was **removed 2026-07-19 by security audit** — bootstrap the first admin via `scripts/create_user.py`. Roles are read from the DB per request, not from the JWT (instant demotion).
 - `ENCRYPTION_KEY` empty → `RuntimeError` at first use; **`APP_ENV=test` (or `TESTING=1`) escape hatch applies to encryption only**. Losing the key = losing every stored RTSP URL. Fernet instance is `@lru_cache` — key change needs process restart.
 - `LLM_API_KEY` empty is graceful: `/agent/ask` → 501, digest/stats still work. `/find` additionally needs `API_ENABLE_FIND=1` (loads CLIP ~600MB into the API process).
 
