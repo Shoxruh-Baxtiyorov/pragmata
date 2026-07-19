@@ -98,6 +98,7 @@ def list_events(
     zone: str | None,
     limit: int,
     offset: int,
+    source: str | None = None,
 ) -> EventsPage:
     from pragmata.db.models import Event
 
@@ -111,6 +112,8 @@ def list_events(
         q = q.where(Event.severity == severity)
     if zone:
         q = q.where(Event.zone == zone)
+    if source:
+        q = q.where(Event.source == source)
     names = camera_names()
     with session_factory()() as s:
         total = s.execute(select(func.count()).select_from(q.subquery())).scalar_one()

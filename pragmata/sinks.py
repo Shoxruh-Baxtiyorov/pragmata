@@ -111,11 +111,12 @@ class JsonlSink:
 class DbSink:
     """Postgres: события + завершённые треки; кропы через MediaStore."""
 
-    def __init__(self, site_cfg: SiteConfig, media: MediaStore):
+    def __init__(self, site_cfg: SiteConfig, media: MediaStore, source: str = "live"):
         from pragmata.db.session import make_session_factory  # ленивый: engine только при db-синке
 
         self._session_factory = make_session_factory()
         self.media = media
+        self.source = source  # live | archive (ретро-анализ записи)
         self._ensure_site(site_cfg)
 
     def _ensure_site(self, cfg: SiteConfig) -> None:
@@ -146,6 +147,7 @@ class DbSink:
                     duration_s=round(ev.t_end - ev.t_start, 2),
                     frame_path=frame_path,
                     face_path=face_path,
+                    source=self.source,
                     meta=ev.meta,
                 )
             )

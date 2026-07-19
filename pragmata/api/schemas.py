@@ -259,3 +259,15 @@ class PersonPatch(BaseModel):
 class PersonPhotoOut(BaseModel):
     id: uuid.UUID
     url: str
+
+
+class ArchiveJobOut(BaseModel):
+    id: uuid.UUID
+    filename: str
+    camera_id: str
+    recorded_at: datetime
+    status: str  # pending | running | done | error
+    progress: float
+    events_found: int
+    error: str | None
+    created_at: datetime

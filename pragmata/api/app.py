@@ -18,7 +18,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from pragmata.api.middleware import SecurityHeadersMiddleware
-from pragmata.api.routers import agent, auth, cameras, events, insights, users, watchlist
+from pragmata.api.routers import (
+    agent,
+    archive,
+    auth,
+    cameras,
+    events,
+    insights,
+    users,
+    watchlist,
+)
 from pragmata.config import get_settings
 
 app = FastAPI(
@@ -44,6 +53,7 @@ for r in (
     agent.router,
     watchlist.router,
     users.router,
+    archive.router,
 ):
     app.include_router(r)
 

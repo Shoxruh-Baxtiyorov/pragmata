@@ -181,6 +181,9 @@ class Event(Base):
     face_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     clip_path: Mapped[str | None] = mapped_column(String(500), nullable=True)  # неделя 2
     description: Mapped[str | None] = mapped_column(String(2000), nullable=True)  # VLM, неделя 3
+    # live = реальный поток; archive = ретро-анализ записи (форензика) — чтобы не
+    # мешать статистику поста разбором старого архива
+    source: Mapped[str] = mapped_column(String(16), default="live")
     meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -217,6 +220,25 @@ class User(Base):
     failed_attempts: Mapped[int] = mapped_column(default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class ArchiveJob(Base):
+    """Задача ретро-анализа записи (форензика): статус фоновой обработки файла."""
+
+    __tablename__ = "archive_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    filename: Mapped[str] = mapped_column(String(300))
+    file_path: Mapped[str] = mapped_column(String(500))
+    camera_id: Mapped[str] = mapped_column(String(64))  # к какой камере относится запись
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # старт записи
+    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending|running|done|err
+    progress: Mapped[float] = mapped_column(Float, default=0.0)  # 0..1
+    events_found: Mapped[int] = mapped_column(default=0)
+    error: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

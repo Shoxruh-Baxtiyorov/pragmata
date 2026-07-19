@@ -86,11 +86,15 @@ class FileSource(VideoSource):
         loop: bool = False,
         realtime: bool = True,
         stop_check: Callable[[], bool] = lambda: False,
+        base_ts: float | None = None,
     ):
         self.path = str(path)
         self.loop = loop
         self.realtime = realtime
         self._stop_check = stop_check
+        # base_ts — реальное время начала записи (архив/форензика): события лягут
+        # на настоящую дату, а не на «сейчас». None = live-темп от текущих часов.
+        self.base_ts = base_ts
 
     def frames(self) -> Iterator[Frame]:
         cap = cv2.VideoCapture(self.path)
@@ -98,7 +102,7 @@ class FileSource(VideoSource):
             raise RuntimeError(f"cannot open video file: {self.path}")
         fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
         dt = 1.0 / fps
-        t0 = time.time()
+        t0 = self.base_ts if self.base_ts is not None else time.time()
         idx = 0
         try:
             while not self._stop_check():
@@ -125,7 +129,10 @@ def make_source(
     loop: bool = False,
     realtime: bool = True,
     stop_check: Callable[[], bool] = lambda: False,
+    base_ts: float | None = None,
 ) -> VideoSource:
     if Path(url).exists():
-        return FileSource(url, loop=loop, realtime=realtime, stop_check=stop_check)
+        return FileSource(
+            url, loop=loop, realtime=realtime, stop_check=stop_check, base_ts=base_ts
+        )
     return CvSource(url, stop_check=stop_check)

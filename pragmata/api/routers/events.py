@@ -38,11 +38,12 @@ def events(
     type: str | None = None,  # noqa: A002 — имя из контракта API
     severity: str | None = None,
     zone: str | None = None,
+    source: str | None = None,  # live | archive (форензика)
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     _: str = Depends(require_auth),
 ) -> EventsPage:
-    return svc.list_events(hours, camera_id, type, severity, zone, limit, offset)
+    return svc.list_events(hours, camera_id, type, severity, zone, limit, offset, source)
 
 
 @router.get("/events/{event_id}/photo")
