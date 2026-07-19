@@ -109,11 +109,23 @@ export interface Camera {
 export interface Person {
   id: string
   name: string
+  category: string
+  position: string | null
   note: string | null
   photo_url: string | null
+  photo_count: number
   seen_count: number
   watch: boolean
 }
+
+export const PERSON_CATEGORIES = [
+  'employee',
+  'visitor',
+  'contractor',
+  'watchlist',
+  'banned',
+  'other',
+] as const
 
 // CameraIn
 export interface CameraInput {
@@ -142,6 +154,8 @@ export interface PersonCreate {
   track_id: string
   watch?: boolean
   note?: string
+  category?: string
+  position?: string
 }
 
 // StatsOut

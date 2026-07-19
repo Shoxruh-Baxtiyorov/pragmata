@@ -34,8 +34,9 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+async function request<T>(path: string, init?: RequestInit, isForm = false): Promise<T> {
+  // FormData сам ставит Content-Type с boundary — не перебиваем
+  const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' }
   const token = auth.get()
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
@@ -61,6 +62,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  postForm: <T>(path: string, form: FormData) =>
+    request<T>(path, { method: 'POST', body: form }, true),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
