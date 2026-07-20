@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     )
     site_config: Path = Path("config/dev.yaml")  # откуда API берёт имена камер/зоны
     api_cors_origins: str = (
-        "http://localhost:5175,http://127.0.0.1:5175,http://localhost:5173,http://127.0.0.1:5173"
+        "http://localhost:5175,http://127.0.0.1:5175,http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:5176,http://127.0.0.1:5176"  # 5176 = отдельный фронт бэкофиса
     )
     api_enable_find: bool = False  # /find грузит CLIP вторым процессом — включать осознанно
     # Telegram: пустой токен = бот выключен. Алерты уходят ТОЛЬКО в chat_id из
