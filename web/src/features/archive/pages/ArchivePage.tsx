@@ -25,18 +25,28 @@ function AnalyzeForm() {
   const { t } = useTranslation()
   const cams = useCamerasList()
   const analyze = useAnalyzeArchive()
+  const [mode, setMode] = useState<'file' | 'url'>('file')
   const [file, setFile] = useState<File | null>(null)
+  const [url, setUrl] = useState('')
   const [recordedAt, setRecordedAt] = useState('')
   const [cameraId, setCameraId] = useState('')
 
+  const ready = recordedAt && cameraId && (mode === 'file' ? !!file : !!url.trim())
+
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!file || !recordedAt || !cameraId) return
+    if (!ready) return
     analyze.mutate(
-      { file, recorded_at: recordedAt, camera_id: cameraId },
+      {
+        file: mode === 'file' ? file : null,
+        url: mode === 'url' ? url.trim() : undefined,
+        recorded_at: recordedAt,
+        camera_id: cameraId,
+      },
       {
         onSuccess: () => {
           setFile(null)
+          setUrl('')
           setRecordedAt('')
         },
       },
@@ -47,17 +57,45 @@ function AnalyzeForm() {
     <Card className="mb-5 p-5">
       <h2 className="mb-1 text-body font-bold">{t('archive.newTitle')}</h2>
       <p className="mb-4 text-label text-text-secondary">{t('archive.newHint')}</p>
+      <div className="mb-3 flex gap-1">
+        {(['file', 'url'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={
+              mode === m
+                ? 'rounded-button bg-brand-10 px-3 py-1.5 text-label font-semibold text-brand'
+                : 'rounded-button px-3 py-1.5 text-label text-text-secondary hover:bg-bg-secondary'
+            }
+          >
+            {t(m === 'file' ? 'archive.modeFile' : 'archive.modeUrl')}
+          </button>
+        ))}
+      </div>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-label text-text-secondary">{t('archive.file')}</span>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="text-body text-text-secondary file:mr-3 file:rounded-button file:border-0 file:bg-brand-10 file:px-3 file:py-1.5 file:text-brand"
-            />
-          </label>
+          {mode === 'file' ? (
+            <label className="flex flex-col gap-1">
+              <span className="text-label text-text-secondary">{t('archive.file')}</span>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="text-body text-text-secondary file:mr-3 file:rounded-button file:border-0 file:bg-brand-10 file:px-3 file:py-1.5 file:text-brand"
+              />
+            </label>
+          ) : (
+            <label className="flex flex-col gap-1">
+              <span className="text-label text-text-secondary">{t('archive.url')}</span>
+              <Input
+                className="w-80"
+                placeholder="rtsp://…/playback?starttime=…"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+            </label>
+          )}
           <label className="flex flex-col gap-1">
             <span className="text-label text-text-secondary">{t('archive.recordedAt')}</span>
             <Input
@@ -79,11 +117,7 @@ function AnalyzeForm() {
               ))}
             </Select>
           </label>
-          <Button
-            type="submit"
-            loading={analyze.isPending}
-            disabled={!file || !recordedAt || !cameraId}
-          >
+          <Button type="submit" loading={analyze.isPending} disabled={!ready}>
             <Search size={16} /> {t('archive.analyze')}
           </Button>
         </div>

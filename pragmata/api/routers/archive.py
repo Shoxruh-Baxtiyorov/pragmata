@@ -18,20 +18,25 @@ MAX_BYTES = 2 * 1024 * 1024 * 1024  # 2 ГБ на один файл записи
 
 @router.post("/archive/analyze", response_model=dict)
 def analyze(
-    file: UploadFile = File(...),
     recorded_at: str = Form(...),  # ISO-время начала записи, напр. 2026-07-05T02:00:00
     camera_id: str = Form(...),
+    file: UploadFile | None = File(None),
+    url: str | None = Form(None),  # NVR-playback / RTSP/HTTP-поток вместо файла
     _: str = Depends(require_auth),
 ) -> dict[str, str]:
     try:
         started = datetime.fromisoformat(recorded_at)
     except ValueError as err:
         raise HTTPException(422, "recorded_at: ISO-дата, напр. 2026-07-05T02:00") from err
-    data = file.file.read()
-    if len(data) > MAX_BYTES:
-        raise HTTPException(413, "файл больше 2 ГБ — вырежьте нужный интервал")
-    job_id = svc.create_job(file.filename or "recording.mp4", data, started, camera_id)
-    return {"id": str(job_id)}
+    if url and url.strip():
+        return {"id": str(svc.create_job(url.strip(), b"", started, camera_id, url=url.strip()))}
+    if file is not None:
+        data = file.file.read()
+        if len(data) > MAX_BYTES:
+            raise HTTPException(413, "файл больше 2 ГБ — вырежьте нужный интервал")
+        name = file.filename or "recording.mp4"
+        return {"id": str(svc.create_job(name, data, started, camera_id))}
+    raise HTTPException(422, "нужен файл записи или URL потока")
 
 
 @router.get("/archive/jobs", response_model=list[ArchiveJobOut])

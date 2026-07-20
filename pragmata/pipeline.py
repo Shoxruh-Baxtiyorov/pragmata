@@ -72,6 +72,7 @@ class CameraWorker(threading.Thread):
         face_recog: FaceRecognizer | None = None,
         vehicle_watcher: VehicleWatcher | None = None,
         base_ts: float | None = None,
+        force_file: bool = False,
     ):
         super().__init__(name=f"cam-{camera.id}", daemon=True)
         self.camera = camera
@@ -82,6 +83,7 @@ class CameraWorker(threading.Thread):
         self.face_recog = face_recog
         self.vehicle_watcher = vehicle_watcher
         self.base_ts = base_ts  # архив: реальное время начала записи
+        self.force_file = force_file  # архив/NVR: читать URL как конечную запись
         self._last_vehicle = 0.0
         self._last_live = 0.0
         self.detector = detector
@@ -104,6 +106,7 @@ class CameraWorker(threading.Thread):
             realtime=self.realtime,
             stop_check=self.stop_event.is_set,
             base_ts=self.base_ts,
+            force_file=self.force_file,
         )
         interval = 1.0 / max(self.camera.process_fps, 0.1)
         last_processed = 0.0

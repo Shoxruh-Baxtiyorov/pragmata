@@ -107,6 +107,7 @@ def run_archive_job(
         watchlist=matcher,
         face_recog=face,
         base_ts=base_ts,  # события лягут на реальную дату записи
+        force_file=True,  # файл ИЛИ NVR-URL — читаем как конечную запись
     )
 
     total = frame_count(file_path)

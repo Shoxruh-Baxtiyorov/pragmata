@@ -216,6 +216,9 @@ const ru = {
   'archive.status.running': 'Анализ…',
   'archive.status.done': 'Готово',
   'archive.status.error': 'Ошибка',
+  'archive.modeFile': 'Файл',
+  'archive.modeUrl': 'URL / NVR',
+  'archive.url': 'URL потока (RTSP/HTTP)',
 }
 
 const uz: typeof ru = {
@@ -430,6 +433,9 @@ const uz: typeof ru = {
   'archive.status.running': 'Tahlil…',
   'archive.status.done': 'Tayyor',
   'archive.status.error': 'Xato',
+  'archive.modeFile': 'Fayl',
+  'archive.modeUrl': 'URL / NVR',
+  'archive.url': 'Oqim URL (RTSP/HTTP)',
 }
 
 const en: typeof ru = {
@@ -644,6 +650,9 @@ const en: typeof ru = {
   'archive.status.running': 'Analyzing…',
   'archive.status.done': 'Done',
   'archive.status.error': 'Error',
+  'archive.modeFile': 'File',
+  'archive.modeUrl': 'URL / NVR',
+  'archive.url': 'Stream URL (RTSP/HTTP)',
 }
 
 void i18n.use(initReactI18next).init({

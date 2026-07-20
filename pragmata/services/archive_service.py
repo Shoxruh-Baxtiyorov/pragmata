@@ -54,28 +54,37 @@ def _run(job_id: uuid.UUID, file_path: str, base_ts: float, camera_id: str) -> N
 
 
 def create_job(
-    filename: str, data: bytes, recorded_at: datetime, camera_id: str
+    filename: str,
+    data: bytes,
+    recorded_at: datetime,
+    camera_id: str,
+    url: str | None = None,
 ) -> uuid.UUID:
     from pragmata.db.models import ArchiveJob
 
-    if not data:
-        raise HTTPException(422, "пустой файл")
     if not camera_id.strip():
         raise HTTPException(422, "укажите камеру записи")
 
     job_id = uuid.uuid4()
-    root = get_settings().media_dir / "archive"
-    root.mkdir(parents=True, exist_ok=True)
-    safe_name = Path(filename).name or "recording.mp4"
-    path = root / f"{job_id.hex}_{safe_name}"
-    path.write_bytes(data)
+    if url:
+        # NVR-playback / внешний поток: файл не сохраняем, читаем прямо по URL
+        file_path = url
+        display = filename[:120]
+    else:
+        if not data:
+            raise HTTPException(422, "пустой файл")
+        root = get_settings().media_dir / "archive"
+        root.mkdir(parents=True, exist_ok=True)
+        display = Path(filename).name or "recording.mp4"
+        file_path = str(root / f"{job_id.hex}_{display}")
+        Path(file_path).write_bytes(data)
 
     with session_factory()() as s:
         s.add(
             ArchiveJob(
                 id=job_id,
-                filename=safe_name,
-                file_path=str(path),
+                filename=display,
+                file_path=file_path,
                 camera_id=camera_id.strip(),
                 recorded_at=recorded_at,
             )
@@ -84,7 +93,7 @@ def create_job(
 
     threading.Thread(
         target=_run,
-        args=(job_id, str(path), recorded_at.timestamp(), camera_id.strip()),
+        args=(job_id, file_path, recorded_at.timestamp(), camera_id.strip()),
         name=f"archive-{job_id.hex[:8]}",
         daemon=True,
     ).start()

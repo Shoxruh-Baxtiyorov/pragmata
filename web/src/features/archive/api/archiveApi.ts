@@ -21,11 +21,17 @@ export function useArchiveJobs() {
 export function useAnalyzeArchive() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: { file: File; recorded_at: string; camera_id: string }) => {
+    mutationFn: (input: {
+      file?: File | null
+      url?: string
+      recorded_at: string
+      camera_id: string
+    }) => {
       const form = new FormData()
-      form.append('file', input.file)
       form.append('recorded_at', input.recorded_at)
       form.append('camera_id', input.camera_id)
+      if (input.url) form.append('url', input.url)
+      else if (input.file) form.append('file', input.file)
       return api.postForm('/api/v1/archive/analyze', form)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['archiveJobs'] }),

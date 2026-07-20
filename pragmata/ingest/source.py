@@ -130,8 +130,11 @@ def make_source(
     realtime: bool = True,
     stop_check: Callable[[], bool] = lambda: False,
     base_ts: float | None = None,
+    force_file: bool = False,
 ) -> VideoSource:
-    if Path(url).exists():
+    # force_file — конечное чтение до конца потока (архив/NVR-playback: и файл, и
+    # RTSP/HTTP-URL читаем как запись, а не как вечно-живую камеру с реконнектом)
+    if force_file or Path(url).exists():
         return FileSource(
             url, loop=loop, realtime=realtime, stop_check=stop_check, base_ts=base_ts
         )
