@@ -173,6 +173,24 @@ TOOL_SPECS: list[dict[str, Any]] = [
     },
 ]
 
+# severity-значения, которые локальные модели ошибочно шлют в поле type
+_SEVERITY_WORDS = {"alert", "warn", "warning", "info", "critical", "тревога"}
+
+
+def _coerce_type_severity(
+    type_: str | None, severity: str | None
+) -> tuple[str | None, str | None]:
+    """type="alert" — частая ошибка модели: alert это severity, не тип события.
+
+    Такой фильтр по несуществующему типу вернул бы пусто, и агент ответил бы
+    «ничего не найдено». Переносим severity-слово из type в severity.
+    """
+    if type_ and type_.lower() in _SEVERITY_WORDS:
+        word = type_.lower()
+        severity = severity or ("warning" if word == "warn" else word)
+        type_ = None
+    return type_, severity
+
 
 class AgentTools:
     """Реализации инструментов, привязанные к БД/конфигу/эмбеддеру."""
@@ -251,6 +269,7 @@ class AgentTools:
     ) -> list[dict[str, Any]]:
         from pragmata.db.models import Event
 
+        type, severity = _coerce_type_severity(type, severity)
         start, end = self._window(hours, date, from_time, to_time)
         q = select(Event).where(Event.t_start >= start)
         if end is not None:

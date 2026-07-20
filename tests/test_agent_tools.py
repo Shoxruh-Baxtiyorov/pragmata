@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from pragmata.agent.tools import TOOL_SPECS, AgentTools
+from pragmata.agent.tools import TOOL_SPECS, AgentTools, _coerce_type_severity
 
 
 def test_tool_specs_are_valid_json() -> None:
@@ -35,3 +35,15 @@ def test_parse_inline_tool_call() -> None:
     assert parse_inline_tool_call('{"name": "camera_status"}') == ("camera_status", {})
     assert parse_inline_tool_call("Обычный ответ без JSON") is None
     assert parse_inline_tool_call('в зоне было {"people": 2} человека') is None  # не tool-call
+
+
+def test_coerce_type_severity() -> None:
+    # модель путает: severity-слово прилетает в type → переносим в severity
+    assert _coerce_type_severity("alert", None) == (None, "alert")
+    assert _coerce_type_severity("warn", None) == (None, "warning")  # DB хранит "warning"
+    assert _coerce_type_severity("тревога", None) == (None, "тревога")
+    # явный type события — не трогаем
+    assert _coerce_type_severity("weapon_detected", None) == ("weapon_detected", None)
+    # severity уже задан — type-слово не перетирает его
+    assert _coerce_type_severity("alert", "info") == (None, "info")
+    assert _coerce_type_severity(None, "alert") == (None, "alert")
