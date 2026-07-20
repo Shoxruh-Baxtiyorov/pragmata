@@ -23,15 +23,29 @@ TOOL_SPECS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "search_events",
-            "description": "События видеонаблюдения с фильтрами. Время — за последние N часов.",
+            "description": (
+                "События видеонаблюдения с фильтрами и временем. По умолчанию — за N "
+                "часов. Для КОНКРЕТНОЙ даты используй date='YYYY-MM-DD' (весь день); "
+                "для точного интервала — from_time/to_time (ISO, напр. '2026-07-05T02:00'). "
+                "Возвращает время, камеру, тип, описание с кадров, фото и клип каждого события."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "hours": {
                         "type": "number",
-                        "description": "глубина поиска в часах",
+                        "description": "глубина поиска в часах (если дата не задана)",
                         "default": 24,
                     },
+                    "date": {
+                        "type": "string",
+                        "description": "конкретный день YYYY-MM-DD (весь день)",
+                    },
+                    "from_time": {
+                        "type": "string",
+                        "description": "начало интервала ISO, напр. 2026-07-05T02:00",
+                    },
+                    "to_time": {"type": "string", "description": "конец интервала ISO"},
                     "camera_id": {"type": "string", "description": "id камеры (опционально)"},
                     "type": {
                         "type": "string",
@@ -41,6 +55,10 @@ TOOL_SPECS: list[dict[str, Any]] = [
                             "zone_intrusion",
                             "loitering",
                             "after_hours_presence",
+                            "weapon_detected",
+                            "vehicle_seen",
+                            "watchlist_match",
+                            "person_recognized",
                             "camera_offline",
                             "camera_online",
                         ],
@@ -57,11 +75,15 @@ TOOL_SPECS: list[dict[str, Any]] = [
         "function": {
             "name": "stats",
             "description": (
-                "Сводные цифры за период: посетители, тревоги, разбивка по типам и камерам."
+                "Сводные цифры за период: посетители, тревоги, разбивка по типам и камерам. "
+                "Для конкретного дня — date='YYYY-MM-DD'."
             ),
             "parameters": {
                 "type": "object",
-                "properties": {"hours": {"type": "number", "default": 24}},
+                "properties": {
+                    "hours": {"type": "number", "default": 24},
+                    "date": {"type": "string", "description": "конкретный день YYYY-MM-DD"},
+                },
             },
         },
     },
@@ -168,7 +190,41 @@ class AgentTools:
         self.embedder = embedder
 
     def _t(self, dt: datetime) -> str:
-        return dt.astimezone(self.tz).strftime("%d.%m %H:%M:%S")
+        return dt.astimezone(self.tz).strftime("%d.%m.%Y %H:%M:%S")
+
+    def _parse_dt(self, s: str | None) -> datetime | None:
+        if not s:
+            return None
+        try:
+            d = datetime.fromisoformat(s)
+        except (ValueError, TypeError):
+            return None
+        return (d.replace(tzinfo=self.tz) if d.tzinfo is None else d).astimezone(UTC)
+
+    def _window(
+        self,
+        hours: float,
+        date: str | None = None,
+        from_time: str | None = None,
+        to_time: str | None = None,
+    ) -> tuple[datetime, datetime | None]:
+        """Окно поиска (start_utc, end_utc|None). Приоритет: from/to → date → hours.
+
+        date — конкретный день 'YYYY-MM-DD' (весь день в tz объекта);
+        from_time/to_time — точный диапазон (ISO, tz объекта).
+        """
+        start = self._parse_dt(from_time)
+        end = self._parse_dt(to_time)
+        if start or end:
+            return start or (datetime.now(UTC) - timedelta(days=3650)), end
+        if date:
+            day = self._parse_dt(date)
+            if day is not None:
+                local = day.astimezone(self.tz).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                return local.astimezone(UTC), (local + timedelta(days=1)).astimezone(UTC)
+        return datetime.now(UTC) - timedelta(hours=hours), None
 
     def call(self, name: str, args: dict[str, Any]) -> Any:
         handler = getattr(self, name, None)
@@ -189,11 +245,16 @@ class AgentTools:
         severity: str | None = None,
         zone: str | None = None,
         limit: int = 20,
+        date: str | None = None,
+        from_time: str | None = None,
+        to_time: str | None = None,
     ) -> list[dict[str, Any]]:
         from pragmata.db.models import Event
 
-        since = datetime.now(UTC) - timedelta(hours=hours)
-        q = select(Event).where(Event.t_start >= since)
+        start, end = self._window(hours, date, from_time, to_time)
+        q = select(Event).where(Event.t_start >= start)
+        if end is not None:
+            q = q.where(Event.t_start < end)
         if camera_id:
             q = q.where(Event.camera_id == camera_id)
         if type:
@@ -220,31 +281,31 @@ class AgentTools:
             for ev in rows
         ]
 
-    def stats(self, hours: float = 24) -> dict[str, Any]:
+    def stats(self, hours: float = 24, date: str | None = None) -> dict[str, Any]:
         from pragmata.db.models import Event, Feedback
 
-        since = datetime.now(UTC) - timedelta(hours=hours)
+        start, end = self._window(hours, date)
+        conds = [Event.t_start >= start, Event.source == "live"]
+        if end is not None:
+            conds.append(Event.t_start < end)
+        fp_conds = [Feedback.created_at >= start, Feedback.verdict == "false_positive"]
+        if end is not None:
+            fp_conds.append(Feedback.created_at < end)
         with self.sf() as s:
             by_type = {
                 r[0]: r[1]
                 for r in s.execute(
-                    select(Event.type, func.count())
-                    .where(Event.t_start >= since, Event.source == "live")
-                    .group_by(Event.type)
+                    select(Event.type, func.count()).where(*conds).group_by(Event.type)
                 ).all()
             }
             by_camera = {
                 self.cam_names.get(r[0], r[0]): r[1]
                 for r in s.execute(
-                    select(Event.camera_id, func.count())
-                    .where(Event.t_start >= since, Event.source == "live")
-                    .group_by(Event.camera_id)
+                    select(Event.camera_id, func.count()).where(*conds).group_by(Event.camera_id)
                 ).all()
             }
             fp = s.execute(
-                select(func.count())
-                .select_from(Feedback)
-                .where(Feedback.created_at >= since, Feedback.verdict == "false_positive")
+                select(func.count()).select_from(Feedback).where(*fp_conds)
             ).scalar_one()
         return {
             "hours": hours,
