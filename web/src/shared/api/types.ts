@@ -75,6 +75,7 @@ export interface EventOut {
   duration_s: number
   description: string | null
   people_in_zone: number | null
+  person: string | null
   photo_url: string | null
   face_url: string | null
   clip_url: string | null

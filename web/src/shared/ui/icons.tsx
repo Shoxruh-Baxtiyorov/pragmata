@@ -100,6 +100,7 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   camera_offline: CameraOff,
   camera_online: Camera,
   watchlist_match: UserSearch,
+  person_recognized: UserRound,
   weapon_detected: Swords,
   vehicle_seen: Car,
 }

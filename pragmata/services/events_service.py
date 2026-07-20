@@ -84,6 +84,7 @@ def _event_out(ev: Any, names: dict[str, str]) -> EventOut:
         duration_s=ev.duration_s,
         description=ev.description,
         people_in_zone=ev.meta.get("people_in_zone"),
+        person=ev.meta.get("person"),
         photo_url=f"/api/v1/events/{ev.id}/photo" if ev.frame_path else None,
         face_url=f"/api/v1/events/{ev.id}/face" if ev.face_path else None,
         clip_url=f"/api/v1/events/{ev.id}/clip" if ev.clip_path else None,

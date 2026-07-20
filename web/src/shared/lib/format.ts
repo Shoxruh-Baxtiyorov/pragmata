@@ -16,6 +16,7 @@ export type EventType =
   | 'camera_offline'
   | 'camera_online'
   | 'watchlist_match'
+  | 'person_recognized'
   | 'weapon_detected'
   | 'vehicle_seen'
 
@@ -37,6 +38,7 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     uz: 'Kuzatuv roʻyxatidagi odam',
     en: 'Person from the watchlist',
   },
+  person_recognized: { ru: 'Распознан', uz: 'Aniqlandi', en: 'Recognized' },
   weapon_detected: { ru: 'Обнаружено оружие', uz: 'Qurol aniqlandi', en: 'Weapon detected' },
   vehicle_seen: { ru: 'Транспорт', uz: 'Transport', en: 'Vehicle' },
 }

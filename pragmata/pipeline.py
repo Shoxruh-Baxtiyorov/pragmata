@@ -204,15 +204,16 @@ class CameraWorker(threading.Thread):
             hit = self.watchlist.match(st.clip_emb, st.face_emb)
             if hit is not None:
                 st.person_id, st.person_name, st.person_watch = hit
-                if st.person_watch:
-                    ev = RuleEvent(
-                        "watchlist_match",
-                        self.camera.id,
-                        st.first_ts,
-                        st.last_ts,
-                        track=st,
-                        meta={"person": st.person_name, "person_id": st.person_id},
-                    )
-                    ev.frame = st.best_frame
-                    ev.others = []
-                    self.sink.emit_event(ev)
+                meta = {"person": st.person_name, "person_id": st.person_id}
+                # watch=true → тревога; известный (сотрудник) → info-лог «кто был»
+                ev = RuleEvent(
+                    "watchlist_match" if st.person_watch else "person_recognized",
+                    self.camera.id,
+                    st.first_ts,
+                    st.last_ts,
+                    track=st,
+                    meta=meta,
+                )
+                ev.frame = st.best_frame
+                ev.others = []
+                self.sink.emit_event(ev)

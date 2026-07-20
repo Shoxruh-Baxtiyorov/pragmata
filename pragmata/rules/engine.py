@@ -22,6 +22,7 @@ SEVERITY = {
     "camera_offline": "alert",
     "camera_online": "info",
     "watchlist_match": "alert",
+    "person_recognized": "info",
     "weapon_detected": "alert",
     "vehicle_seen": "info",
 }

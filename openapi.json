@@ -448,6 +448,17 @@
             ],
             "title": "People In Zone"
           },
+          "person": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person"
+          },
           "photo_url": {
             "anyOf": [
               {
@@ -501,6 +512,7 @@
           "duration_s",
           "description",
           "people_in_zone",
+          "person",
           "photo_url",
           "face_url",
           "clip_url"

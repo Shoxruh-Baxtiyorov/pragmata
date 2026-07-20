@@ -11,6 +11,7 @@ EVENT_TITLES = {
     "camera_offline": "📵 Камера недоступна",
     "camera_online": "✅ Камера снова в сети",
     "watchlist_match": "🔴 Человек из списка наблюдения",
+    "person_recognized": "👤 Распознан известный человек",
     "weapon_detected": "🔫 Обнаружено оружие",
     "vehicle_seen": "🚗 Транспорт",
 }

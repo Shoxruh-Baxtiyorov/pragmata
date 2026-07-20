@@ -127,6 +127,7 @@ class EventOut(BaseModel):
     duration_s: float
     description: str | None
     people_in_zone: int | None
+    person: str | None  # имя распознанного человека (watchlist_match / person_recognized)
     photo_url: str | None
     face_url: str | None
     clip_url: str | None

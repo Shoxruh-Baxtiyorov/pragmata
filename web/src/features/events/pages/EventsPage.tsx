@@ -36,6 +36,7 @@ const TYPES: EventType[] = [
   'person_exited',
   'camera_offline',
   'watchlist_match',
+  'person_recognized',
   'weapon_detected',
   'vehicle_seen',
 ]

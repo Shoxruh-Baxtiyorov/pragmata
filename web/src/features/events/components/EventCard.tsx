@@ -34,6 +34,9 @@ export function EventCard({ event, onClick }: { event: EventOut; onClick: () => 
           <span className="truncate text-body font-semibold text-text-primary">
             {eventLabel(event.type, lang)}
           </span>
+          {event.person ? (
+            <span className="truncate text-body font-semibold text-brand">· {event.person}</span>
+          ) : null}
           {event.people_in_zone && event.people_in_zone > 1 ? (
             <Badge tone={severityTone[event.severity as Severity]} className="ml-1 px-2 py-0.5">
               <Users size={16} />
