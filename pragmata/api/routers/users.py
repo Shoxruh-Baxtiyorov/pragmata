@@ -20,7 +20,7 @@ from pragmata.api.schemas import (
     UserOut,
     UserPatch,
 )
-from pragmata.api.security import Principal, current_principal, require_admin
+from pragmata.api.security import Principal, current_principal, require_backoffice
 from pragmata.services import user_service as svc
 
 
@@ -31,18 +31,18 @@ router = APIRouter(prefix="/api/v1", tags=["users"])
 
 
 @router.get("/users", response_model=list[UserOut])
-def list_users(_: Principal = Depends(require_admin)) -> list[UserOut]:
+def list_users(_: Principal = Depends(require_backoffice)) -> list[UserOut]:
     return svc.list_users()
 
 
 @router.post("/users", response_model=dict)
-def create_user(payload: UserCreate, _: Principal = Depends(require_admin)) -> dict[str, str]:
+def create_user(payload: UserCreate, _: Principal = Depends(require_backoffice)) -> dict[str, str]:
     return {"id": str(svc.create_user(payload))}
 
 
 @router.patch("/users/{user_id}", response_model=OkOut)
 def patch_user(
-    user_id: uuid.UUID, payload: UserPatch, _: Principal = Depends(require_admin)
+    user_id: uuid.UUID, payload: UserPatch, _: Principal = Depends(require_backoffice)
 ) -> OkOut:
     svc.patch_user(user_id, payload)
     return OkOut()
@@ -50,7 +50,7 @@ def patch_user(
 
 @router.post("/users/{user_id}/password", response_model=OkOut)
 def reset_password(
-    user_id: uuid.UUID, payload: PasswordChange, _: Principal = Depends(require_admin)
+    user_id: uuid.UUID, payload: PasswordChange, _: Principal = Depends(require_backoffice)
 ) -> OkOut:
     svc.change_password(user_id, payload.new_password)
     return OkOut()

@@ -272,3 +272,34 @@ class ArchiveJobOut(BaseModel):
     events_found: int
     error: str | None
     created_at: datetime
+
+
+# --- Бэкофис (админ-панель под require_backoffice) ---------------------------
+
+
+class SiteSettingsOut(BaseModel):
+    name: str
+    timezone: str
+    working_hours: dict[str, object] | None  # {days, open, close} | null = after_hours off
+    digest_time: str
+
+
+class SiteSettingsPatch(BaseModel):
+    name: str | None = None
+    timezone: str | None = None
+    working_hours: dict[str, object] | None = None  # {} → отключить after_hours
+    digest_time: str | None = None
+
+
+class BackofficeOverview(BaseModel):
+    users_total: int
+    users_active: int
+    admins: int
+    users_with_2fa: int
+    users_locked: int
+    cameras_total: int
+    cameras_enabled: int
+    persons_total: int
+    events_today: int  # live-события за текущие сутки объекта
+    llm_model: str
+    llm_enabled: bool

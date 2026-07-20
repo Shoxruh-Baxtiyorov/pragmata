@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse  # noqa: TC002 — FastAPI резолвит return-type в рантайме
 
 from pragmata.api.schemas import CameraIn, CameraOut, CameraPatch, OkOut, ZoneIn
-from pragmata.api.security import require_auth
+from pragmata.api.security import require_auth, require_backoffice
 from pragmata.services import config_service as cfgsvc
 from pragmata.services import events_service as svc
 
@@ -26,30 +26,32 @@ def snapshot(camera_id: str, _: str = Depends(require_auth)) -> FileResponse:
 
 
 @router.post("/cameras", response_model=OkOut)
-def create(payload: CameraIn, _: str = Depends(require_auth)) -> OkOut:
+def create(payload: CameraIn, _: object = Depends(require_backoffice)) -> OkOut:
     cfgsvc.create_camera(payload)
     return OkOut()
 
 
 @router.patch("/cameras/{camera_id}", response_model=OkOut)
-def patch(camera_id: str, payload: CameraPatch, _: str = Depends(require_auth)) -> OkOut:
+def patch(camera_id: str, payload: CameraPatch, _: object = Depends(require_backoffice)) -> OkOut:
     cfgsvc.patch_camera(camera_id, payload)
     return OkOut()
 
 
 @router.delete("/cameras/{camera_id}", response_model=OkOut)
-def remove(camera_id: str, _: str = Depends(require_auth)) -> OkOut:
+def remove(camera_id: str, _: object = Depends(require_backoffice)) -> OkOut:
     cfgsvc.delete_camera(camera_id)
     return OkOut()
 
 
 @router.post("/cameras/{camera_id}/zones", response_model=dict)
-def add_zone(camera_id: str, payload: ZoneIn, _: str = Depends(require_auth)) -> dict[str, str]:
+def add_zone(
+    camera_id: str, payload: ZoneIn, _: object = Depends(require_backoffice)
+) -> dict[str, str]:
     zid = cfgsvc.add_zone(camera_id, payload)
     return {"id": str(zid)}
 
 
 @router.delete("/zones/{zone_id}", response_model=OkOut)
-def delete_zone(zone_id: uuid.UUID, _: str = Depends(require_auth)) -> OkOut:
+def delete_zone(zone_id: uuid.UUID, _: object = Depends(require_backoffice)) -> OkOut:
     cfgsvc.delete_zone(zone_id)
     return OkOut()

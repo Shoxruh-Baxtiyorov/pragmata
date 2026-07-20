@@ -258,3 +258,34 @@ def disable_totp(user_id: uuid.UUID, code: str) -> None:
         user.totp_enabled = False
         user.totp_secret = None
         s.commit()
+
+
+# --- админ-восстановление (бэкофис): без кода, только под require_backoffice ----
+
+
+def admin_reset_totp(user_id: uuid.UUID) -> None:
+    """Снять 2FA без кода — восстановление, когда юзер потерял аутентификатор.
+    Доступно ТОЛЬКО из бэкофиса (require_backoffice), не self-service.
+    """
+    from pragmata.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            raise HTTPException(404, "нет такого пользователя")
+        user.totp_enabled = False
+        user.totp_secret = None
+        s.commit()
+
+
+def unlock_user(user_id: uuid.UUID) -> None:
+    """Снять brute-force локаут: обнулить счётчик попыток и locked_until."""
+    from pragmata.db.models import User
+
+    with session_factory()() as s:
+        user = s.get(User, user_id)
+        if user is None:
+            raise HTTPException(404, "нет такого пользователя")
+        user.failed_attempts = 0
+        user.locked_until = None
+        s.commit()

@@ -61,12 +61,20 @@ class Settings(BaseSettings):
     # Калибровка 2026-07-14: реальные совпадения ≥ +0.033 (dress/hat/shirt),
     # негации и «почти похожие» ≤ +0.030 → порог между ними. Выше = точнее, ниже = полнее.
     find_min_margin: float = 0.032
+    # Бэкофис (по логике Iqbola): доступ к /backoffice/* — не просто роль admin, а
+    # отдельный allowlist имён. Пустой список = бэкофис закрыт для всех (secure
+    # default). Имена через запятую, регистр не важен: "admin,security_head".
+    backoffice_users: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def allowed_chat_ids(self) -> set[int]:
         return {int(x) for x in self.telegram_chat_ids.split(",") if x.strip()}
+
+    @property
+    def backoffice_usernames(self) -> set[str]:
+        return {x.strip().lower() for x in self.backoffice_users.split(",") if x.strip()}
 
 
 @lru_cache

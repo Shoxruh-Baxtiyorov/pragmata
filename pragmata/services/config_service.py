@@ -11,7 +11,7 @@ from pragmata.api.deps import session_factory
 from pragmata.db.config_store import bump_config_version
 
 if TYPE_CHECKING:
-    from pragmata.api.schemas import CameraIn, CameraPatch, ZoneIn
+    from pragmata.api.schemas import CameraIn, CameraPatch, SiteSettingsPatch, ZoneIn
 
 
 def _bump() -> None:
@@ -131,3 +131,43 @@ def delete_zone(zone_id: uuid.UUID) -> None:
         s.delete(z)
         s.commit()
     _bump()
+
+
+# --- настройки объекта (бэкофис): имя, tz, рабочие часы, время дайджеста -------
+
+
+def get_site_settings() -> dict[str, object]:
+    from pragmata.db.models import Site
+
+    with session_factory()() as s:
+        site = s.get(Site, 1)
+        if site is None:
+            raise HTTPException(404, "объект не сконфигурирован")
+        return {
+            "name": site.name,
+            "timezone": site.timezone,
+            "working_hours": site.working_hours,
+            "digest_time": site.digest_time,
+        }
+
+
+def patch_site_settings(patch: SiteSettingsPatch) -> dict[str, object]:
+    """Частичное обновление настроек объекта. Любая правка bump'ает конфиг."""
+    from pragmata.db.models import Site
+
+    with session_factory()() as s:
+        site = s.get(Site, 1)
+        if site is None:
+            raise HTTPException(404, "объект не сконфигурирован")
+        if patch.name is not None:
+            site.name = patch.name
+        if patch.timezone is not None:
+            site.timezone = patch.timezone
+        if patch.digest_time is not None:
+            site.digest_time = patch.digest_time
+        # working_hours: {} или null → отключить after_hours; иначе {days, open, close}
+        if patch.working_hours is not None:
+            site.working_hours = patch.working_hours or None
+        s.commit()
+    _bump()
+    return get_site_settings()

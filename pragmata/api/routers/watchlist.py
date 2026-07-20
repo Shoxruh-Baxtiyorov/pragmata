@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse  # noqa: TC002 — FastAPI резол
 
 from pragmata.api.deps import safe_file, session_factory
 from pragmata.api.schemas import OkOut, PersonCreate, PersonOut, PersonPatch, PersonPhotoOut
-from pragmata.api.security import require_auth
+from pragmata.api.security import require_auth, require_backoffice
 from pragmata.config import get_settings
 from pragmata.services import watchlist_service as svc
 
@@ -25,7 +25,7 @@ def persons(category: str | None = None, _: str = Depends(require_auth)) -> list
 
 
 @router.post("/persons", response_model=dict)
-def create(payload: PersonCreate, _: str = Depends(require_auth)) -> dict[str, str]:
+def create(payload: PersonCreate, _: object = Depends(require_backoffice)) -> dict[str, str]:
     return {"id": str(svc.create_person(payload))}
 
 
@@ -37,7 +37,7 @@ def enroll(
     note: str | None = Form(None),
     watch: bool = Form(False),
     files: list[UploadFile] = File(...),
-    _: str = Depends(require_auth),
+    _: object = Depends(require_backoffice),
 ) -> dict[str, str]:
     images = [f.file.read() for f in files[:MAX_PHOTOS]]
     pid = svc.enroll_person(name, category, position, note, watch, images)
@@ -45,13 +45,15 @@ def enroll(
 
 
 @router.patch("/persons/{person_id}", response_model=OkOut)
-def patch(person_id: uuid.UUID, payload: PersonPatch, _: str = Depends(require_auth)) -> OkOut:
+def patch(
+    person_id: uuid.UUID, payload: PersonPatch, _: object = Depends(require_backoffice)
+) -> OkOut:
     svc.patch_person(person_id, payload)
     return OkOut()
 
 
 @router.delete("/persons/{person_id}", response_model=OkOut)
-def remove(person_id: uuid.UUID, _: str = Depends(require_auth)) -> OkOut:
+def remove(person_id: uuid.UUID, _: object = Depends(require_backoffice)) -> OkOut:
     svc.delete_person(person_id)
     return OkOut()
 
@@ -65,14 +67,14 @@ def photos(person_id: uuid.UUID, _: str = Depends(require_auth)) -> list[PersonP
 def add_photos(
     person_id: uuid.UUID,
     files: list[UploadFile] = File(...),
-    _: str = Depends(require_auth),
+    _: object = Depends(require_backoffice),
 ) -> dict[str, int]:
     images = [f.file.read() for f in files[:MAX_PHOTOS]]
     return {"added": svc.add_photos(person_id, images)}
 
 
 @router.delete("/persons/photos/{photo_id}", response_model=OkOut)
-def delete_photo(photo_id: uuid.UUID, _: str = Depends(require_auth)) -> OkOut:
+def delete_photo(photo_id: uuid.UUID, _: object = Depends(require_backoffice)) -> OkOut:
     svc.delete_photo(photo_id)
     return OkOut()
 

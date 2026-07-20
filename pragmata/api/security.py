@@ -103,3 +103,16 @@ def require_admin(p: Principal = Depends(current_principal)) -> Principal:
     if not p.is_admin:
         raise HTTPException(403, "нужны права администратора")
     return p
+
+
+def require_backoffice(p: Principal = Depends(current_principal)) -> Principal:
+    """Гейт бэкофиса (по логике Iqbola): роли admin МАЛО — юзер должен быть в
+    отдельном allowlist BACKOFFICE_USERS. Пустой allowlist = бэкофис закрыт для
+    всех (secure default: доступ выдаётся явно, а не по умолчанию всем админам).
+    """
+    if not p.is_admin:
+        raise HTTPException(403, "нужны права администратора")
+    allow = get_settings().backoffice_usernames
+    if p.username.lower() not in allow:
+        raise HTTPException(403, "доступ к бэкофису не выдан (нет в BACKOFFICE_USERS)")
+    return p

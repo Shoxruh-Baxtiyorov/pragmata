@@ -22,6 +22,7 @@ from pragmata.api.routers import (
     agent,
     archive,
     auth,
+    backoffice,
     cameras,
     events,
     insights,
@@ -54,6 +55,7 @@ for r in (
     watchlist.router,
     users.router,
     archive.router,
+    backoffice.router,
 ):
     app.include_router(r)
 
