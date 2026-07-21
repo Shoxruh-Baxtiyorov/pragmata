@@ -78,6 +78,22 @@ def _load_principal(sub: str) -> Principal:
     return Principal(sub=sub, role=user.role, username=user.username)
 
 
+def peek_token(header: str | None) -> tuple[str | None, str]:
+    """(sub, username) из Bearer-заголовка БЕЗ похода в БД и без исключений.
+
+    Для аудита: middleware не должен ронять запрос и не может позволить себе
+    запрос к БД на каждый вызов. Невалидный/отсутствующий токен → anonymous.
+    """
+    if not header or not header.lower().startswith("bearer "):
+        return None, "anonymous"
+    try:
+        payload = jwt.decode(header[7:].strip(), get_settings().secret_key, algorithms=[ALGO])
+    except (jwt.PyJWTError, ValueError):
+        return None, "anonymous"
+    sub = str(payload.get("sub") or "") or None
+    return sub, str(payload.get("username") or "anonymous")
+
+
 def current_principal(
     cred: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> Principal:

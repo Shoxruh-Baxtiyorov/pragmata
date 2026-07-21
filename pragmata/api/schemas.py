@@ -291,6 +291,25 @@ class SiteSettingsPatch(BaseModel):
     digest_time: str | None = None
 
 
+class NvrPlaybackIn(BaseModel):
+    """Разбор архива прямо с регистратора: камера + интервал вместо ссылки."""
+
+    camera_id: str
+    from_time: datetime
+    to_time: datetime
+    brand: str | None = None  # hikvision | dahua; None = определить по адресу камеры
+
+
+class AuditEntryOut(BaseModel):
+    id: uuid.UUID
+    ts: datetime
+    actor: str
+    method: str
+    path: str
+    status_code: int
+    ip: str | None
+
+
 class BackofficeOverview(BaseModel):
     users_total: int
     users_active: int

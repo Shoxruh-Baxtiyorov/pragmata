@@ -103,6 +103,58 @@
         "title": "ArchiveJobOut",
         "type": "object"
       },
+      "AuditEntryOut": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "status_code": {
+            "title": "Status Code",
+            "type": "integer"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "actor",
+          "method",
+          "path",
+          "status_code",
+          "ip"
+        ],
+        "title": "AuditEntryOut",
+        "type": "object"
+      },
       "BackofficeOverview": {
         "properties": {
           "admins": {
@@ -774,6 +826,43 @@
           "caption"
         ],
         "title": "MediaEvidence",
+        "type": "object"
+      },
+      "NvrPlaybackIn": {
+        "description": "Разбор архива прямо с регистратора: камера + интервал вместо ссылки.",
+        "properties": {
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "camera_id": {
+            "title": "Camera Id",
+            "type": "string"
+          },
+          "from_time": {
+            "format": "date-time",
+            "title": "From Time",
+            "type": "string"
+          },
+          "to_time": {
+            "format": "date-time",
+            "title": "To Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "camera_id",
+          "from_time",
+          "to_time"
+        ],
+        "title": "NvrPlaybackIn",
         "type": "object"
       },
       "OkOut": {
@@ -1943,6 +2032,55 @@
         ]
       }
     },
+    "/api/v1/archive/nvr": {
+      "post": {
+        "description": "Разобрать архив прямо с регистратора: выбираем камеру и интервал.\n\nPlayback-адрес собирается из уже сохранённого живого RTSP камеры (там же\nхост и учётка), поэтому оператору не нужно знать формат ссылки вендора.",
+        "operationId": "analyze_from_nvr_api_v1_archive_nvr_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NvrPlaybackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Analyze From Nvr Api V1 Archive Nvr Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analyze From Nvr",
+        "tags": [
+          "archive"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",
@@ -1981,6 +2119,87 @@
         "summary": "Login",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/backoffice/audit": {
+      "get": {
+        "description": "Последние действия: кто, что, когда, откуда, с каким итогом.",
+        "operationId": "audit_api_v1_backoffice_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "only_writes",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Only Writes",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryOut"
+                  },
+                  "title": "Response Audit Api V1 Backoffice Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Audit",
+        "tags": [
+          "backoffice"
         ]
       }
     },

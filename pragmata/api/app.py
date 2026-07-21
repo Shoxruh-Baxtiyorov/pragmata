@@ -17,7 +17,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from pragmata.api.middleware import SecurityHeadersMiddleware
+from pragmata.api.middleware import AuditMiddleware, SecurityHeadersMiddleware
 from pragmata.api.routers import (
     agent,
     archive,
@@ -38,6 +38,9 @@ app = FastAPI(
 )
 
 _settings = get_settings()
+# порядок важен: audit добавляется первым → выполняется ПОСЛЕ CORS-обработки,
+# поэтому preflight-OPTIONS в журнал не попадают
+app.add_middleware(AuditMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,

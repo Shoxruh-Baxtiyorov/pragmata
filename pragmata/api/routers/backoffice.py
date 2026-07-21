@@ -15,11 +15,12 @@ import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута рез
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 
 from pragmata.api.deps import session_factory
 from pragmata.api.schemas import (
+    AuditEntryOut,
     BackofficeOverview,
     OkOut,
     SiteSettingsOut,
@@ -83,6 +84,39 @@ def get_settings_ep() -> SiteSettingsOut:
 @router.patch("/settings", response_model=SiteSettingsOut)
 def patch_settings_ep(payload: SiteSettingsPatch) -> SiteSettingsOut:
     return SiteSettingsOut(**cfgsvc.patch_site_settings(payload))
+
+
+# --- журнал действий --------------------------------------------------------
+
+
+@router.get("/audit", response_model=list[AuditEntryOut])
+def audit(
+    limit: int = Query(100, ge=1, le=500),
+    actor: str | None = None,
+    only_writes: bool = False,
+) -> list[AuditEntryOut]:
+    """Последние действия: кто, что, когда, откуда, с каким итогом."""
+    from pragmata.db.models import AuditLog
+
+    q = select(AuditLog).order_by(AuditLog.ts.desc()).limit(limit)
+    if actor:
+        q = q.where(AuditLog.actor == actor)
+    if only_writes:
+        q = q.where(AuditLog.method != "GET")
+    with session_factory()() as s:
+        rows = s.execute(q).scalars().all()
+    return [
+        AuditEntryOut(
+            id=r.id,
+            ts=r.ts,
+            actor=r.actor,
+            method=r.method,
+            path=r.path,
+            status_code=r.status_code,
+            ip=r.ip,
+        )
+        for r in rows
+    ]
 
 
 # --- восстановление доступа пользователей -----------------------------------

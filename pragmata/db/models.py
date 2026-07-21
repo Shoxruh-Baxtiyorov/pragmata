@@ -242,3 +242,25 @@ class ArchiveJob(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class AuditLog(Base):
+    """Кто/что/когда/откуда изменил или выгрузил. Требование госсектора.
+
+    Пишется middleware'ом на КАЖДЫЙ изменяющий запрос — не по месту вызова,
+    чтобы новый эндпоинт нельзя было забыть зааудитить. Имя актора хранится
+    копией: запись должна пережить удаление пользователя.
+    """
+
+    __tablename__ = "audit_log"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ts: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    actor: Mapped[str] = mapped_column(String(64), default="anonymous")  # копия username
+    method: Mapped[str] = mapped_column(String(8))
+    path: Mapped[str] = mapped_column(String(300))
+    status_code: Mapped[int] = mapped_column()
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
