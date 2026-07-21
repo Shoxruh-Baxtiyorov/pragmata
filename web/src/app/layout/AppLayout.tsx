@@ -21,14 +21,12 @@ import {
   X,
   type LucideIcon,
 } from '@/shared/ui/icons'
-import { Button } from '@/shared/ui'
+import { Button, LangSelect } from '@/shared/ui'
 import { Logo } from '@/shared/ui/Logo'
 import { cn } from '@/shared/lib/utils'
-import { setLang } from '@/shared/i18n'
 import { useTheme } from '@/shared/hooks/useTheme'
 import { authActions, useIsAdmin, useUsername } from '@/features/auth'
 
-const NEXT_LANG: Record<'ru' | 'uz' | 'en', 'ru' | 'uz' | 'en'> = { uz: 'ru', ru: 'en', en: 'uz' }
 
 type NavItem = { to: string; key: string; icon: LucideIcon; admin?: boolean }
 // Сгруппировано по смыслу — «нормальный» сайдбар с секциями, а не плоский список
@@ -63,12 +61,11 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
 ]
 
 export function AppLayout() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [theme, toggleTheme] = useTheme()
   const [open, setOpen] = useState(false) // мобильный drawer
   const isAdmin = useIsAdmin()
   const username = useUsername()
-  const nextLang = NEXT_LANG[i18n.language as keyof typeof NEXT_LANG] ?? 'uz'
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -146,9 +143,7 @@ export function AppLayout() {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="theme">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setLang(nextLang)}>
-            {nextLang.toUpperCase()}
-          </Button>
+          <LangSelect />
 
           {username && (
             <div className="ml-1 flex items-center gap-2 border-l border-border-default pl-3">

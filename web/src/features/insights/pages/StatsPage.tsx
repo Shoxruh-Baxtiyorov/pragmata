@@ -1,3 +1,4 @@
+import { DigestText } from '../components/DigestText'
 import { useTranslation } from 'react-i18next'
 import { Card, EmptyState, PageHeader, Skeleton, SkeletonTiles, StatTile } from '@/shared/ui'
 import { eventLabel, type EventType } from '@/shared/lib/format'
@@ -73,7 +74,7 @@ export function StatsPage() {
         {digest.isError ? (
           <EmptyState text={t('common.noConnection')} onRetry={digest.refetch} />
         ) : digest.data ? (
-          <pre className="whitespace-pre-wrap text-body text-text-secondary">{digest.data.text}</pre>
+          <DigestText text={digest.data.text} />
         ) : (
           <Skeleton className="h-40" />
         )}

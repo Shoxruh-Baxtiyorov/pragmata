@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, TypedDict
 from zoneinfo import ZoneInfo
@@ -101,8 +102,30 @@ def seconds_until(hhmm: str, tz: str, now_ts: float) -> float:
     return (target - now).total_seconds()
 
 
+# Только escape-последовательности: литеральные эмодзи в исходнике уже ломали файл.
+# Диапазоны: пиктограммы, часы/песочница, символы+дингбаты, стрелки, variation selector.
+_EMOJI_RE = re.compile("[\U0001f000-\U0001faff⌀-⏿☀-➿⬀-⯿️]+")
+
+
+def strip_emoji(text: str) -> str:
+    """Убрать эмодзи и следы от них. В вебе иконки рисует UI, а не текст.
+
+    Телеграм-шаблон дайджеста намеренно с эмодзи — там они уместны; на дашборде
+    это мусор. Отступ вложенных строк (2 пробела) сохраняем: он держит структуру.
+    """
+    cleaned = _EMOJI_RE.sub("", text)
+    cleaned = re.sub(r"(?m)^(?P<indent> {2})? (?=\S)", lambda m: m.group("indent") or "", cleaned)
+    cleaned = re.sub(r"(?<=\S) {2,}(?=\S)", " ", cleaned)
+    cleaned = re.sub(r"·\s*·", "·", cleaned)  # повисший разделитель ·
+    return "\n".join(line.rstrip() for line in cleaned.split("\n"))
+
+
 def build_digest_text(
-    session_factory: sessionmaker[Session], cfg: SiteConfig, hours: int = 24, lang: str = "ru"
+    session_factory: sessionmaker[Session],
+    cfg: SiteConfig,
+    hours: int = 24,
+    lang: str = "ru",
+    emoji: bool = True,
 ) -> str:
     from pragmata.db.models import Event, Feedback
 
@@ -166,4 +189,5 @@ def build_digest_text(
     else:
         lines.append("")
         lines.append(labels["quiet"])
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    return text if emoji else strip_emoji(text)

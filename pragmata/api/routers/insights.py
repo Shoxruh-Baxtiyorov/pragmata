@@ -61,7 +61,10 @@ def digest(
     from pragmata.digest import build_digest_text
 
     cfg = require_site()
-    return DigestOut(text=build_digest_text(session_factory(), cfg, hours=hours, lang=lang))
+    # в вебе иконки рисует UI — эмодзи из телеграм-шаблона тут только мешают
+    return DigestOut(
+        text=build_digest_text(session_factory(), cfg, hours=hours, lang=lang, emoji=False)
+    )
 
 
 @router.get("/find", response_model=list[FindItem])

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, Modal } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { X } from '@/shared/ui/icons'
+import { Undo2, X } from '@/shared/ui/icons'
+import { cn } from '@/shared/lib/utils'
 import type { Camera } from '@/shared/api/types'
 import { useAddZone } from '../api/manageApi'
 
@@ -90,7 +91,7 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
         <div className="min-w-0">
           <h2 className="truncate text-h3 text-text-primary">{t('manage.drawZone')}</h2>
           <p className="truncate text-body text-text-secondary" title={camera.name}>
-            {camera.name} · {t('manage.zoneHint')}
+            {camera.name}
           </p>
         </div>
         <button
@@ -144,25 +145,76 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
             ))}
           </svg>
         )}
+
+        {/* Пустой холст молчал — теперь прямо говорит, что делать */}
+        {points.length === 0 && (
+          <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-4">
+            <span className="rounded-pill bg-black/65 px-3 py-1.5 text-label font-semibold text-white backdrop-blur-sm">
+              {t('manage.zoneHint')}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t('manage.zoneName')}
-          className="h-9 w-40"
-        />
-        <label className="flex items-center gap-1.5 text-label text-text-secondary">
-          <input type="checkbox" checked={loitering} onChange={(e) => setLoitering(e.target.checked)} />
-          {t('manage.loitering')}
+      {/* Настройки зоны: подписанные поля, а не свалка контролов в одну строку */}
+      <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-label font-semibold text-text-secondary">
+            {t('manage.zoneName')}
+          </span>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('manage.zoneName')}
+            autoFocus
+          />
         </label>
-        <span className="text-label text-text-secondary">
+
+        <label className="flex cursor-pointer items-center gap-2.5 self-end rounded-button border border-border-default px-3 py-2.5">
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--color-brand)]"
+            checked={loitering}
+            onChange={(e) => setLoitering(e.target.checked)}
+          />
+          <span className="text-label text-text-secondary">{t('manage.loitering')}</span>
+        </label>
+      </div>
+
+      {/* Футер отделён линией: слева — состояние и правка точек, справа — решение */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-default pt-4">
+        <span
+          className={cn(
+            'rounded-pill px-2.5 py-1 text-caption font-semibold',
+            points.length >= 3 ? 'bg-brand-10 text-brand' : 'bg-bg-secondary text-text-secondary',
+          )}
+        >
           {t('manage.points')}: {points.length}
         </span>
-        <div className="flex-1" />
-        <Button variant="ghost" size="sm" onClick={() => setPoints([])}>
+        {points.length < 3 && (
+          <span className="text-caption text-text-placeholder">{t('manage.needPoints')}</span>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setPoints((p) => p.slice(0, -1))}
+          disabled={points.length === 0}
+        >
+          <Undo2 size={16} /> {t('manage.undo')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setPoints([])}
+          disabled={points.length === 0}
+        >
           {t('manage.reset')}
+        </Button>
+
+        <div className="flex-1" />
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          {t('manage.cancel')}
         </Button>
         <Button size="sm" disabled={points.length < 3 || addZone.isPending} onClick={save}>
           {t('manage.save')}
