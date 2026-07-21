@@ -1,70 +1,87 @@
 @import 'tailwindcss';
+
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import '@fontsource/jetbrains-mono/500.css';
+/* @source ПОСЛЕ всех @import — иначе postcss ругается «@import must precede» */
 @source './**/*.{ts,tsx}';
 
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
-@import '@fontsource/jetbrains-mono/500.css';
-
 /*
- * Дизайн-токены по iqbola-design (style-system-builder + variable-tokenizer):
- * - наборы цветов: Main (Brand/Dark/White), Greys 1-4, System, Secondary (brand с прозрачностью)
- * - тёмная тема обязательна: семантические переменные ниже, переключение — data-theme на <html>
- * - spacing: 4pt-сетка (дефолтная шкала Tailwind = 4px-инкременты, ничего не переопределяем)
- * - радиусы: button/input 12, card 16, modal 24, pill 999
- * - тени: S/M/L
+ * Дизайн-язык «Ziyo» (референс IQBOLA-2 / Dizayn tizimi) — общий с бэкофисом:
+ * - бренд #2f6bff с градиентом на #5b8bff; апертура Pragmata остаётся бирюзовой
+ * - холодные границы #eef0f3, фон #f7f8fa, текст #1f2530 / #99a1b7
+ * - радиусы: контролы 11, карточки 15, модалки 20
+ * - плотная типографика 11.5–14.5px (референс намеренно компактный)
+ * - тёмная тема выведена из hero-градиента референса #1f2940 → #2f4068
+ * Имена токенов НЕ менялись — компоненты подхватывают новый вид без правок.
  */
 :root {
   /* Main */
-  --brand: #2563eb; /* Pragmata brand blue — единственная точка замены брендового цвета */
-  --brand-pressed: #1d4ed8;
+  --brand: #2f6bff;
+  --brand-hi: #5b8bff;
+  --brand-soft: #9ab8ff;
+  --brand-pressed: #2558d6;
   --on-brand: #ffffff;
-  --brand-mark: #0d9488; /* логотип-бирюза (светлая тема): апертура Pragmata */
-  /* Greys 1-4 (светлая тема) */
-  --grey-1: #f5f5f5;
-  --grey-2: #e0e0e0;
-  --grey-3: #9e9e9e;
-  --grey-4: #616161;
+  --brand-mark: #0d9488; /* знак бренда — единственное, что не синее */
+  /* Greys */
+  --grey-1: #f7f8fa;
+  --grey-2: #eef0f3;
+  --grey-3: #99a1b7;
+  --grey-4: #5b6472;
   /* Семантические */
   --bg-app: #f7f8fa;
   --bg-surface: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --text-primary: #1a1a1a;
-  --text-secondary: #616161;
-  --text-placeholder: #9e9e9e;
-  --border-default: #e0e0e0;
+  --bg-secondary: #f4f5f7;
+  --text-primary: #1f2530;
+  --text-secondary: #5b6472;
+  --text-muted: #78808f;
+  --text-placeholder: #99a1b7;
+  --border-default: #eef0f3;
+  --border-strong: #e2e6ec;
   --border-focused: var(--brand);
   /* System */
-  --error: #e53935;
-  --success: #43a047;
-  --warning: #fb8c00;
-  /* Secondary: brand с прозрачностью (на цвете, не на слое) */
+  --error: #f8285a;
+  --success: #17c653;
+  --warning: #f6b100;
+  --accent: #7239ea;
+  /* Secondary */
   --brand-10: color-mix(in srgb, var(--brand) 10%, transparent);
   --brand-20: color-mix(in srgb, var(--brand) 20%, transparent);
+  --ring: 0 0 0 3px rgb(47 107 255 / 0.12);
 }
 
 [data-theme='dark'] {
-  --brand: #3b82f6;
-  --brand-pressed: #2563eb;
-  --brand-mark: #34cbb9; /* логотип-бирюза (тёмная тема): ярче на графите */
-  --bg-app: #121212;
-  --bg-surface: #1e1e1e;
-  --bg-secondary: #1e1e1e;
-  --text-primary: #ffffff;
-  --text-secondary: #ababab;
-  --text-placeholder: #757575;
-  --border-default: #2c2c2c;
-  --error: #ef5350;
-  --success: #66bb6a;
-  --warning: #ffa726;
+  --brand: #4f82ff;
+  --brand-hi: #7ba3ff;
+  --brand-pressed: #3a6ae0;
+  --brand-mark: #34cbb9;
+  --grey-1: #1c2434;
+  --grey-2: #2a3446;
+  --bg-app: #151b28;
+  --bg-surface: #1c2434;
+  --bg-secondary: #232c3e;
+  --text-primary: #eef1f6;
+  --text-secondary: #a8b1c2;
+  --text-muted: #8b93a3;
+  --text-placeholder: #6b7488;
+  --border-default: #2a3446;
+  --border-strong: #354054;
+  --error: #ff5c7d;
+  --success: #3ad46f;
+  --warning: #ffbe2e;
+  --ring: 0 0 0 3px rgb(79 130 255 / 0.22);
 }
 
 @theme inline {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --color-brand: var(--brand);
+  --color-brand-hi: var(--brand-hi);
+  --color-brand-soft: var(--brand-soft);
   --color-brand-mark: var(--brand-mark);
   --color-brand-pressed: var(--brand-pressed);
   --color-on-brand: var(--on-brand);
@@ -79,52 +96,90 @@
   --color-bg-secondary: var(--bg-secondary);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --color-text-placeholder: var(--text-placeholder);
   --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
   --color-border-focused: var(--border-focused);
   --color-error: var(--error);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-accent: var(--accent);
 
-  /* Радиусы (component/radius/*) */
-  --radius-button: 12px;
-  --radius-input: 12px;
-  --radius-card: 16px;
-  --radius-modal: 24px;
+  /* Радиусы референса */
+  --radius-button: 11px;
+  --radius-input: 11px;
+  --radius-card: 15px;
+  --radius-modal: 20px;
   --radius-pill: 999px;
 
-  /* Тени S/M/L */
-  --shadow-s: 0 2px 6px rgb(0 0 0 / 0.07);
-  --shadow-m: 0 4px 12px rgb(0 0 0 / 0.1);
-  --shadow-l: 0 8px 24px rgb(0 0 0 / 0.14);
+  /* Тени референса */
+  --shadow-xs: 0 1px 2px rgb(20 30 50 / 0.03);
+  --shadow-s: 0 4px 10px rgb(20 30 50 / 0.08);
+  --shadow-m: 0 12px 30px rgb(15 23 42 / 0.12);
+  --shadow-l: 0 30px 70px rgb(15 23 42 / 0.18);
+  --shadow-brand: 0 4px 10px rgb(47 107 255 / 0.35);
 
-  /* Типографическая шкала: H1-H4 / Body / UI */
-  --text-h1: 28px;
-  --text-h1--line-height: 34px;
-  --text-h1--font-weight: 700;
-  --text-h2: 22px;
-  --text-h2--line-height: 28px;
-  --text-h2--font-weight: 700;
-  --text-h3: 18px;
-  --text-h3--line-height: 24px;
-  --text-h3--font-weight: 600;
+  /* Плотная типографика референса */
+  --text-h1: 30px;
+  --text-h1--line-height: 36px;
+  --text-h1--font-weight: 800;
+  --text-h2: 26px;
+  --text-h2--line-height: 32px;
+  --text-h2--font-weight: 800;
+  --text-h3: 21px;
+  --text-h3--line-height: 27px;
+  --text-h3--font-weight: 700;
   --text-h4: 16px;
   --text-h4--line-height: 22px;
-  --text-h4--font-weight: 600;
-  --text-body: 15px;
-  --text-body--line-height: 22px;
-  --text-label: 13px;
-  --text-label--line-height: 18px;
-  --text-label--font-weight: 500;
-  --text-caption: 12px;
-  --text-caption--line-height: 16px;
+  --text-h4--font-weight: 700;
+  --text-body: 13.5px;
+  --text-body--line-height: 20px;
+  --text-label: 12.5px;
+  --text-label--line-height: 17px;
+  --text-label--font-weight: 600;
+  --text-caption: 11.5px;
+  --text-caption--line-height: 15px;
+  --text-caption--font-weight: 600;
 }
 
 body {
   font-family: var(--font-sans);
   background: var(--bg-app);
   color: var(--text-primary);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 13.5px;
+  line-height: 20px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Скроллбар как в референсе */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid var(--bg-app);
+}
+
+/* Шиммер-скелетон референса */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.sk {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0px,
+    var(--bg-surface) 200px,
+    var(--bg-secondary) 400px
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.2s infinite linear;
+  border-radius: 10px;
 }

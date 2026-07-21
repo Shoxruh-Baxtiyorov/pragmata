@@ -19,7 +19,7 @@
   --brand-soft: #9ab8ff;
   --brand-pressed: #2558d6;
   --on-brand: #ffffff;
-  --brand-mark: #2f6bff;
+  --brand-mark: #0d9488; /* апертура Pragmata остаётся бирюзовой — это знак бренда */
 
   --bg-app: #f7f8fa;
   --bg-surface: #ffffff;
@@ -48,7 +48,7 @@
   --brand: #4f82ff;
   --brand-hi: #7ba3ff;
   --brand-pressed: #3a6ae0;
-  --brand-mark: #7ba3ff;
+  --brand-mark: #34cbb9;
 
   --bg-app: #151b28;
   --bg-surface: #1c2434;
