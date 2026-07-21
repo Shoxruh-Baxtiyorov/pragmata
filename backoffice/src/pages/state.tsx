@@ -16,11 +16,15 @@ export function PageState({
   children: ReactNode
 }) {
   if (loading) {
+    // шиммер как в референсе (.sk), а не пульсация
     return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-card bg-bg-secondary" />
-        ))}
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="sk h-24" />
+          ))}
+        </div>
+        <div className="sk h-64" />
       </div>
     )
   }

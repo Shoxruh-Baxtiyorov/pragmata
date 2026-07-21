@@ -20,16 +20,19 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-button font-medium ' +
-    'transition-colors disabled:opacity-50 disabled:pointer-events-none'
+    'inline-flex items-center justify-center gap-2 rounded-button font-semibold ' +
+    'transition-all disabled:opacity-50 disabled:pointer-events-none ' +
+    'focus-visible:outline-none focus-visible:shadow-[var(--ring)]'
   const variants = {
-    primary: 'bg-brand text-on-brand hover:bg-brand-pressed',
+    primary:
+      'bg-gradient-to-br from-brand-hi to-brand text-on-brand shadow-brand ' +
+      'hover:brightness-105 active:brightness-95',
     ghost: 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
     danger: 'text-error hover:bg-error/10',
   }
   const sizes = {
     sm: 'h-8 px-3 text-label',
-    md: 'h-10 px-4 text-body',
+    md: 'h-9.5 px-4 text-body',
     icon: 'h-9 w-9',
   }
   return (
@@ -45,7 +48,9 @@ export function Button({
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cx('rounded-card border border-border-default bg-surface shadow-s', className)}>
+    <div
+      className={cx('rounded-card border border-border-default bg-surface shadow-xs', className)}
+    >
       {children}
     </div>
   )
@@ -55,9 +60,9 @@ export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputEleme
   return (
     <input
       className={cx(
-        'h-10 rounded-input border border-border-default bg-surface px-3 text-body',
-        'text-text-primary placeholder:text-text-placeholder',
-        'focus:border-border-focused focus:outline-none',
+        'h-9.5 rounded-input border border-border-default bg-surface px-3 text-body',
+        'text-text-primary placeholder:text-text-placeholder transition-shadow',
+        'focus:border-border-focused focus:outline-none focus:shadow-[var(--ring)]',
         className,
       )}
       {...rest}
@@ -81,8 +86,9 @@ export function Select({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cx(
-        'h-10 rounded-input border border-border-default bg-surface px-3 text-body',
-        'text-text-primary focus:border-border-focused focus:outline-none',
+        'h-9.5 rounded-input border border-border-default bg-surface px-3 text-body',
+        'text-text-primary transition-shadow',
+        'focus:border-border-focused focus:outline-none focus:shadow-[var(--ring)]',
         className,
       )}
     >

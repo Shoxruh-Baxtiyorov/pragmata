@@ -61,7 +61,10 @@ def build_playback_url(
 
     brand = brand or detect_brand(live_url)
     if brand not in (HIKVISION, DAHUA):
-        raise ValueError(f"бренд NVR не опознан по адресу — укажите playback-URL вручную: {brand}")
+        raise ValueError(
+            "бренд регистратора не опознан по адресу камеры — выберите Hikvision или Dahua "
+            "вручную, либо загрузите запись файлом"
+        )
 
     parsed = urlparse(live_url)
     netloc = parsed.netloc  # user:pass@host:port сохраняем как есть

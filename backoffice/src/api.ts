@@ -56,6 +56,7 @@ export const api = {
     request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
 
 // --- логин (тот же /auth/login, поддержка TOTP-2FA) -------------------------
@@ -104,4 +105,47 @@ export type UserOut = {
   email: string | null
   last_login_at: string | null
   locked: boolean
+}
+
+export type ZoneOut = { id: string | null; name: string; type: string }
+
+export type CameraOut = {
+  id: string
+  name: string
+  online: boolean
+  enabled: boolean
+  snapshot_url: string | null
+  zones: ZoneOut[]
+}
+
+export type PersonOut = {
+  id: string
+  name: string
+  category: string
+  position: string | null
+  note: string | null
+  watch: boolean
+  photo_count: number
+}
+
+export type AuditEntry = {
+  id: string
+  ts: string
+  actor: string
+  method: string
+  path: string
+  status_code: number
+  ip: string | null
+}
+
+export type ArchiveJob = {
+  id: string
+  filename: string
+  camera_id: string
+  recorded_at: string
+  status: string
+  progress: number
+  events_found: number
+  error: string | null
+  created_at: string
 }
