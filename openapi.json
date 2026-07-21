@@ -103,6 +103,69 @@
         "title": "ArchiveJobOut",
         "type": "object"
       },
+      "BackofficeOverview": {
+        "properties": {
+          "admins": {
+            "title": "Admins",
+            "type": "integer"
+          },
+          "cameras_enabled": {
+            "title": "Cameras Enabled",
+            "type": "integer"
+          },
+          "cameras_total": {
+            "title": "Cameras Total",
+            "type": "integer"
+          },
+          "events_today": {
+            "title": "Events Today",
+            "type": "integer"
+          },
+          "llm_enabled": {
+            "title": "Llm Enabled",
+            "type": "boolean"
+          },
+          "llm_model": {
+            "title": "Llm Model",
+            "type": "string"
+          },
+          "persons_total": {
+            "title": "Persons Total",
+            "type": "integer"
+          },
+          "users_active": {
+            "title": "Users Active",
+            "type": "integer"
+          },
+          "users_locked": {
+            "title": "Users Locked",
+            "type": "integer"
+          },
+          "users_total": {
+            "title": "Users Total",
+            "type": "integer"
+          },
+          "users_with_2fa": {
+            "title": "Users With 2Fa",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "users_total",
+          "users_active",
+          "admins",
+          "users_with_2fa",
+          "users_locked",
+          "cameras_total",
+          "cameras_enabled",
+          "persons_total",
+          "events_today",
+          "llm_model",
+          "llm_enabled"
+        ],
+        "title": "BackofficeOverview",
+        "type": "object"
+      },
       "Body_add_photos_api_v1_persons__person_id__photos_post": {
         "properties": {
           "files": {
@@ -1028,6 +1091,93 @@
         "title": "PersonPhotoOut",
         "type": "object"
       },
+      "SiteSettingsOut": {
+        "properties": {
+          "digest_time": {
+            "title": "Digest Time",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "working_hours": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Working Hours"
+          }
+        },
+        "required": [
+          "name",
+          "timezone",
+          "working_hours",
+          "digest_time"
+        ],
+        "title": "SiteSettingsOut",
+        "type": "object"
+      },
+      "SiteSettingsPatch": {
+        "properties": {
+          "digest_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Time"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "working_hours": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Working Hours"
+          }
+        },
+        "title": "SiteSettingsPatch",
+        "type": "object"
+      },
       "StatsOut": {
         "properties": {
           "alerts": {
@@ -1831,6 +1981,200 @@
         "summary": "Login",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/backoffice/overview": {
+      "get": {
+        "operationId": "overview_api_v1_backoffice_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackofficeOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Overview",
+        "tags": [
+          "backoffice"
+        ]
+      }
+    },
+    "/api/v1/backoffice/settings": {
+      "get": {
+        "operationId": "get_settings_ep_api_v1_backoffice_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Settings Ep",
+        "tags": [
+          "backoffice"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_settings_ep_api_v1_backoffice_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSettingsPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Settings Ep",
+        "tags": [
+          "backoffice"
+        ]
+      }
+    },
+    "/api/v1/backoffice/users/{user_id}/2fa/reset": {
+      "post": {
+        "description": "Снять 2FA юзеру без кода — когда он потерял аутентификатор.",
+        "operationId": "reset_user_2fa_api_v1_backoffice_users__user_id__2fa_reset_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reset User 2Fa",
+        "tags": [
+          "backoffice"
+        ]
+      }
+    },
+    "/api/v1/backoffice/users/{user_id}/unlock": {
+      "post": {
+        "description": "Снять brute-force локаут (обнулить попытки и locked_until).",
+        "operationId": "unlock_user_ep_api_v1_backoffice_users__user_id__unlock_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlock User Ep",
+        "tags": [
+          "backoffice"
         ]
       }
     },

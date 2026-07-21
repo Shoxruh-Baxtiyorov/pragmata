@@ -11,7 +11,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from zoneinfo import ZoneInfo
 
 from pragmata.agent.tools import TOOL_SPECS
@@ -222,11 +222,13 @@ class AgentRunner:
         forced = False
 
         for _ in range(MAX_TOOL_ROUNDS):
+            # Literal, а не str: SDK разбирает tool_choice по перегрузкам
+            choice: Literal["auto", "required"] = "required" if forced else "auto"
             resp = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,  # type: ignore[arg-type]
                 tools=TOOL_SPECS,  # type: ignore[arg-type]
-                tool_choice="required" if forced else "auto",
+                tool_choice=choice,
                 temperature=0.2,
             )
             msg = resp.choices[0].message

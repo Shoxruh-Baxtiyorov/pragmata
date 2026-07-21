@@ -49,7 +49,7 @@ def overview() -> BackofficeOverview:
         day_start = midnight.astimezone(UTC)
 
         def n(stmt: object) -> int:
-            return int(s.execute(stmt).scalar_one())  # type: ignore[arg-type]
+            return int(s.execute(stmt).scalar_one())
 
         cnt = func.count()
         settings = get_settings()
@@ -77,12 +77,12 @@ def overview() -> BackofficeOverview:
 
 @router.get("/settings", response_model=SiteSettingsOut)
 def get_settings_ep() -> SiteSettingsOut:
-    return SiteSettingsOut(**cfgsvc.get_site_settings())  # type: ignore[arg-type]
+    return SiteSettingsOut(**cfgsvc.get_site_settings())
 
 
 @router.patch("/settings", response_model=SiteSettingsOut)
 def patch_settings_ep(payload: SiteSettingsPatch) -> SiteSettingsOut:
-    return SiteSettingsOut(**cfgsvc.patch_site_settings(payload))  # type: ignore[arg-type]
+    return SiteSettingsOut(**cfgsvc.patch_site_settings(payload))
 
 
 # --- восстановление доступа пользователей -----------------------------------
