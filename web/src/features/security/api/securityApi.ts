@@ -20,6 +20,13 @@ export function useEnableTotp() {
   })
 }
 
+export function useChangeOwnPassword() {
+  return useMutation({
+    mutationFn: (newPassword: string) =>
+      api.post('/api/v1/me/password', { new_password: newPassword }),
+  })
+}
+
 export function useDisableTotp() {
   const qc = useQueryClient()
   return useMutation({

@@ -39,6 +39,16 @@ export function useAnalyzeArchive() {
 }
 
 // События, найденные в архиве данной камеры (за широкое окно 30 дней)
+/** Разбор прямо с регистратора: playback-ссылку собирает бэкенд из адреса камеры. */
+export function useAnalyzeFromNvr() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { camera_id: string; from_time: string; to_time: string }) =>
+      api.post<{ id: string }>('/api/v1/archive/nvr', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['archive-jobs'] }),
+  })
+}
+
 export function useArchiveEvents(cameraId: string | null) {
   return useQuery({
     queryKey: ['archiveEvents', cameraId],

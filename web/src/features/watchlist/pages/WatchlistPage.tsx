@@ -13,7 +13,8 @@ import {
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
 import { ApiError } from '@/shared/api/client'
 import { cn } from '@/shared/lib/utils'
-import { Bell, BellOff, Trash2, UserPlus, X } from '@/shared/ui/icons'
+import { Bell, BellOff, ImagePlus, Trash2, UserPlus, X } from '@/shared/ui/icons'
+import { PersonPhotos } from '../components/PersonPhotos'
 import { PERSON_CATEGORIES, type Person } from '@/shared/api/types'
 import {
   useDeletePerson,
@@ -37,6 +38,7 @@ function PersonCard({ p }: { p: Person }) {
   const photo = useAuthedMedia(p.photo_url)
   const patch = usePatchPerson()
   const del = useDeletePerson()
+  const [photosOpen, setPhotosOpen] = useState(false)
 
   return (
     <Card className="overflow-hidden p-0">
@@ -73,10 +75,20 @@ function PersonCard({ p }: { p: Person }) {
           {p.watch ? <BellOff size={14} /> : <Bell size={14} />}
           {p.watch ? t('watchlist.unwatch') : t('watchlist.watch')}
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setPhotosOpen(true)}
+          title={t('watchlist.photos')}
+        >
+          <ImagePlus size={14} />
+        </Button>
         <Button variant="ghost" size="sm" onClick={() => del.mutate(p.id)}>
           <Trash2 size={14} />
         </Button>
       </div>
+
+      {photosOpen && <PersonPhotos person={p} onClose={() => setPhotosOpen(false)} />}
     </Card>
   )
 }

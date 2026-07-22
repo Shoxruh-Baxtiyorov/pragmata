@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, Input, PageHeader, Skeleton } from '@/shared/ui'
 import { ApiError } from '@/shared/api/client'
 import { ShieldCheck } from '@/shared/ui/icons'
+import { ChangePassword } from '../components/ChangePassword'
 import type { TotpSetup } from '@/shared/api/types'
 import {
   useDisableTotp,
@@ -121,7 +122,7 @@ export function SecurityPage() {
   const status = useTotpStatus()
 
   return (
-    <>
+    <div className="flex flex-col gap-5">
       <PageHeader title={t('security.title')} subtitle={t('security.subtitle')} />
       <Card className="max-w-2xl p-6">
         <h2 className="mb-4 flex items-center gap-2 text-h3">
@@ -141,6 +142,8 @@ export function SecurityPage() {
           <EnableFlow />
         )}
       </Card>
-    </>
+
+      <ChangePassword />
+    </div>
   )
 }

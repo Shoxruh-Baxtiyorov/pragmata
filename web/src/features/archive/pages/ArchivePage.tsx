@@ -8,6 +8,7 @@ import type { ArchiveJob } from '@/shared/api/types'
 import { EventCard } from '@/features/events/components/EventCard'
 import {
   useAnalyzeArchive,
+  useAnalyzeFromNvr,
   useArchiveEvents,
   useArchiveJobs,
   useCamerasList,
@@ -25,17 +26,30 @@ function AnalyzeForm() {
   const { t } = useTranslation()
   const cams = useCamerasList()
   const analyze = useAnalyzeArchive()
-  const [mode, setMode] = useState<'file' | 'url'>('file')
+  const nvr = useAnalyzeFromNvr()
+  const [mode, setMode] = useState<'file' | 'url' | 'nvr'>('nvr')
   const [file, setFile] = useState<File | null>(null)
   const [url, setUrl] = useState('')
   const [recordedAt, setRecordedAt] = useState('')
+  const [toTime, setToTime] = useState('')
   const [cameraId, setCameraId] = useState('')
 
-  const ready = recordedAt && cameraId && (mode === 'file' ? !!file : !!url.trim())
+  const ready =
+    recordedAt &&
+    cameraId &&
+    (mode === 'file' ? !!file : mode === 'url' ? !!url.trim() : !!toTime && toTime > recordedAt)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!ready) return
+    // режим регистратора: playback-ссылку собирает бэкенд из адреса камеры
+    if (mode === 'nvr') {
+      nvr.mutate(
+        { camera_id: cameraId, from_time: recordedAt, to_time: toTime },
+        { onSuccess: () => { setRecordedAt(''); setToTime('') } },
+      )
+      return
+    }
     analyze.mutate(
       {
         file: mode === 'file' ? file : null,
@@ -58,7 +72,7 @@ function AnalyzeForm() {
       <h2 className="mb-1 text-body font-bold">{t('archive.newTitle')}</h2>
       <p className="mb-4 text-label text-text-secondary">{t('archive.newHint')}</p>
       <div className="mb-3 flex gap-1">
-        {(['file', 'url'] as const).map((m) => (
+        {(['nvr', 'file', 'url'] as const).map((m) => (
           <button
             key={m}
             type="button"
@@ -69,13 +83,23 @@ function AnalyzeForm() {
                 : 'rounded-button px-3 py-1.5 text-label text-text-secondary hover:bg-bg-secondary'
             }
           >
-            {t(m === 'file' ? 'archive.modeFile' : 'archive.modeUrl')}
+            {t(`archive.mode.${m}`)}
           </button>
         ))}
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end gap-3">
-          {mode === 'file' ? (
+          {mode === 'nvr' ? (
+            <label className="flex flex-col gap-1">
+              <span className="text-label text-text-secondary">{t('archive.toTime')}</span>
+              <Input
+                type="datetime-local"
+                className="w-52"
+                value={toTime}
+                onChange={(e) => setToTime(e.target.value)}
+              />
+            </label>
+          ) : mode === 'file' ? (
             <label className="flex flex-col gap-1">
               <span className="text-label text-text-secondary">{t('archive.file')}</span>
               <input
@@ -117,13 +141,16 @@ function AnalyzeForm() {
               ))}
             </Select>
           </label>
-          <Button type="submit" loading={analyze.isPending} disabled={!ready}>
+          <Button type="submit" loading={analyze.isPending || nvr.isPending} disabled={!ready}>
             <Search size={16} /> {t('archive.analyze')}
           </Button>
         </div>
-        {analyze.isError && (
+        {(analyze.isError || nvr.isError) && (
           <p className="text-label text-error">
-            {analyze.error instanceof ApiError ? analyze.error.message : t('common.noConnection')}
+            {(() => {
+              const err = analyze.error ?? nvr.error
+              return err instanceof ApiError ? err.message : t('common.noConnection')
+            })()}
           </p>
         )}
       </form>

@@ -53,6 +53,49 @@ export function usePatchPerson() {
   })
 }
 
+// --- фото человека: эталон лица строится усреднением по всем фото, поэтому
+// добавление/удаление снимков напрямую влияет на точность распознавания.
+
+export interface PersonPhoto {
+  id: string
+  url: string
+}
+
+export function usePersonPhotos(personId: string | null) {
+  return useQuery({
+    queryKey: ['person-photos', personId],
+    queryFn: () => api.get<PersonPhoto[]>(`/api/v1/persons/${personId}/photos`),
+    enabled: !!personId,
+  })
+}
+
+export function useAddPersonPhotos() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, files }: { id: string; files: File[] }) => {
+      const form = new FormData()
+      files.forEach((f) => form.append('files', f))
+      return api.postForm<{ added: number }>(`/api/v1/persons/${id}/photos`, form)
+    },
+    onSuccess: (_r, v) => {
+      void qc.invalidateQueries({ queryKey: ['person-photos', v.id] })
+      void qc.invalidateQueries({ queryKey: ['persons'] })
+    },
+  })
+}
+
+export function useDeletePersonPhoto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ photoId }: { photoId: string; personId: string }) =>
+      api.del(`/api/v1/persons/photos/${photoId}`),
+    onSuccess: (_r, v) => {
+      void qc.invalidateQueries({ queryKey: ['person-photos', v.personId] })
+      void qc.invalidateQueries({ queryKey: ['persons'] })
+    },
+  })
+}
+
 export function useDeletePerson() {
   const qc = useQueryClient()
   return useMutation({
