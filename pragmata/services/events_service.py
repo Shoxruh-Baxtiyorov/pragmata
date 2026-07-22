@@ -22,8 +22,11 @@ if TYPE_CHECKING:
 ONLINE_STALE_S = 15.0  # снапшот старше — камера офлайн
 
 
-def list_cameras(include_disabled: bool = False) -> list[CameraOut]:
-    """Камеры + зоны прямо из БД (с id зон и enabled — для UI-управления)."""
+def list_cameras(include_disabled: bool = False, scope: int | None = None) -> list[CameraOut]:
+    """Камеры + зоны прямо из БД (с id зон и enabled — для UI-управления).
+
+    scope — организация клиента; None = платформа, видит все организации.
+    """
     from sqlalchemy import select
 
     from pragmata.db.models import Camera, Zone
@@ -33,6 +36,8 @@ def list_cameras(include_disabled: bool = False) -> list[CameraOut]:
     out: list[CameraOut] = []
     with session_factory()() as s:
         q = select(Camera).order_by(Camera.id)
+        if scope is not None:
+            q = q.where(Camera.site_id == scope)
         if not include_disabled:
             q = q.where(Camera.enabled)
         cams = s.execute(q).scalars().all()

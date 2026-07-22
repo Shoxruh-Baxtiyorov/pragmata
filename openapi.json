@@ -2449,6 +2449,7 @@
         ]
       },
       "post": {
+        "description": "Клиент заводит камеру себе. Админ без организации — некому: 422.",
         "operationId": "create_api_v1_cameras_post",
         "requestBody": {
           "content": {

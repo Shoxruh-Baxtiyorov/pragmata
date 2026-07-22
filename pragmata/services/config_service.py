@@ -18,7 +18,7 @@ def _bump() -> None:
     bump_config_version(session_factory())
 
 
-def create_camera(payload: CameraIn) -> None:
+def create_camera(payload: CameraIn, site_id: int = 1) -> None:
     from pragmata.db.models import Camera
 
     with session_factory()() as s:
@@ -27,7 +27,7 @@ def create_camera(payload: CameraIn) -> None:
         s.add(
             Camera(
                 id=payload.id,
-                site_id=1,
+                site_id=site_id,
                 name=payload.name,
                 url=payload.url,
                 enabled=True,
@@ -121,13 +121,18 @@ def add_zone(camera_id: str, payload: ZoneIn) -> uuid.UUID:
     return zid
 
 
-def delete_zone(zone_id: uuid.UUID) -> None:
-    from pragmata.db.models import Zone
+def delete_zone(zone_id: uuid.UUID, scope: int | None = None) -> None:
+    """Зона наследует арендатора от камеры — чужую не отдаём и не удаляем."""
+    from pragmata.db.models import Camera, Zone
 
     with session_factory()() as s:
         z = s.get(Zone, zone_id)
         if z is None:
             raise HTTPException(404, "нет такой зоны")
+        if scope is not None:
+            cam = s.get(Camera, z.camera_id)
+            if cam is None or cam.site_id != scope:
+                raise HTTPException(404, "нет такой зоны")
         s.delete(z)
         s.commit()
     _bump()

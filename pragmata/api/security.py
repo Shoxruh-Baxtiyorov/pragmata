@@ -28,10 +28,23 @@ class Principal:
     sub: str
     role: str
     username: str
+    site_id: int | None = None  # организация клиента; None у платформенного админа
 
     @property
     def is_admin(self) -> bool:
         return self.role == "admin"
+
+    @property
+    def scope(self) -> int | None:
+        """Организация, которой ограничен запрос. None = видно всё (платформа).
+
+        Клиент без организации не должен видеть ЧУЖОЕ, поэтому ему отдаём
+        заведомо несуществующий site (-1), а не None: иначе баг в данных
+        превратился бы в утечку между арендаторами.
+        """
+        if self.is_admin:
+            return None
+        return self.site_id if self.site_id is not None else -1
 
 
 def _secret() -> str:
@@ -75,7 +88,7 @@ def _load_principal(sub: str) -> Principal:
         user = s.get(User, uid)
     if user is None or not user.is_active:
         raise HTTPException(401, "аккаунт отключён")
-    return Principal(sub=sub, role=user.role, username=user.username)
+    return Principal(sub=sub, role=user.role, username=user.username, site_id=user.site_id)
 
 
 def peek_token(header: str | None) -> tuple[str | None, str]:
@@ -119,6 +132,26 @@ def require_admin(p: Principal = Depends(current_principal)) -> Principal:
     if not p.is_admin:
         raise HTTPException(403, "нужны права администратора")
     return p
+
+
+def current_scope(p: Principal = Depends(current_principal)) -> int | None:
+    """Организация, которой ограничен запрос. None = платформа, видно всё."""
+    return p.scope
+
+
+def own_camera_or_404(camera_id: str, scope: int | None) -> None:
+    """Камера чужой организации должна выглядеть как несуществующая.
+
+    404, а не 403: 403 подтвердил бы, что такая камера есть — это утечка
+    самого факта. Платформенный админ (scope=None) проходит всегда.
+    """
+    from pragmata.api.deps import session_factory
+    from pragmata.db.models import Camera
+
+    with session_factory()() as s:
+        cam = s.get(Camera, camera_id)
+    if cam is None or (scope is not None and cam.site_id != scope):
+        raise HTTPException(404, "нет такой камеры")
 
 
 def require_backoffice(p: Principal = Depends(current_principal)) -> Principal:

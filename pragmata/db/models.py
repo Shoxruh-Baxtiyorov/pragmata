@@ -85,6 +85,10 @@ class Person(Base):
     __tablename__ = "persons"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # реестр людей принадлежит организации: он не привязан к конкретной камере
+    site_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sites.id"), nullable=True, index=True, default=1
+    )
     name: Mapped[str] = mapped_column(String(200))
     # employee | visitor | contractor | watchlist | banned | other
     category: Mapped[str] = mapped_column(String(32), default="other")
@@ -209,7 +213,11 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # хранится в lower
     password_hash: Mapped[str] = mapped_column(String(255))
+    # admin = платформа (видит всё, site_id пуст); user = клиент своей организации
     role: Mapped[str] = mapped_column(String(16), default="user")  # user | admin
+    site_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sites.id"), nullable=True, index=True
+    )
     is_active: Mapped[bool] = mapped_column(default=True)
     full_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     # 2FA (TOTP): секрет base32 (Fernet-шифрован), enabled=подтверждён кодом и активен

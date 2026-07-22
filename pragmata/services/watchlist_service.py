@@ -82,12 +82,26 @@ def _recompute_face(s: Session, person: Person) -> None:
     person.face_emb = _avg_norm(_photo_embs(s, person.id))
 
 
-def list_persons(category: str | None = None) -> list[PersonOut]:
+def own_person_or_404(person_id: uuid.UUID, scope: int | None) -> None:
+    """Человек чужой организации = как будто его нет (404, а не 403)."""
+    from fastapi import HTTPException
+
+    from pragmata.db.models import Person
+
+    with session_factory()() as s:
+        p = s.get(Person, person_id)
+    if p is None or (scope is not None and p.site_id != scope):
+        raise HTTPException(404, "нет такого человека")
+
+
+def list_persons(category: str | None = None, scope: int | None = None) -> list[PersonOut]:
     from pragmata.api.schemas import PersonOut
     from pragmata.db.models import Person, PersonPhoto, Track
 
     with session_factory()() as s:
         q = select(Person).order_by(Person.created_at.desc())
+        if scope is not None:
+            q = q.where(Person.site_id == scope)
         if category:
             q = q.where(Person.category == category)
         persons = s.execute(q).scalars().all()
@@ -128,6 +142,7 @@ def enroll_person(
     note: str | None,
     watch: bool,
     images: list[bytes],
+    site_id: int | None = None,
 ) -> uuid.UUID:
     """Регистрация человека по фото: детект лица на каждом → усреднённый эталон."""
     from pragmata.db.models import Person, PersonPhoto
@@ -155,6 +170,7 @@ def enroll_person(
     face_emb = _avg_norm([e for _, e in saved])
     with session_factory()() as s:
         person = Person(
+            site_id=site_id,
             name=name.strip(),
             category=category,
             position=(position or None),
@@ -247,7 +263,7 @@ def photo_path(photo_id: uuid.UUID) -> str | None:
         return photo.path if photo is not None else None
 
 
-def create_person(payload: PersonCreate) -> uuid.UUID:
+def create_person(payload: PersonCreate, site_id: int | None = None) -> uuid.UUID:
     """Завести человека, взяв эталон у существующего трека (из Поиска/кадра)."""
     from pragmata.db.models import Person, Track
 
@@ -258,6 +274,7 @@ def create_person(payload: PersonCreate) -> uuid.UUID:
         if track is None or (track.clip_emb is None and track.face_emb is None):
             raise HTTPException(404, "у трека нет эмбеддинга — выберите другой")
         person = Person(
+            site_id=site_id,
             name=payload.name,
             category=payload.category,
             position=payload.position,
