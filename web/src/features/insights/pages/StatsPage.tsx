@@ -7,8 +7,16 @@ import { useDigest, useStats } from '../api/insightsApi'
 
 // Горизонтальные бары в стиле HourlyBars — чистый CSS, без графических библиотек.
 function Bars({ data, labelType, lang }: { data: Record<string, number>; labelType?: boolean; lang: 'ru' | 'uz' | 'en' }) {
+  const { t } = useTranslation()
   const max = Math.max(1, ...Object.values(data))
   const rows = Object.entries(data).sort((a, b) => b[1] - a[1])
+  // без этого пустые данные давали глухую пустую карточку — выглядело как поломка
+  if (rows.length === 0)
+    return (
+      <p className="rounded-card border border-dashed border-border-default px-4 py-6 text-center text-label text-text-secondary">
+        {t('common.empty')}
+      </p>
+    )
   return (
     <div className="space-y-2.5">
       {rows.map(([k, v]) => {
