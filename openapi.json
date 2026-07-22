@@ -4503,6 +4503,35 @@
         ]
       }
     },
+    "/api/v1/telegram/bind-code": {
+      "post": {
+        "description": "Код привязки Telegram-чата к своей организации.\n\nКлиент подключает свой чат сам: получает код здесь и отправляет боту\n/bind КОД. Без этого владельцу платформы пришлось бы вписывать чужие\nchat_id в .env руками, а тревоги ходили бы в общий котёл.",
+        "operationId": "telegram_bind_code_api_v1_telegram_bind_code_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Telegram Bind Code Api V1 Telegram Bind Code Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Telegram Bind Code",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/tracks/{track_id}/photo": {
       "get": {
         "operationId": "track_photo_api_v1_tracks__track_id__photo_get",

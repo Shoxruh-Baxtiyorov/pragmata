@@ -16,12 +16,27 @@ from pragmata.api.schemas import (
     StatsOut,
     SystemOut,
 )
-from pragmata.api.security import current_scope, require_auth
+from pragmata.api.security import Principal, current_principal, current_scope, require_auth
 from pragmata.config import get_settings
 from pragmata.services import insights_service as isvc
 
 router = APIRouter(prefix="/api/v1", tags=["insights"])
 _embedder = None
+
+
+@router.post("/telegram/bind-code", response_model=dict)
+def telegram_bind_code(p: Principal = Depends(current_principal)) -> dict[str, str]:
+    """Код привязки Telegram-чата к своей организации.
+
+    Клиент подключает свой чат сам: получает код здесь и отправляет боту
+    /bind КОД. Без этого владельцу платформы пришлось бы вписывать чужие
+    chat_id в .env руками, а тревоги ходили бы в общий котёл.
+    """
+    from pragmata.services.telegram_service import issue_bind_code
+
+    if p.site_id is None:
+        raise HTTPException(422, "у платформенного админа нет своей организации")
+    return {"code": issue_bind_code(p.site_id), "how": "отправьте боту: /bind КОД"}
 
 
 @router.get("/overview", response_model=OverviewOut)

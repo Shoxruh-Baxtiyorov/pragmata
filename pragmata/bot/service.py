@@ -123,11 +123,25 @@ class BotService:
                 photo = buf.tobytes()
         asyncio.run_coroutine_threadsafe(self._send_alert(ev, photo), self.loop)
 
+    def _recipients(self, ev: RuleEvent) -> set[int]:
+        """Чаты организации события + чаты владельца платформы.
+
+        Раньше карточка уходила во ВСЕ чаты из .env — в мультиаренде это
+        отправило бы тревогу одного клиента другому.
+        """
+        from pragmata.services.telegram_service import recipients_for_site
+
+        try:
+            return recipients_for_site(getattr(ev, "site_id", None))
+        except Exception:  # noqa: BLE001 — недоступная БД не должна глушить алерты
+            log.exception("не удалось определить получателей, шлю владельцу")
+            return set(self.allowed)
+
     async def _send_alert(self, ev: RuleEvent, photo: bytes | None) -> None:
         caption = self._caption(ev)
         kb = _keyboard(ev.id) if ev.track is not None else None
         sent: list[tuple[int, int, str]] = []
-        for chat_id in self.allowed:
+        for chat_id in self._recipients(ev):
             try:
                 if photo is not None:
                     msg = await self.bot.send_photo(
@@ -211,6 +225,24 @@ class BotService:
                 await msg.answer(texts.START_OK.format(chat_id=msg.chat.id))
             else:
                 await msg.answer(texts.NOT_ALLOWED.format(chat_id=msg.chat.id))
+
+        @router.message(Command("bind"))
+        async def bind(msg: Message) -> None:
+            """/bind КОД — привязать этот чат к организации клиента.
+
+            Так клиент подключает свой чат сам, не дожидаясь, пока владелец
+            платформы впишет его chat_id в .env руками.
+            """
+            from pragmata.services.telegram_service import bind_chat
+
+            parts = (msg.text or "").split(maxsplit=1)
+            if len(parts) < 2:
+                await msg.answer(texts.BIND_USAGE)
+                return
+            site_id = await asyncio.to_thread(
+                bind_chat, parts[1], msg.chat.id, msg.chat.title or msg.chat.full_name
+            )
+            await msg.answer(texts.BIND_OK if site_id else texts.BIND_BAD_CODE)
 
         @router.message(Command("digest"))
         async def digest(msg: Message) -> None:
