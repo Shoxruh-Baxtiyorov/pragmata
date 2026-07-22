@@ -25,6 +25,15 @@ class Site(Base):
     # рабочий календарь {days:[...], open:"08:00", close:"18:00"}; null = after_hours выкл
     working_hours: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     digest_time: Mapped[str] = mapped_column(String(8), default="20:00")
+    # Тариф задаёт глубину архива. Рутина (info) тает быстро, улики живут долго:
+    # 73% событий — info, именно они съедают диск (≈1 ГБ на камеру в сутки).
+    tariff: Mapped[str] = mapped_column(String(16), default="basic")  # basic | pro
+    retention_info_days: Mapped[int] = mapped_column(default=7)
+    retention_alert_days: Mapped[int] = mapped_column(default=90)
+    media_quota_gb: Mapped[int] = mapped_column(default=0)  # 0 = без ограничения
+    media_cleaned_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -148,6 +157,10 @@ class Chat(Base):
     __tablename__ = "chats"
 
     chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    # один бот на всех, но чат принадлежит организации: иначе тревога одного
+    # клиента улетит в чат другого. bind_code — одноразовый код привязки.
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id"), nullable=True)
+    bind_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     role: Mapped[str] = mapped_column(String(16), default="viewer")
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

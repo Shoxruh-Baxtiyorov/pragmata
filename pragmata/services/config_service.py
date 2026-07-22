@@ -153,6 +153,10 @@ def get_site_settings() -> dict[str, object]:
             "timezone": site.timezone,
             "working_hours": site.working_hours,
             "digest_time": site.digest_time,
+            "tariff": site.tariff,
+            "retention_info_days": site.retention_info_days,
+            "retention_alert_days": site.retention_alert_days,
+            "media_quota_gb": site.media_quota_gb,
         }
 
 
@@ -170,6 +174,15 @@ def patch_site_settings(patch: SiteSettingsPatch) -> dict[str, object]:
             site.timezone = patch.timezone
         if patch.digest_time is not None:
             site.digest_time = patch.digest_time
+        if patch.tariff is not None:
+            site.tariff = patch.tariff
+        # сроки не могут быть нулевыми: 0 дней = немедленное удаление улик
+        if patch.retention_info_days is not None:
+            site.retention_info_days = max(1, patch.retention_info_days)
+        if patch.retention_alert_days is not None:
+            site.retention_alert_days = max(1, patch.retention_alert_days)
+        if patch.media_quota_gb is not None:
+            site.media_quota_gb = max(0, patch.media_quota_gb)
         # working_hours: {} или null → отключить after_hours; иначе {days, open, close}
         if patch.working_hours is not None:
             site.working_hours = patch.working_hours or None

@@ -1186,8 +1186,24 @@
             "title": "Digest Time",
             "type": "string"
           },
+          "media_quota_gb": {
+            "title": "Media Quota Gb",
+            "type": "integer"
+          },
           "name": {
             "title": "Name",
+            "type": "string"
+          },
+          "retention_alert_days": {
+            "title": "Retention Alert Days",
+            "type": "integer"
+          },
+          "retention_info_days": {
+            "title": "Retention Info Days",
+            "type": "integer"
+          },
+          "tariff": {
+            "title": "Tariff",
             "type": "string"
           },
           "timezone": {
@@ -1211,7 +1227,11 @@
           "name",
           "timezone",
           "working_hours",
-          "digest_time"
+          "digest_time",
+          "tariff",
+          "retention_info_days",
+          "retention_alert_days",
+          "media_quota_gb"
         ],
         "title": "SiteSettingsOut",
         "type": "object"
@@ -1229,6 +1249,17 @@
             ],
             "title": "Digest Time"
           },
+          "media_quota_gb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Quota Gb"
+          },
           "name": {
             "anyOf": [
               {
@@ -1239,6 +1270,39 @@
               }
             ],
             "title": "Name"
+          },
+          "retention_alert_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Alert Days"
+          },
+          "retention_info_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Info Days"
+          },
+          "tariff": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tariff"
           },
           "timezone": {
             "anyOf": [
@@ -2224,6 +2288,63 @@
           }
         ],
         "summary": "Overview",
+        "tags": [
+          "backoffice"
+        ]
+      }
+    },
+    "/api/v1/backoffice/retention/run": {
+      "post": {
+        "description": "Прибрать медиа сейчас, не дожидаясь ночного прохода.\n\nКадры удаляются, строки событий остаются — история статистики не рвётся.",
+        "operationId": "run_retention_api_v1_backoffice_retention_run_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "site_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Retention Api V1 Backoffice Retention Run Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Run Retention",
         "tags": [
           "backoffice"
         ]

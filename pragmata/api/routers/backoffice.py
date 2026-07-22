@@ -86,6 +86,26 @@ def patch_settings_ep(payload: SiteSettingsPatch) -> SiteSettingsOut:
     return SiteSettingsOut(**cfgsvc.patch_site_settings(payload))
 
 
+# --- ретенция медиа ---------------------------------------------------------
+
+
+@router.post("/retention/run", response_model=dict)
+def run_retention(site_id: int | None = None) -> dict[str, object]:
+    """Прибрать медиа сейчас, не дожидаясь ночного прохода.
+
+    Кадры удаляются, строки событий остаются — история статистики не рвётся.
+    """
+    from pragmata.services import retention_service as rsvc
+
+    res = rsvc.cleanup_all() if site_id is None else rsvc.cleanup_site(site_id)
+    return {
+        "events": res["events"],
+        "freed_mb": round(res["freed_bytes"] / 1024 / 1024, 1),
+        "orphans": res.get("orphans", 0),
+        "note": "кадры удалены, события сохранены",
+    }
+
+
 # --- журнал действий --------------------------------------------------------
 
 

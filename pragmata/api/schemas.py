@@ -282,6 +282,11 @@ class SiteSettingsOut(BaseModel):
     timezone: str
     working_hours: dict[str, object] | None  # {days, open, close} | null = after_hours off
     digest_time: str
+    # глубина архива по тарифу: рутина тает быстро, улики живут долго
+    tariff: str
+    retention_info_days: int
+    retention_alert_days: int
+    media_quota_gb: int  # 0 = без ограничения (аварийный тормоз поверх сроков)
 
 
 class SiteSettingsPatch(BaseModel):
@@ -289,6 +294,10 @@ class SiteSettingsPatch(BaseModel):
     timezone: str | None = None
     working_hours: dict[str, object] | None = None  # {} → отключить after_hours
     digest_time: str | None = None
+    tariff: str | None = None
+    retention_info_days: int | None = None
+    retention_alert_days: int | None = None
+    media_quota_gb: int | None = None
 
 
 class NvrPlaybackIn(BaseModel):
