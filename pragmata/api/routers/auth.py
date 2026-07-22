@@ -51,5 +51,17 @@ def login(payload: LoginRequest, request: Request) -> TokenResponse:
 
 
 @router.get("/me")
-def me(p: Principal = Depends(current_principal)) -> dict[str, str]:
-    return {"sub": p.sub, "username": p.username, "role": p.role}
+def me(p: Principal = Depends(current_principal)) -> dict[str, str | bool]:
+    """Кто я и что мне можно.
+
+    backoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого
+    он рисует кнопки настройки тем, у кого они гарантированно дадут 403.
+    """
+    from pragmata.config import get_settings
+
+    return {
+        "sub": p.sub,
+        "username": p.username,
+        "role": p.role,
+        "backoffice": p.is_admin and p.username.lower() in get_settings().backoffice_usernames,
+    }

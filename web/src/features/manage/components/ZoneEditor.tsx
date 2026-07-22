@@ -4,6 +4,7 @@ import { Button, Input, Modal } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
 import { Undo2, X } from '@/shared/ui/icons'
 import { cn } from '@/shared/lib/utils'
+import { ApiError } from '@/shared/api/client'
 import type { Camera } from '@/shared/api/types'
 import { useAddZone } from '../api/manageApi'
 
@@ -180,6 +181,17 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
           <span className="text-label text-text-secondary">{t('manage.loitering')}</span>
         </label>
       </div>
+
+      {/* Молчащая ошибка — худшее: юзер жал «Сохранить» 11 раз и не видел 403 */}
+      {addZone.isError && (
+        <p className="mt-3 rounded-input bg-error/10 px-3 py-2 text-label text-error">
+          {addZone.error instanceof ApiError && addZone.error.status === 403
+            ? t('manage.noRights')
+            : addZone.error instanceof ApiError
+              ? addZone.error.message
+              : t('common.noConnection')}
+        </p>
+      )}
 
       {/* Футер отделён линией: слева — состояние и правка точек, справа — решение */}
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-default pt-4">

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, EmptyState, Input, PageHeader, SkeletonList } from '@/shared/ui'
-import { MapPin, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
+import { useCanManage } from '@/features/auth'
+import { MapPin, Plus, ShieldAlert, Trash2, Video, VideoOff } from '@/shared/ui/icons'
 import type { Camera, CameraInput } from '@/shared/api/types'
 import {
   useCreateCamera,
@@ -166,10 +167,24 @@ function AddCameraForm() {
 export function ManagePage() {
   const { t } = useTranslation()
   const cams = useManageCameras()
+  const canManage = useCanManage()
 
   return (
     <>
-      <PageHeader title={t('manage.title')} subtitle={t('manage.subtitle')} actions={<AddCameraForm />} />
+      <PageHeader
+        title={t('manage.title')}
+        subtitle={t('manage.subtitle')}
+        actions={canManage ? <AddCameraForm /> : undefined}
+      />
+
+      {/* Честно предупреждаем ДО кликов: раньше кнопки были, а сохранение молча
+          отдавало 403 — пользователь жал вслепую. */}
+      {!canManage && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-card border border-warning/30 bg-warning/10 px-4 py-3">
+          <ShieldAlert size={18} className="mt-0.5 shrink-0 text-warning" />
+          <p className="text-label text-text-secondary">{t('manage.noRights')}</p>
+        </div>
+      )}
 
       {cams.isLoading ? (
         <SkeletonList rows={4} />

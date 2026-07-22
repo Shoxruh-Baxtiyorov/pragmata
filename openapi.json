@@ -3259,6 +3259,7 @@
     },
     "/api/v1/me": {
       "get": {
+        "description": "Кто я и что мне можно.\n\nbackoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого\nон рисует кнопки настройки тем, у кого они гарантированно дадут 403.",
         "operationId": "me_api_v1_me_get",
         "responses": {
           "200": {
@@ -3266,7 +3267,14 @@
               "application/json": {
                 "schema": {
                   "additionalProperties": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
                   },
                   "title": "Response Me Api V1 Me Get",
                   "type": "object"
