@@ -19,6 +19,20 @@ export const auth = {
   },
 }
 
+const SITE_KEY = 'pragmata_active_site'
+
+/** Выбранная владельцем платформы организация. Пусто = смотрит все сразу. */
+export const activeSite = {
+  get: () => localStorage.getItem(SITE_KEY) ?? '',
+  set: (id: string) => {
+    if (id) localStorage.setItem(SITE_KEY, id)
+    else localStorage.removeItem(SITE_KEY)
+    // данные всех экранов зависят от организации — проще перезагрузить, чем
+    // ловить полуобновлённые кэши react-query по всему приложению
+    window.location.reload()
+  },
+}
+
 // Мост к роутеру: 401 → logout + redirect (подключается в AppProviders)
 let onUnauthorized: (() => void) | undefined
 export function setOnUnauthorized(fn: () => void): void {
@@ -39,6 +53,10 @@ async function request<T>(path: string, init?: RequestInit, isForm = false): Pro
   const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' }
   const token = auth.get()
   if (token) headers.Authorization = `Bearer ${token}`
+  // Переключатель организаций: сервер учитывает заголовок ТОЛЬКО у админа и
+  // только чтобы сузить видимость — у клиента он молча игнорируется.
+  const site = activeSite.get()
+  if (site) headers['X-Site-Id'] = site
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (res.status === 401) {
     auth.clear()

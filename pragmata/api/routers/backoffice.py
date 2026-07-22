@@ -73,6 +73,21 @@ def overview() -> BackofficeOverview:
         )
 
 
+@router.get("/sites", response_model=list[dict[str, object]])
+def sites() -> list[dict[str, object]]:
+    """Организации-клиенты — для переключателя: владелец смотрит их по одному."""
+    from pragmata.db.models import Camera, Site
+
+    with session_factory()() as s:
+        cams = dict(
+            s.execute(select(Camera.site_id, func.count()).group_by(Camera.site_id)).all()
+        )
+        return [
+            {"id": row.id, "name": row.name, "tariff": row.tariff, "cameras": cams.get(row.id, 0)}
+            for row in s.execute(select(Site).order_by(Site.id)).scalars().all()
+        ]
+
+
 # --- настройки объекта ------------------------------------------------------
 
 

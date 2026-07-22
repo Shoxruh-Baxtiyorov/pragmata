@@ -2420,6 +2420,38 @@
         ]
       }
     },
+    "/api/v1/backoffice/sites": {
+      "get": {
+        "description": "Организации-клиенты — для переключателя: владелец смотрит их по одному.",
+        "operationId": "sites_api_v1_backoffice_sites_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Sites Api V1 Backoffice Sites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sites",
+        "tags": [
+          "backoffice"
+        ]
+      }
+    },
     "/api/v1/backoffice/users/{user_id}/2fa/reset": {
       "post": {
         "description": "Снять 2FA юзеру без кода — когда он потерял аутентификатор.",

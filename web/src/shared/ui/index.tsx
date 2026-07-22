@@ -10,6 +10,7 @@ export { Card } from './card'
 export { Badge } from './badge'
 export { Modal } from './modal'
 export { LangSelect } from './LangSelect'
+export { SiteSelect } from './SiteSelect'
 
 export function Spinner() {
   return <Loader2 className="size-6 animate-spin text-brand" />

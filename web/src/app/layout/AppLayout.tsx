@@ -21,7 +21,7 @@ import {
   X,
   type LucideIcon,
 } from '@/shared/ui/icons'
-import { Button, LangSelect } from '@/shared/ui'
+import { Button, LangSelect, SiteSelect } from '@/shared/ui'
 import { Logo } from '@/shared/ui/Logo'
 import { cn } from '@/shared/lib/utils'
 import { useTheme } from '@/shared/hooks/useTheme'
@@ -143,6 +143,7 @@ export function AppLayout() {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="theme">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </Button>
+          <SiteSelect />
           <LangSelect />
 
           {username && (
