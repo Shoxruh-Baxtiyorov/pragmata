@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response  # noqa: TC002 — FastAPI резолвит в рантайме
 
 from pragmata.api.schemas import EventsPage, FeedbackIn, OkOut
-from pragmata.api.security import require_auth
+from pragmata.api.security import current_scope, require_auth
 from pragmata.services import events_service as svc
 
 router = APIRouter(prefix="/api/v1", tags=["events"])
@@ -41,24 +41,30 @@ def events(
     source: str | None = None,  # live | archive (форензика)
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    _: str = Depends(require_auth),
+    scope: int | None = Depends(current_scope),
 ) -> EventsPage:
-    return svc.list_events(hours, camera_id, type, severity, zone, limit, offset, source)
+    return svc.list_events(hours, camera_id, type, severity, zone, limit, offset, source, scope)
 
 
 @router.get("/events/{event_id}/photo")
-def event_photo(event_id: uuid.UUID, _: str = Depends(require_auth)) -> FileResponse:
-    return svc.event_media(event_id, "photo")
+def event_photo(
+    event_id: uuid.UUID, scope: int | None = Depends(current_scope)
+) -> FileResponse:
+    return svc.event_media(event_id, "photo", scope)
 
 
 @router.get("/events/{event_id}/face")
-def event_face(event_id: uuid.UUID, _: str = Depends(require_auth)) -> FileResponse:
-    return svc.event_media(event_id, "face")
+def event_face(
+    event_id: uuid.UUID, scope: int | None = Depends(current_scope)
+) -> FileResponse:
+    return svc.event_media(event_id, "face", scope)
 
 
 @router.get("/events/{event_id}/clip")
-def event_clip(event_id: uuid.UUID, _: str = Depends(require_auth)) -> FileResponse:
-    return svc.event_media(event_id, "clip")
+def event_clip(
+    event_id: uuid.UUID, scope: int | None = Depends(current_scope)
+) -> FileResponse:
+    return svc.event_media(event_id, "clip", scope)
 
 
 @router.post("/events/{event_id}/feedback", response_model=OkOut)

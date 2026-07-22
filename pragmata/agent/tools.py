@@ -200,9 +200,12 @@ class AgentTools:
         session_factory: sessionmaker[Session],
         cfg: SiteConfig,
         embedder: ClipEmbedder | None = None,
+        scope: int | None = None,
     ):
         self.sf = session_factory
         self.cfg = cfg
+        # организация, которой ограничен агент; None = платформа видит всё
+        self.scope = scope
         self.tz = ZoneInfo(cfg.site.timezone)
         self.cam_names = {c.id: c.name for c in cfg.cameras}
         self.embedder = embedder
@@ -272,6 +275,8 @@ class AgentTools:
         type, severity = _coerce_type_severity(type, severity)
         start, end = self._window(hours, date, from_time, to_time)
         q = select(Event).where(Event.t_start >= start)
+        if self.scope is not None:
+            q = q.where(Event.site_id == self.scope)
         if end is not None:
             q = q.where(Event.t_start < end)
         if camera_id:
@@ -305,6 +310,8 @@ class AgentTools:
 
         start, end = self._window(hours, date)
         conds = [Event.t_start >= start, Event.source == "live"]
+        if self.scope is not None:
+            conds.append(Event.site_id == self.scope)
         if end is not None:
             conds.append(Event.t_start < end)
         fp_conds = [Feedback.created_at >= start, Feedback.verdict == "false_positive"]

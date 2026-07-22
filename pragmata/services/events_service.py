@@ -105,11 +105,14 @@ def list_events(
     limit: int,
     offset: int,
     source: str | None = None,
+    scope: int | None = None,
 ) -> EventsPage:
     from pragmata.db.models import Event
 
     since = datetime.now(UTC) - timedelta(hours=hours)
     q = select(Event).where(Event.t_start >= since)
+    if scope is not None:
+        q = q.where(Event.site_id == scope)
     if camera_id:
         q = q.where(Event.camera_id == camera_id)
     if type_:
@@ -129,7 +132,7 @@ def list_events(
         return EventsPage(total=total, items=[_event_out(ev, names) for ev in rows])
 
 
-def event_media(event_id: uuid.UUID, kind: str) -> FileResponse:
+def event_media(event_id: uuid.UUID, kind: str, scope: int | None = None) -> FileResponse:
     from fastapi import HTTPException
     from fastapi.responses import FileResponse
 
@@ -137,7 +140,7 @@ def event_media(event_id: uuid.UUID, kind: str) -> FileResponse:
 
     with session_factory()() as s:
         ev = s.get(Event, event_id)
-    if ev is None:
+    if ev is None or (scope is not None and ev.site_id != scope):
         raise HTTPException(404, "нет такого события")
     if kind == "clip":
         path, root, media_type = ev.clip_path, data_root() / "clips", "video/mp4"

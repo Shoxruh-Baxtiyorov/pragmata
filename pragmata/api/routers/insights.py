@@ -16,7 +16,7 @@ from pragmata.api.schemas import (
     StatsOut,
     SystemOut,
 )
-from pragmata.api.security import require_auth
+from pragmata.api.security import current_scope, require_auth
 from pragmata.config import get_settings
 from pragmata.services import insights_service as isvc
 
@@ -25,14 +25,14 @@ _embedder = None
 
 
 @router.get("/overview", response_model=OverviewOut)
-def overview(_: str = Depends(require_auth)) -> OverviewOut:
+def overview(scope: int | None = Depends(current_scope)) -> OverviewOut:
     require_site()
-    return isvc.overview()
+    return isvc.overview(scope)
 
 
 @router.get("/system", response_model=SystemOut)
-def system(_: str = Depends(require_auth)) -> SystemOut:
-    return isvc.system_status()
+def system(scope: int | None = Depends(current_scope)) -> SystemOut:
+    return isvc.system_status(scope)
 
 
 @router.get("/tracks/{track_id}/timeline", response_model=list[PersonAppearance])
@@ -45,11 +45,14 @@ def timeline(
 
 
 @router.get("/stats", response_model=StatsOut)
-def stats(hours: float = Query(24, gt=0, le=24 * 30), _: str = Depends(require_auth)) -> StatsOut:
+def stats(
+    hours: float = Query(24, gt=0, le=24 * 30),
+    scope: int | None = Depends(current_scope),
+) -> StatsOut:
     from pragmata.agent.tools import AgentTools
 
     cfg = require_site()
-    return StatsOut(**AgentTools(session_factory(), cfg, None).stats(hours=hours))
+    return StatsOut(**AgentTools(session_factory(), cfg, None, scope=scope).stats(hours=hours))
 
 
 @router.get("/digest", response_model=DigestOut)

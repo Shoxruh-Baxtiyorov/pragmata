@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from pragmata.config import get_settings
@@ -134,8 +134,19 @@ def require_admin(p: Principal = Depends(current_principal)) -> Principal:
     return p
 
 
-def current_scope(p: Principal = Depends(current_principal)) -> int | None:
-    """Организация, которой ограничен запрос. None = платформа, видно всё."""
+def current_scope(
+    p: Principal = Depends(current_principal),
+    x_site_id: int | None = Header(default=None, alias="X-Site-Id"),
+) -> int | None:
+    """Организация, которой ограничен запрос. None = платформа, видно всё.
+
+    Заголовок X-Site-Id — переключатель организаций для владельца платформы:
+    он смотрит клиентов по одному, а не общим котлом. Заголовок умеет ТОЛЬКО
+    СУЖАТЬ: у клиента он игнорируется целиком, иначе подделка заголовка стала бы
+    входом в чужую организацию.
+    """
+    if p.is_admin and x_site_id is not None:
+        return x_site_id
     return p.scope
 
 

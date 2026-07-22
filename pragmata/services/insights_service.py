@@ -5,9 +5,13 @@ from __future__ import annotations
 import time
 import uuid  # noqa: TC003 — uuid.UUID в сигнатуре, вызываемой из FastAPI-роута
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.elements import ColumnElement
 
 from pragmata.api.deps import camera_names, data_root, require_site, session_factory, site_config
 from pragmata.api.schemas import (
@@ -42,7 +46,16 @@ def _cameras_online() -> tuple[int, int]:
     return online, len(ids)
 
 
-def overview() -> OverviewOut:
+def _site(scope: int | None) -> ColumnElement[bool]:
+    """Условие принадлежности организации; без скоупа — всегда истинно."""
+    from sqlalchemy import true
+
+    from pragmata.db.models import Event
+
+    return true() if scope is None else Event.site_id == scope
+
+
+def overview(scope: int | None = None) -> OverviewOut:
     from pragmata.db.models import Event, Feedback
     from pragmata.services.events_service import _event_out
 
@@ -56,7 +69,7 @@ def overview() -> OverviewOut:
             r[0]: r[1]
             for r in s.execute(
                 select(Event.type, func.count())
-                .where(Event.t_start >= since, Event.source == "live")
+                .where(Event.t_start >= since, Event.source == "live", _site(scope))
                 .group_by(Event.type)
             ).all()
         }
@@ -68,7 +81,12 @@ def overview() -> OverviewOut:
         recent = (
             s.execute(
                 select(Event)
-                .where(Event.t_start >= since, Event.severity == "alert", Event.source == "live")
+                .where(
+                    Event.t_start >= since,
+                    Event.severity == "alert",
+                    Event.source == "live",
+                    _site(scope),
+                )
                 .order_by(Event.t_start.desc())
                 .limit(6)
             )
@@ -78,7 +96,7 @@ def overview() -> OverviewOut:
         # почасовые бакеты за 24ч
         rows = s.execute(
             select(Event.t_start, Event.severity).where(
-                Event.t_start >= since, Event.source == "live"
+                Event.t_start >= since, Event.source == "live", _site(scope)
             )
         ).all()
 
@@ -109,7 +127,7 @@ def overview() -> OverviewOut:
     )
 
 
-def system_status() -> SystemOut:
+def system_status(scope: int | None = None) -> SystemOut:
     from pragmata.db.models import Event
 
     cfg = require_site()
@@ -120,13 +138,13 @@ def system_status() -> SystemOut:
 
     with session_factory()() as s:
         total = s.execute(
-            select(func.count()).select_from(Event).where(Event.source == "live")
+            select(func.count()).select_from(Event).where(Event.source == "live", _site(scope))
         ).scalar_one()
         last_by_cam = {
             r[0]: r[1]
             for r in s.execute(
                 select(Event.camera_id, func.max(Event.t_start))
-                .where(Event.source == "live")
+                .where(Event.source == "live", _site(scope))
                 .group_by(Event.camera_id)
             ).all()
         }
@@ -134,7 +152,7 @@ def system_status() -> SystemOut:
             r[0]: r[1]
             for r in s.execute(
                 select(Event.camera_id, func.count())
-                .where(Event.t_start >= since, Event.source == "live")
+                .where(Event.t_start >= since, Event.source == "live", _site(scope))
                 .group_by(Event.camera_id)
             ).all()
         }
