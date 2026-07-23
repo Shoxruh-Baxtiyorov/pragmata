@@ -93,6 +93,8 @@ SYSTEM_PROMPT = """Ты — Pragmata AI, ассистент видеонаблю
 Правила:
 0. НЕ пиши код, псевдокод или имена функций в ответе пользователю. Вызывай
    инструменты через tool-calling; пользователю давай только человеческий текст.
+   НЕ вставляй ссылки/URL/пути к файлам и не выдумывай их — фото и клипы
+   прикладываются к ответу отдельно и автоматически, писать их не нужно.
 1. ЯЗЫК ОТВЕТА = ЯЗЫК ВОПРОСА, СТРОГО, БЕЗ ИСКЛЮЧЕНИЙ, БЕЗ СМЕШИВАНИЯ ЯЗЫКОВ:
    — savol o'zbekcha bo'lsa — javob FAQAT o'zbekcha (masalan: «Bugun nechta
      odam keldi?» → javob o'zbek tilida, ORASIGA birorta ham rus so'zi YO'Q);
@@ -215,22 +217,31 @@ class AgentRunner:
             {"role": "user", "content": question},
         ]
         evidence: list[dict[str, str]] = []
-        # слабые локальные модели (особенно на узбекском вводе) любят ответить
-        # «нет / yo'q», НЕ заглянув в данные. Если модель отказалась вызвать
-        # инструмент сама — один раз принуждаем её выбрать инструмент и свериться
-        # с фактами, прежде чем принять голый ответ.
+        # слабые локальные модели любят ответить «нет / yo'q», НЕ заглянув в
+        # данные. Если модель отвечает голым текстом, НИ РАЗУ не вызвав
+        # инструмент, — один раз принуждаем её свериться с фактами. Но если
+        # инструмент уже вызывался, готовый ответ НЕ выбрасываем (иначе сильная
+        # облачная модель зациклится, отдав корректный ответ).
+        tool_used = False
         forced = False
 
-        for _ in range(MAX_TOOL_ROUNDS):
-            # Literal, а не str: SDK разбирает tool_choice по перегрузкам
-            choice: Literal["auto", "required"] = "required" if forced else "auto"
-            resp = self.client.chat.completions.create(
+        def _ask(tc: Literal["auto", "required"]) -> Any:
+            return self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,  # type: ignore[arg-type]
                 tools=TOOL_SPECS,  # type: ignore[arg-type]
-                tool_choice=choice,
+                tool_choice=tc,
                 temperature=0.2,
             )
+
+        for _ in range(MAX_TOOL_ROUNDS):
+            try:
+                resp = _ask("required" if forced else "auto")
+            except Exception:  # noqa: BLE001 — часть провайдеров не умеет required
+                if not forced:
+                    raise
+                forced = False  # откат на auto: продолжаем без принуждения
+                resp = _ask("auto")
             msg = resp.choices[0].message
             if not msg.tool_calls:
                 text = msg.content or "…"
@@ -254,9 +265,9 @@ class AgentRunner:
                         }
                     )
                     continue
-                if not forced:
-                    # модель ответила без единого инструмента — заставляем
-                    # свериться с данными (следующий круг: tool_choice=required)
+                if not tool_used and not forced:
+                    # ответ без единого обращения к данным — форсим ровно один
+                    # раз; если инструмент уже был, ответу верим
                     forced = True
                     continue
                 history.extend(
@@ -265,6 +276,7 @@ class AgentRunner:
                 del history[:-6]  # держим последние 3 обмена
                 return text, evidence
 
+            tool_used = True
             forced = False  # модель снова вызывает инструменты — снимаем принуждение
             messages.append(
                 {

@@ -44,9 +44,13 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://openrouter.ai/api/v1"
     llm_api_key: str = ""
     llm_model: str = "google/gemini-2.0-flash-001"
-    # VLM-описания alert-событий (тот же endpoint, что LLM_BASE_URL/LLM_API_KEY).
-    # Локально: qwen2.5vl:3b (Ollama свапает модели — секунды на алерт, ок).
-    # Облако: пусто = использовать LLM_MODEL (gemini-flash мультимодальна).
+    # VLM-описания/детекция оружия. По умолчанию тот же endpoint, что LLM, но
+    # можно РАЗДЕЛИТЬ: VLM бьёт на каждого входящего (высокая частота) — держать
+    # его на облачном free-лимите нельзя, квота сгорит. Поэтому агент можно
+    # увести в облако (LLM_*), а VLM оставить локально (VLM_BASE_URL/VLM_API_KEY).
+    # Пустые vlm_base_url/vlm_api_key = падают обратно на llm_*.
+    vlm_base_url: str = ""
+    vlm_api_key: str = ""
     vlm_model: str = "qwen2.5vl:3b"
     vlm_max_per_hour: int = 60
     # распознавание лица для watchlist (insightface buffalo_s, ~90МБ, CPU-офлайн).
@@ -76,6 +80,11 @@ class Settings(BaseSettings):
     @property
     def backoffice_usernames(self) -> set[str]:
         return {x.strip().lower() for x in self.backoffice_users.split(",") if x.strip()}
+
+    @property
+    def vlm_endpoint(self) -> tuple[str, str]:
+        """(base_url, api_key) для VLM: свой, иначе тот же, что у LLM."""
+        return (self.vlm_base_url or self.llm_base_url, self.vlm_api_key or self.llm_api_key)
 
 
 @lru_cache

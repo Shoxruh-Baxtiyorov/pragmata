@@ -329,7 +329,7 @@ def main() -> None:
             update_description(vlm_sf, eid, text, meta)
 
         vlm_worker = VlmWorker(
-            VlmDescriber(settings.llm_base_url, settings.llm_api_key, settings.vlm_model),
+            VlmDescriber(*settings.vlm_endpoint, settings.vlm_model),
             HourBudget(settings.vlm_max_per_hour),
             persist=persist_description,
             notify=(bot.attach_description if bot is not None else None),
@@ -360,7 +360,7 @@ def main() -> None:
             )
 
         weapon_worker = WeaponWorker(
-            VlmDescriber(settings.llm_base_url, settings.llm_api_key, settings.vlm_model),
+            VlmDescriber(*settings.vlm_endpoint, settings.vlm_model),
             HourBudget(settings.weapon_max_per_hour),
             emit_alert=emit_weapon_alert,
             stop_event=stop_event,
