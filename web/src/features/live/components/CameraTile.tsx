@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchAuthedBlob } from '@/shared/api/client'
 import { Badge, Button } from '@/shared/ui'
 import { Video, VideoOff } from '@/shared/ui/icons'
+import { POLL } from '@/shared/lib/format'
 import type { Camera } from '@/shared/api/types'
 
 /** Снапшот перезапрашиваем сами (cache-buster), чтоб не кэшировался; поверх — зоны. */
@@ -27,7 +28,7 @@ export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera
         .catch(() => {})
     }
     tick()
-    const id = setInterval(tick, 3000)
+    const id = setInterval(tick, POLL.snapshots) // раз в секунду — живая стена
     return () => {
       active = false
       clearInterval(id)

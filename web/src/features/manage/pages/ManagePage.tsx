@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, EmptyState, Input, PageHeader, SkeletonList } from '@/shared/ui'
-import { useCanManage } from '@/features/auth'
-import { MapPin, Plus, ShieldAlert, Trash2, Video, VideoOff } from '@/shared/ui/icons'
+import { ApiError } from '@/shared/api/client'
+import { MapPin, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
 import type { Camera, CameraInput } from '@/shared/api/types'
 import {
   useCreateCamera,
@@ -50,11 +50,23 @@ function CameraRow({ cam }: { cam: Camera }) {
           variant="ghost"
           size="icon"
           aria-label={t('manage.delete')}
-          onClick={() => del.mutate(cam.id)}
+          disabled={del.isPending}
+          onClick={() => {
+            if (window.confirm(t('manage.confirmDelete', { name: cam.name })))
+              del.mutate(cam.id)
+          }}
         >
           <Trash2 size={16} className="text-error" />
         </Button>
       </div>
+
+      {(patch.isError || del.isError) && (
+        <p className="pl-7 text-caption text-error">
+          {(patch.error ?? del.error) instanceof ApiError
+            ? (patch.error ?? del.error)?.message
+            : t('common.noConnection')}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 pl-7">
         {cam.zones.map((z) => (
@@ -160,6 +172,11 @@ function AddCameraForm() {
       <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
         {t('common.close')}
       </Button>
+      {create.isError && (
+        <p className="w-full text-caption text-error">
+          {create.error instanceof ApiError ? create.error.message : t('common.noConnection')}
+        </p>
+      )}
     </form>
   )
 }
@@ -167,24 +184,17 @@ function AddCameraForm() {
 export function ManagePage() {
   const { t } = useTranslation()
   const cams = useManageCameras()
-  const canManage = useCanManage()
 
+  // Камерами управляет любой сотрудник организации — это его объект, а не
+  // работа владельца платформы. Ограничение по организации держит бэкенд
+  // (own_camera_or_404): чужую камеру он не покажет и не даст тронуть.
   return (
     <>
       <PageHeader
         title={t('manage.title')}
         subtitle={t('manage.subtitle')}
-        actions={canManage ? <AddCameraForm /> : undefined}
+        actions={<AddCameraForm />}
       />
-
-      {/* Честно предупреждаем ДО кликов: раньше кнопки были, а сохранение молча
-          отдавало 403 — пользователь жал вслепую. */}
-      {!canManage && (
-        <div className="mb-4 flex items-start gap-2.5 rounded-card border border-warning/30 bg-warning/10 px-4 py-3">
-          <ShieldAlert size={18} className="mt-0.5 shrink-0 text-warning" />
-          <p className="text-label text-text-secondary">{t('manage.noRights')}</p>
-        </div>
-      )}
 
       {cams.isLoading ? (
         <SkeletonList rows={4} />

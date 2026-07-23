@@ -116,7 +116,9 @@ class CameraWorker(threading.Thread):
                 if self.stop_event.is_set():
                     break
                 self.stats.frames_read += 1
-                if self.live_dir is not None and frame.ts - self._last_live >= 2.0:
+                # живой кадр 4 раза в секунду — стена ощущается как видео
+                # (≤640px jpeg — дёшево); ниже уже нужен MJPEG/WebRTC-стрим
+                if self.live_dir is not None and frame.ts - self._last_live >= 0.25:
                     self._last_live = frame.ts
                     self._write_live(frame.image)
                 if frame.ts - last_processed < interval:

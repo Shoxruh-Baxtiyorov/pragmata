@@ -2,7 +2,7 @@ import type { Severity } from '@/shared/api/types'
 
 // Интервалы поллинга (мс) — единая точка замены на WebSocket в будущем
 export const POLL = {
-  snapshots: 3000,
+  snapshots: 400, // живая стена ~2.5 fps; пайплайн пишет кадр 4×/сек
   events: 5000,
   stats: 30000,
 } as const
