@@ -55,7 +55,15 @@ def load_config_from_db(session_factory: sessionmaker[Session]) -> SiteConfig:
         site = s.get(Site, 1)
         if site is None:
             raise RuntimeError("site row missing — запусти seed_config_from_yaml")
-        cams = s.execute(select(Camera).where(Camera.enabled).order_by(Camera.id)).scalars().all()
+        cams = (
+            s.execute(
+                select(Camera)
+                .where(Camera.enabled, Camera.deleted.is_(False))
+                .order_by(Camera.id)
+            )
+            .scalars()
+            .all()
+        )
         zones_by_cam: dict[str, list[object]] = {}
         for z in s.execute(select(Zone).order_by(Zone.name)).scalars().all():
             zones_by_cam.setdefault(z.camera_id, []).append(z)

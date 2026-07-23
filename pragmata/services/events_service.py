@@ -35,7 +35,7 @@ def list_cameras(include_disabled: bool = False, scope: int | None = None) -> li
     now = time.time()
     out: list[CameraOut] = []
     with session_factory()() as s:
-        q = select(Camera).order_by(Camera.id)
+        q = select(Camera).where(Camera.deleted.is_(False)).order_by(Camera.id)
         if scope is not None:
             q = q.where(Camera.site_id == scope)
         if not include_disabled:

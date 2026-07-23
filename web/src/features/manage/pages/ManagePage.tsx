@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, EmptyState, Input, PageHeader, SkeletonList } from '@/shared/ui'
 import { ApiError } from '@/shared/api/client'
-import { MapPin, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
+import { MapPin, Pencil, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
 import type { Camera, CameraInput } from '@/shared/api/types'
 import {
   useCreateCamera,
@@ -13,12 +13,71 @@ import {
 } from '../api/manageApi'
 import { ZoneEditor } from '../components/ZoneEditor'
 
+function EditCameraForm({ cam, onDone }: { cam: Camera; onDone: () => void }) {
+  const { t } = useTranslation()
+  const patch = usePatchCamera()
+  const [name, setName] = useState(cam.name)
+  const [url, setUrl] = useState('')
+  const [fps, setFps] = useState('')
+
+  const save = () => {
+    const body: Record<string, unknown> = {}
+    if (name.trim() && name.trim() !== cam.name) body.name = name.trim()
+    if (url.trim()) body.url = url.trim() // пусто = не менять (URL наружу не отдаётся)
+    if (fps) body.process_fps = Number(fps)
+    if (Object.keys(body).length === 0) return onDone()
+    patch.mutate({ id: cam.id, patch: body }, { onSuccess: onDone })
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-end gap-2 rounded-card bg-bg-secondary p-3">
+      <label className="flex flex-col gap-1">
+        <span className="text-caption text-text-secondary">{t('manage.cameraName')}</span>
+        <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 w-44" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-caption text-text-secondary">{t('manage.newUrl')}</span>
+        <Input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder={t('manage.keepUrl')}
+          className="h-9 min-w-64 flex-1"
+        />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-caption text-text-secondary">fps</span>
+        <Input
+          type="number"
+          step="0.5"
+          min="0"
+          value={fps}
+          onChange={(e) => setFps(e.target.value)}
+          placeholder="—"
+          className="h-9 w-20"
+        />
+      </label>
+      <Button size="sm" onClick={save} loading={patch.isPending}>
+        {t('manage.save')}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onDone}>
+        {t('common.close')}
+      </Button>
+      {patch.isError && (
+        <p className="w-full text-caption text-error">
+          {patch.error instanceof ApiError ? patch.error.message : t('common.noConnection')}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function CameraRow({ cam }: { cam: Camera }) {
   const { t } = useTranslation()
   const patch = usePatchCamera()
   const del = useDeleteCamera()
   const delZone = useDeleteZone()
   const [editZone, setEditZone] = useState(false)
+  const [editCam, setEditCam] = useState(false)
 
   return (
     <div className="flex flex-col gap-2 border-b border-border-default py-3 last:border-0">
@@ -39,6 +98,15 @@ function CameraRow({ cam }: { cam: Camera }) {
         ) : (
           <Badge tone="neutral">{t('manage.disabled')}</Badge>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('manage.edit')}
+          title={t('manage.edit')}
+          onClick={() => setEditCam((v) => !v)}
+        >
+          <Pencil size={16} />
+        </Button>
         <Button
           variant="ghost"
           size="sm"
@@ -67,6 +135,8 @@ function CameraRow({ cam }: { cam: Camera }) {
             : t('common.noConnection')}
         </p>
       )}
+
+      {editCam && <EditCameraForm cam={cam} onDone={() => setEditCam(false)} />}
 
       <div className="flex flex-wrap items-center gap-2 pl-7">
         {cam.zones.map((z) => (

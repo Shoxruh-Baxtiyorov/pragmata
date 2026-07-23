@@ -85,7 +85,9 @@ def delete_camera(camera_id: str) -> None:
             select(func.count()).select_from(Event).where(Event.camera_id == camera_id)
         ).scalar_one()
         if has_events:
-            # у камеры есть история → мягкое удаление (disable), чтобы не рвать FK событий
+            # есть история → прячем камеру (deleted), не снося события (FK cascade).
+            # Из всех списков она исчезнет, но статистика прошлого сохранится.
+            cam.deleted = True
             cam.enabled = False
         else:
             s.delete(cam)

@@ -61,6 +61,9 @@ class Camera(Base):
     # Ciphertext ~3–4x длиннее плейнтекста — держим запас.
     url: Mapped[str] = mapped_column(EncryptedString(512))
     enabled: Mapped[bool] = mapped_column(default=True)
+    # мягкое удаление: события ссылаются на камеру (FK cascade), поэтому вместо
+    # сноса строки прячем её из всех списков, а историю событий сохраняем
+    deleted: Mapped[bool] = mapped_column(default=False, index=True)
     process_fps: Mapped[float] = mapped_column(Float, default=5.0)
     detect_conf: Mapped[float] = mapped_column(Float, default=0.35)
     detect_imgsz: Mapped[int] = mapped_column(default=640)
