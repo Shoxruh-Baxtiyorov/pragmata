@@ -1,0 +1,75 @@
+/* Entypo icon font is loaded via <link> in index.html */
+
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes floatMock {
+  0%, 100% { transform: rotateY(-8deg) rotateX(4deg) translateY(0px); }
+  50%       { transform: rotateY(-8deg) rotateX(4deg) translateY(-10px); }
+}
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-brand-shadow); }
+  50%       { box-shadow: 0 0 0 8px rgba(47,107,255,0); }
+}
+
+.landing-hero-badge  { animation: heroFadeUp 0.6s 0s    cubic-bezier(0.16,1,0.3,1) both; }
+.landing-hero-h1     { animation: heroFadeUp 0.7s 0.1s  cubic-bezier(0.16,1,0.3,1) both; }
+.landing-hero-sub    { animation: heroFadeUp 0.7s 0.2s  cubic-bezier(0.16,1,0.3,1) both; }
+.landing-hero-cta    { animation: heroFadeUp 0.7s 0.3s  cubic-bezier(0.16,1,0.3,1) both; }
+.landing-hero-mock   { animation: heroFadeIn 0.9s 0.25s cubic-bezier(0.16,1,0.3,1) both; }
+.landing-mock-float  { animation: floatMock 7s ease-in-out infinite; }
+.landing-badge-float { animation: badgeFloat 3.5s ease-in-out infinite; }
+.landing-badge-float-alt { animation: badgeFloat 3.5s 1.75s ease-in-out infinite; }
+.landing-pulse-glow  { animation: pulseGlow 2.5s ease-in-out infinite; }
+
+.landing-gradient-text {
+  background: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-300) 50%, var(--color-brand-500) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Override app body defaults inside landing */
+.landing-root {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  background-color: #ffffff;
+  color: #0f1c3f;
+  line-height: 1.6;
+}
+
+/* Dot grid background for hero */
+.landing-dot-grid {
+  background-image: radial-gradient(circle, #b4d3fb 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ─── A11y: Reduced-motion guard ─────────────────────────────────────────
+   Honours the OS-level prefers-reduced-motion setting. This is the
+   strongest, most-inclusive form (animation-duration ~0 + iteration-count
+   reset + transition-duration ~0 + scroll-behavior:auto) so even
+   long-running CSS animations on landing decorations short-circuit. ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
