@@ -1,4 +1,11 @@
-@import 'tailwindcss';
+/* ─────────────────────────────────────────────────────────────────────────
+ * Дизайн-кит iqbola (shadcn) — основной слой: tailwind + tw-animate + shadcn
+ * + полный набор токенов. Ниже — ЛЕГАСИ-слой Ziyo, чтобы ещё не мигрированные
+ * на кит экраны продолжали резолвить свои утилиты (bg-surface, text-primary,
+ * rounded-card…). По мере перевода экранов легаси-слой будет уменьшаться.
+ * ───────────────────────────────────────────────────────────────────────── */
+@import './ds-styles/tailwind.css';
+@import './ds-styles/globals.css';
 
 @import '@fontsource/plus-jakarta-sans/400.css';
 @import '@fontsource/plus-jakarta-sans/500.css';
@@ -6,32 +13,22 @@
 @import '@fontsource/plus-jakarta-sans/700.css';
 @import '@fontsource/plus-jakarta-sans/800.css';
 @import '@fontsource/jetbrains-mono/500.css';
-/* @source ПОСЛЕ всех @import — иначе postcss ругается «@import must precede» */
+
+/* @source ПОСЛЕ всех @import */
 @source './**/*.{ts,tsx}';
 
-/*
- * Дизайн-язык «Ziyo» (референс IQBOLA-2 / Dizayn tizimi) — общий с бэкофисом:
- * - бренд #2f6bff с градиентом на #5b8bff; апертура Pragmata остаётся бирюзовой
- * - холодные границы #eef0f3, фон #f7f8fa, текст #1f2530 / #99a1b7
- * - радиусы: контролы 11, карточки 15, модалки 20
- * - плотная типографика 11.5–14.5px (референс намеренно компактный)
- * - тёмная тема выведена из hero-градиента референса #1f2940 → #2f4068
- * Имена токенов НЕ менялись — компоненты подхватывают новый вид без правок.
- */
+/* ── ЛЕГАСИ Ziyo (транзитивный слой миграции) ───────────────────────────── */
 :root {
-  /* Main */
   --brand: #2f6bff;
   --brand-hi: #5b8bff;
   --brand-soft: #9ab8ff;
   --brand-pressed: #2558d6;
   --on-brand: #ffffff;
-  --brand-mark: #0d9488; /* знак бренда — единственное, что не синее */
-  /* Greys */
+  --brand-mark: #0d9488;
   --grey-1: #f7f8fa;
   --grey-2: #eef0f3;
   --grey-3: #99a1b7;
   --grey-4: #5b6472;
-  /* Семантические */
   --bg-app: #f7f8fa;
   --bg-surface: #ffffff;
   --bg-secondary: #f4f5f7;
@@ -42,12 +39,10 @@
   --border-default: #eef0f3;
   --border-strong: #e2e6ec;
   --border-focused: var(--brand);
-  /* System */
   --error: #f8285a;
   --success: #17c653;
   --warning: #f6b100;
   --accent: #7239ea;
-  /* Secondary */
   --brand-10: color-mix(in srgb, var(--brand) 10%, transparent);
   --brand-20: color-mix(in srgb, var(--brand) 20%, transparent);
   --ring: 0 0 0 3px rgb(47 107 255 / 0.12);
@@ -76,9 +71,6 @@
 }
 
 @theme inline {
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-
   --color-brand: var(--brand);
   --color-brand-hi: var(--brand-hi);
   --color-brand-soft: var(--brand-soft);
@@ -106,21 +98,18 @@
   --color-warning: var(--warning);
   --color-accent: var(--accent);
 
-  /* Радиусы референса */
   --radius-button: 11px;
   --radius-input: 11px;
   --radius-card: 15px;
   --radius-modal: 20px;
   --radius-pill: 999px;
 
-  /* Тени референса */
   --shadow-xs: 0 1px 2px rgb(20 30 50 / 0.03);
   --shadow-s: 0 4px 10px rgb(20 30 50 / 0.08);
   --shadow-m: 0 12px 30px rgb(15 23 42 / 0.12);
   --shadow-l: 0 30px 70px rgb(15 23 42 / 0.18);
   --shadow-brand: 0 4px 10px rgb(47 107 255 / 0.35);
 
-  /* Плотная типографика референса */
   --text-h1: 30px;
   --text-h1--line-height: 36px;
   --text-h1--font-weight: 800;
@@ -152,7 +141,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Скроллбар как в референсе */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -163,7 +151,6 @@ body {
   border: 2px solid var(--bg-app);
 }
 
-/* Шиммер-скелетон референса */
 @keyframes shimmer {
   0% {
     background-position: -400px 0;

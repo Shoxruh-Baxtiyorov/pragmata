@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setOnUnauthorized } from '@/shared/api/client'
 import { authActions } from '@/features/auth'
+import { DsProvider, Toaster } from '@/shared/ds'
 
 // 401 из api-клиента → logout + redirect на /login
 function UnauthorizedBridge() {
@@ -22,8 +23,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   )
   return (
     <QueryClientProvider client={client}>
-      <UnauthorizedBridge />
-      {children}
+      <DsProvider>
+        <UnauthorizedBridge />
+        {children}
+        <Toaster />
+      </DsProvider>
     </QueryClientProvider>
   )
 }

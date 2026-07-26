@@ -1,41 +1,46 @@
+/**
+ * Оболочка операторского фронта Pragmata — дизайн-язык iqbola (shadcn + токены).
+ * Сайдбар 250px, сворачивается в 78px (состояние в localStorage); на мобильном —
+ * выезжающий drawer. Нав-группы, футер с выбором языка/организации, темой и
+ * карточкой роли. Домен — наш (мониторинг камер).
+ */
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Bot,
+  Archive,
   Camera,
-  Database,
   LayoutDashboard,
   LogOut,
   Menu,
-  MonitorPlay,
   Moon,
+  RadioTower,
   Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Sun,
   TrendingUp,
   UserCog,
   Users,
   X,
-  type LucideIcon,
-} from '@/shared/ui/icons'
-import { Button, LangSelect, SiteSelect } from '@/shared/ui'
-import { Logo } from '@/shared/ui/Logo'
+  type IconComponent,
+} from '@/shared/ds/icons'
+import { IconButton } from '@/shared/ds'
+import { LangSelect, SiteSelect } from '@/shared/ui'
+import { Logo, LogoMark } from '@/shared/ui/Logo'
 import { cn } from '@/shared/lib/utils'
 import { useTheme } from '@/shared/hooks/useTheme'
 import { authActions, useIsAdmin, useUsername } from '@/features/auth'
 
-
-type NavItem = { to: string; key: string; icon: LucideIcon; admin?: boolean }
-// Сгруппировано по смыслу — «нормальный» сайдбар с секциями, а не плоский список
+type NavItem = { to: string; key: string; icon: IconComponent; admin?: boolean }
 const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   { items: [{ to: '/overview', key: 'nav.overview', icon: LayoutDashboard }] },
   {
     label: 'navGroup.monitoring',
     items: [
-      { to: '/live', key: 'nav.live', icon: MonitorPlay },
+      { to: '/live', key: 'nav.live', icon: RadioTower },
       { to: '/events', key: 'nav.events', icon: ShieldAlert },
       { to: '/stats', key: 'nav.stats', icon: TrendingUp },
     ],
@@ -43,9 +48,9 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   {
     label: 'navGroup.investigate',
     items: [
-      { to: '/assistant', key: 'nav.assistant', icon: Bot },
+      { to: '/assistant', key: 'nav.assistant', icon: Sparkles },
       { to: '/search', key: 'nav.search', icon: Search },
-      { to: '/archive', key: 'nav.archive', icon: Database },
+      { to: '/archive', key: 'nav.archive', icon: Archive },
       { to: '/watchlist', key: 'nav.watchlist', icon: Users },
     ],
   },
@@ -60,23 +65,37 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   },
 ]
 
+const SIDE_KEY = 'pragmata_side'
+const AVATAR_GRADIENT =
+  'bg-[linear-gradient(135deg,var(--color-brand-400),var(--color-brand-700))]'
+
 export function AppLayout() {
   const { t } = useTranslation()
   const [theme, toggleTheme] = useTheme()
   const [open, setOpen] = useState(false) // мобильный drawer
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDE_KEY) === '1')
   const isAdmin = useIsAdmin()
   const username = useUsername()
 
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  const toggleSide = () =>
+    setCollapsed((c) => {
+      localStorage.setItem(SIDE_KEY, c ? '0' : '1')
+      return !c
+    })
+
+  const initial = (username || '?').slice(0, 1).toUpperCase()
+
+  const navItemClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'flex h-10 items-center gap-3 rounded-button px-3 text-body font-medium transition-colors',
-      isActive
-        ? 'bg-brand-10 text-brand'
-        : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
+      'flex items-center gap-2.5 rounded-[12px] px-3 py-[11px] text-[13px] font-medium',
+      'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+      collapsed && 'lg:justify-center lg:px-0',
+      isActive &&
+        'bg-[var(--color-brand-50)] font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-text)]',
     )
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen bg-[var(--color-bg-app)]">
       {open && (
         <button
           aria-label={t('common.close')}
@@ -87,91 +106,153 @@ export function AppLayout() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border-default bg-surface p-3',
-          'transition-transform duration-200 ease-out will-change-transform',
+          'fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col',
+          'border-r border-[var(--color-border-soft)] bg-[var(--color-bg-surface)]',
+          'transition-[width,transform] duration-200 will-change-transform',
           'lg:static lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
+          collapsed ? 'w-[250px] lg:w-[78px]' : 'w-[250px]',
         )}
       >
-        <div className="flex items-center justify-between px-2 pb-2 pt-1">
-          <Logo size={24} />
-          <button
-            className="rounded-button p-1 text-text-secondary hover:bg-bg-secondary lg:hidden"
+        {/* шапка: логотип + сворачивание */}
+        <div
+          className={cn(
+            'flex items-center gap-2.5 px-4 py-4',
+            collapsed && 'lg:flex-col lg:gap-3 lg:px-0',
+          )}
+        >
+          <div className={cn('min-w-0 flex-1 leading-tight', collapsed && 'lg:hidden')}>
+            <Logo size={22} />
+          </div>
+          {collapsed && <LogoMark size={28} className="hidden lg:block" />}
+          <IconButton
             aria-label={t('common.close')}
+            size={32}
             onClick={() => setOpen(false)}
+            className="lg:hidden"
           >
-            <X size={20} />
-          </button>
+            <X size={18} />
+          </IconButton>
+          <IconButton
+            aria-label="collapse"
+            size={32}
+            onClick={toggleSide}
+            className="hidden lg:inline-flex"
+          >
+            <Menu size={18} />
+          </IconButton>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto py-2">
+        {/* навигация */}
+        <nav className={cn('flex-1 overflow-y-auto px-3 pb-3', collapsed && 'lg:px-2')}>
           {NAV_GROUPS.map((group, gi) => {
             const items = group.items.filter((it) => !it.admin || isAdmin)
             if (items.length === 0) return null
             return (
-              <div key={gi} className="flex flex-col gap-1">
-                {group.label && (
-                  <div className="px-3 pb-1 text-caption font-semibold uppercase tracking-wider text-text-placeholder">
+              <div key={gi}>
+                {group.label ? (
+                  <div
+                    className={cn(
+                      'px-3 pb-1 pt-4 text-[9.5px] font-bold tracking-[1.3px] text-[var(--color-text-muted)]',
+                      collapsed && 'lg:hidden',
+                    )}
+                  >
                     {t(group.label)}
                   </div>
+                ) : (
+                  <div className="pt-1" />
                 )}
-                {items.map(({ to, key, icon: Icon }) => (
-                  <NavLink key={to} to={to} className={navLinkClass} onClick={() => setOpen(false)}>
-                    <Icon size={19} />
-                    {t(key)}
-                  </NavLink>
-                ))}
+                {group.label && collapsed && <div className="hidden pt-4 lg:block" />}
+                <div className="flex flex-col gap-0.5">
+                  {items.map(({ to, key, icon: Icon }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      title={collapsed ? t(key) : undefined}
+                      className={navItemClass}
+                      onClick={() => setOpen(false)}
+                    >
+                      <Icon size={18} />
+                      <span className={cn('truncate', collapsed && 'lg:hidden')}>{t(key)}</span>
+                    </NavLink>
+                  ))}
+                </div>
               </div>
             )
           })}
         </nav>
-      </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border-default bg-surface px-4">
+        {/* футер: язык + организация + тема + роль */}
+        <div className="flex flex-col gap-2 border-t border-[var(--color-border-soft)] p-3">
+          {!collapsed && (
+            <div className="flex flex-col gap-2">
+              <SiteSelect />
+              <LangSelect />
+            </div>
+          )}
+
           <button
-            className="rounded-button p-2 text-text-secondary hover:bg-bg-secondary lg:hidden"
-            aria-label={t('nav.overview')}
-            onClick={() => setOpen(true)}
+            type="button"
+            onClick={toggleTheme}
+            className={cn(
+              'flex items-center gap-2.5 rounded-[12px] px-3 py-[11px] text-[13px] font-medium',
+              'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+              collapsed && 'lg:justify-center lg:px-0',
+            )}
+            title={theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
           >
-            <Menu size={20} />
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <span className={cn(collapsed && 'lg:hidden')}>
+              {theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
+            </span>
           </button>
-          <Logo size={22} wordmark={false} className="lg:hidden" />
 
-          <div className="flex-1" />
-
-          <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="theme">
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
-          <SiteSelect />
-          <LangSelect />
-
-          {username && (
-            <div className="ml-1 flex items-center gap-2 border-l border-border-default pl-3">
-              <span className="grid size-8 place-items-center rounded-full bg-brand-10 text-caption font-bold uppercase text-brand">
-                {username.slice(0, 1)}
-              </span>
-              <div className="hidden leading-tight sm:block">
-                <div className="max-w-32 truncate text-label font-semibold text-text-primary">
+          <div
+            className={cn(
+              'flex items-center gap-2.5 rounded-[12px] bg-[var(--color-bg-muted)] p-2.5',
+              collapsed && 'lg:flex-col lg:gap-2 lg:p-2',
+            )}
+          >
+            <div
+              className={cn(
+                'flex size-[34px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white',
+                AVATAR_GRADIENT,
+              )}
+            >
+              {initial}
+            </div>
+            {username && (
+              <div className={cn('min-w-0 flex-1 leading-tight', collapsed && 'lg:hidden')}>
+                <div className="truncate text-[12px] font-semibold text-[var(--color-text-primary)]">
                   {username}
                 </div>
-                <div className="text-caption text-text-secondary">
+                <div className="text-[10px] font-bold text-[var(--color-brand-text)]">
                   {isAdmin ? t('users.roleAdmin') : t('users.roleUser')}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => authActions.logout()}
-                aria-label={t('common.logout')}
-              >
-                <LogOut size={19} />
-              </Button>
-            </div>
-          )}
+            )}
+            <IconButton
+              aria-label={t('common.logout')}
+              size={28}
+              onClick={() => authActions.logout()}
+            >
+              <LogOut size={15} />
+            </IconButton>
+          </div>
+        </div>
+      </aside>
+
+      {/* контент */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* мобильная шапка (только < lg) */}
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] px-4 lg:hidden">
+          <IconButton aria-label={t('nav.overview')} size={36} onClick={() => setOpen(true)}>
+            <Menu size={20} />
+          </IconButton>
+          <Logo size={20} />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7">
           <Outlet />
         </main>
       </div>

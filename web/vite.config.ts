@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
-// Tailwind 4 подключён через PostCSS (postcss.config.mjs), не через vite-плагин —
-// vite-плагин не транслировался в этой связке версий.
+// Tailwind 4 через официальный vite-плагин (как в бэкофисе/iqbola-ките) —
+// нужен, чтобы резолвился `@import "shadcn/tailwind.css"` из дизайн-кита.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },

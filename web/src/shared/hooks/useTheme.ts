@@ -10,8 +10,15 @@ function current(): Theme {
   return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
 }
 
+function apply(theme: Theme): void {
+  // Легаси-компоненты читают data-theme, дизайн-кит (shadcn) — класс .dark.
+  // Держим оба в синхроне на время миграции.
+  document.documentElement.dataset.theme = theme
+  document.documentElement.classList.toggle('dark', theme === 'dark')
+}
+
 export function initTheme(): void {
-  document.documentElement.dataset.theme = current()
+  apply(current())
 }
 
 export function useTheme(): [Theme, () => void] {
@@ -25,7 +32,7 @@ export function useTheme(): [Theme, () => void] {
   const toggle = () => {
     const next: Theme = current() === 'dark' ? 'light' : 'dark'
     localStorage.setItem(THEME_KEY, next)
-    document.documentElement.dataset.theme = next
+    apply(next)
     listeners.forEach((cb) => cb())
   }
   return [theme, toggle]
