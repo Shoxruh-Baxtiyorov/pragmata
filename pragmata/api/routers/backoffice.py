@@ -23,6 +23,9 @@ from pragmata.api.schemas import (
     AuditEntryOut,
     BackofficeOverview,
     OkOut,
+    PlanIn,
+    SiteCreate,
+    SitePatch,
     SiteSettingsOut,
     SiteSettingsPatch,
 )
@@ -86,6 +89,64 @@ def sites() -> list[dict[str, object]]:
             {"id": row.id, "name": row.name, "tariff": row.tariff, "cameras": cams.get(row.id, 0)}
             for row in s.execute(select(Site).order_by(Site.id)).scalars().all()
         ]
+
+
+# --- CRUD организаций ---------------------------------------------------------
+
+
+@router.post("/sites", response_model=dict[str, int])
+def create_site(payload: SiteCreate) -> dict[str, int]:
+    from pragmata.services import tenant_service as tsvc
+
+    return {"id": tsvc.create_site(payload)}
+
+
+@router.patch("/sites/{site_id}", response_model=OkOut)
+def patch_site(site_id: int, payload: SitePatch) -> OkOut:
+    from pragmata.services import tenant_service as tsvc
+
+    tsvc.patch_site(site_id, payload)
+    return OkOut()
+
+
+@router.delete("/sites/{site_id}", response_model=OkOut)
+def delete_site(site_id: int) -> OkOut:
+    from pragmata.services import tenant_service as tsvc
+
+    tsvc.delete_site(site_id)
+    return OkOut()
+
+
+# --- CRUD тарифов (каталог планов) -------------------------------------------
+
+
+@router.get("/plans", response_model=list[dict[str, object]])
+def list_plans() -> list[dict[str, object]]:
+    from pragmata.services import tenant_service as tsvc
+
+    return tsvc.list_plans()
+
+
+@router.post("/plans/{key}", response_model=dict[str, object])
+def create_plan(key: str, payload: PlanIn) -> dict[str, object]:
+    from pragmata.services import tenant_service as tsvc
+
+    return tsvc.upsert_plan(key, payload, create=True)
+
+
+@router.patch("/plans/{key}", response_model=dict[str, object])
+def patch_plan(key: str, payload: PlanIn) -> dict[str, object]:
+    from pragmata.services import tenant_service as tsvc
+
+    return tsvc.upsert_plan(key, payload, create=False)
+
+
+@router.delete("/plans/{key}", response_model=OkOut)
+def delete_plan(key: str) -> OkOut:
+    from pragmata.services import tenant_service as tsvc
+
+    tsvc.delete_plan(key)
+    return OkOut()
 
 
 # --- настройки объекта ------------------------------------------------------

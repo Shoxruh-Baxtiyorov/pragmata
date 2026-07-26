@@ -309,6 +309,27 @@ class NvrPlaybackIn(BaseModel):
     brand: str | None = None  # hikvision | dahua; None = определить по адресу камеры
 
 
+class SiteCreate(BaseModel):
+    name: str
+    timezone: str | None = None
+    tariff: str = "basic"
+
+
+class SitePatch(BaseModel):
+    name: str | None = None
+    timezone: str | None = None
+    tariff: str | None = None
+
+
+class PlanIn(BaseModel):
+    name: str | None = None
+    price_note: str | None = None
+    retention_info_days: int | None = None
+    retention_alert_days: int | None = None
+    active: bool | None = None
+    features: list[str] | None = None
+
+
 class AuditEntryOut(BaseModel):
     id: uuid.UUID
     ts: datetime

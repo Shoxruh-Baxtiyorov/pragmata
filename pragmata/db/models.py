@@ -16,6 +16,25 @@ class Base(DeclarativeBase):
     pass
 
 
+class Plan(Base):
+    """Каталог тарифов (Ko'z/Nazorat/Qalqon): витрина + дефолты хранения.
+
+    site.tariff ссылается на key. Ретенция читает site.retention_* — план даёт
+    дефолты при заведении организации и цену/фичи для UI, не онлайн-зависимость.
+    """
+
+    __tablename__ = "plans"
+
+    key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    price_note: Mapped[str] = mapped_column(String(200), default="")
+    retention_info_days: Mapped[int] = mapped_column(default=7)
+    retention_alert_days: Mapped[int] = mapped_column(default=90)
+    sort: Mapped[int] = mapped_column(default=0)
+    active: Mapped[bool] = mapped_column(default=True)
+    features: Mapped[list[str]] = mapped_column(JSONB, default=list)
+
+
 class Site(Base):
     __tablename__ = "sites"
 

@@ -147,6 +147,61 @@ export function usePatchSettings() {
   })
 }
 
+// --- организации (CRUD) -----------------------------------------------------
+
+export function useCreateSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; tariff: string; timezone?: string }) =>
+      api.post<{ id: number }>('/api/v1/backoffice/sites', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
+export function usePatchSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: { name?: string; tariff?: string } }) =>
+      api.patch(`/api/v1/backoffice/sites/${id}`, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
+export function useDeleteSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.del(`/api/v1/backoffice/sites/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
+// --- тарифы (каталог планов) ------------------------------------------------
+
+export interface PlanRow {
+  key: string
+  name: string
+  price_note: string
+  retention_info_days: number
+  retention_alert_days: number
+  active: boolean
+  features: string[]
+}
+
+export const usePlans = () =>
+  useQuery({ queryKey: ['plans'], queryFn: () => api.get<PlanRow[]>('/api/v1/backoffice/plans') })
+
+export function usePatchPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ key, patch }: { key: string; patch: Partial<PlanRow> }) =>
+      api.patch<PlanRow>(`/api/v1/backoffice/plans/${key}`, patch),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['plans'] })
+      void qc.invalidateQueries({ queryKey: ['sites'] })
+    },
+  })
+}
+
 export function useRunRetention() {
   return useMutation({
     mutationFn: () =>
