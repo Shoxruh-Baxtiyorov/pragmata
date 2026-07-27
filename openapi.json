@@ -375,6 +375,12 @@
       },
       "CameraOut": {
         "properties": {
+          "analytics": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Analytics",
+            "type": "object"
+          },
           "enabled": {
             "default": true,
             "title": "Enabled",
@@ -826,6 +832,24 @@
           "caption"
         ],
         "title": "MediaEvidence",
+        "type": "object"
+      },
+      "ModuleConfigIn": {
+        "description": "Включение/настройка модуля аналитики на камере или зоне.",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "params": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "title": "ModuleConfigIn",
         "type": "object"
       },
       "NvrPlaybackIn": {
@@ -3311,6 +3335,88 @@
         ]
       }
     },
+    "/api/v1/cameras/{camera_id}/analytics/{module_key}": {
+      "put": {
+        "operationId": "set_camera_module_api_v1_cameras__camera_id__analytics__module_key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camera_id",
+            "required": true,
+            "schema": {
+              "title": "Camera Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleConfigIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Camera Module",
+        "tags": [
+          "cameras"
+        ]
+      }
+    },
     "/api/v1/cameras/{camera_id}/snapshot": {
       "get": {
         "operationId": "snapshot_api_v1_cameras__camera_id__snapshot_get",
@@ -5439,6 +5545,89 @@
           }
         ],
         "summary": "Delete Zone",
+        "tags": [
+          "cameras"
+        ]
+      }
+    },
+    "/api/v1/zones/{zone_id}/analytics/{module_key}": {
+      "put": {
+        "operationId": "set_zone_module_api_v1_zones__zone_id__analytics__module_key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "zone_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Zone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleConfigIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Zone Module",
         "tags": [
           "cameras"
         ]

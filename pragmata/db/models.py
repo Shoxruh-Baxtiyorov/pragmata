@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, String, func
+from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -88,6 +88,10 @@ class Camera(Base):
     detect_imgsz: Mapped[int] = mapped_column(default=640)
     motion: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)  # MotionConfig
     clips: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)  # ClipConfig
+    # конфиг камеро-ориентированных модулей аналитики: {module_key: {enabled, ...}}
+    analytics: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

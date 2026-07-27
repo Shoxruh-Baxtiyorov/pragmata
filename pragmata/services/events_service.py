@@ -54,6 +54,7 @@ def list_cameras(include_disabled: bool = False, scope: int | None = None) -> li
                     online=online,
                     enabled=cam.enabled,
                     snapshot_url=f"/api/v1/cameras/{cam.id}/snapshot" if snap.exists() else None,
+                    analytics=cam.analytics or {},
                     zones=[
                         ZoneOut(
                             id=z.id,

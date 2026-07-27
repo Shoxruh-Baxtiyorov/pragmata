@@ -82,6 +82,15 @@ class CameraOut(BaseModel):
     snapshot_url: str | None
     zones: list[ZoneOut]
     enabled: bool = True
+    # конфиг камеро-ориентированных модулей аналитики: {module_key: {enabled, ...}}
+    analytics: dict[str, object] = {}
+
+
+class ModuleConfigIn(BaseModel):
+    """Включение/настройка модуля аналитики на камере или зоне."""
+
+    enabled: bool = True
+    params: dict[str, object] = {}
 
 
 class CameraIn(BaseModel):

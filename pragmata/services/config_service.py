@@ -11,7 +11,13 @@ from pragmata.api.deps import session_factory
 from pragmata.db.config_store import bump_config_version
 
 if TYPE_CHECKING:
-    from pragmata.api.schemas import CameraIn, CameraPatch, SiteSettingsPatch, ZoneIn
+    from pragmata.api.schemas import (
+        CameraIn,
+        CameraPatch,
+        ModuleConfigIn,
+        SiteSettingsPatch,
+        ZoneIn,
+    )
 
 
 def _bump() -> None:
@@ -136,6 +142,54 @@ def delete_zone(zone_id: uuid.UUID, scope: int | None = None) -> None:
             if cam is None or cam.site_id != scope:
                 raise HTTPException(404, "нет такой зоны")
         s.delete(z)
+        s.commit()
+    _bump()
+
+
+# --- модули аналитики (включение/настройка per-камера/зона) ------------------
+
+
+def set_camera_module(
+    camera_id: str, module_key: str, payload: ModuleConfigIn, scope: int | None = None
+) -> None:
+    """Записать конфиг камеро-ориентированного модуля в Camera.analytics."""
+    from pragmata.analytics import module_by_key
+    from pragmata.db.models import Camera
+
+    m = module_by_key(module_key)
+    if m is None or m.scope != "camera":
+        raise HTTPException(404, "нет такого модуля камеры")
+    with session_factory()() as s:
+        cam = s.get(Camera, camera_id)
+        if cam is None or (scope is not None and cam.site_id != scope):
+            raise HTTPException(404, "нет такой камеры")
+        cam.analytics = {
+            **(cam.analytics or {}),
+            module_key: {"enabled": payload.enabled, **payload.params},
+        }
+        s.commit()
+    _bump()
+
+
+def set_zone_module(
+    zone_id: uuid.UUID, module_key: str, payload: ModuleConfigIn, scope: int | None = None
+) -> None:
+    """Записать конфиг зон-ориентированного модуля в Zone.rules."""
+    from pragmata.analytics import module_by_key
+    from pragmata.db.models import Camera, Zone
+
+    m = module_by_key(module_key)
+    if m is None or m.scope != "zone":
+        raise HTTPException(404, "нет такого модуля зоны")
+    with session_factory()() as s:
+        z = s.get(Zone, zone_id)
+        if z is None:
+            raise HTTPException(404, "нет такой зоны")
+        if scope is not None:
+            cam = s.get(Camera, z.camera_id)
+            if cam is None or cam.site_id != scope:
+                raise HTTPException(404, "нет такой зоны")
+        z.rules = {**(z.rules or {}), module_key: {"enabled": payload.enabled, **payload.params}}
         s.commit()
     _bump()
 

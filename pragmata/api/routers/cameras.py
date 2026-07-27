@@ -13,7 +13,14 @@ import uuid  # noqa: TC003 — uuid.UUID в сигнатуре роута рез
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse  # noqa: TC002 — FastAPI резолвит return-type в рантайме
 
-from pragmata.api.schemas import CameraIn, CameraOut, CameraPatch, OkOut, ZoneIn
+from pragmata.api.schemas import (
+    CameraIn,
+    CameraOut,
+    CameraPatch,
+    ModuleConfigIn,
+    OkOut,
+    ZoneIn,
+)
 from pragmata.api.security import Principal, current_principal, current_scope, own_camera_or_404
 from pragmata.services import config_service as cfgsvc
 from pragmata.services import events_service as svc
@@ -72,4 +79,30 @@ def add_zone(
 @router.delete("/zones/{zone_id}", response_model=OkOut)
 def delete_zone(zone_id: uuid.UUID, scope: int | None = Depends(current_scope)) -> OkOut:
     cfgsvc.delete_zone(zone_id, scope=scope)
+    return OkOut()
+
+
+# --- модули аналитики: включение/настройка на камере или зоне ----------------
+
+
+@router.put("/cameras/{camera_id}/analytics/{module_key}", response_model=OkOut)
+def set_camera_module(
+    camera_id: str,
+    module_key: str,
+    payload: ModuleConfigIn,
+    scope: int | None = Depends(current_scope),
+) -> OkOut:
+    own_camera_or_404(camera_id, scope)
+    cfgsvc.set_camera_module(camera_id, module_key, payload, scope=scope)
+    return OkOut()
+
+
+@router.put("/zones/{zone_id}/analytics/{module_key}", response_model=OkOut)
+def set_zone_module(
+    zone_id: uuid.UUID,
+    module_key: str,
+    payload: ModuleConfigIn,
+    scope: int | None = Depends(current_scope),
+) -> OkOut:
+    cfgsvc.set_zone_module(zone_id, module_key, payload, scope=scope)
     return OkOut()
