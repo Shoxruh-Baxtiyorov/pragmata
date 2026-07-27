@@ -7,6 +7,8 @@ const LANG_KEY = 'pragmata_lang'
 const ru = {
   'nav.overview': 'Обзор',
   'nav.analytics': 'Модули аналитики',
+  'techbreak.title': 'Технический перерыв',
+  'techbreak.subtitle': 'Идёт восстановление связи с сервером…',
   'analytics.title': 'Модули аналитики',
   'analytics.subtitle': 'Включите нужные функции под свою задачу — по камерам и зонам',
   'analytics.tier.A': 'Работает',
@@ -324,6 +326,8 @@ const ru = {
 const uz: typeof ru = {
   'nav.overview': 'Umumiy',
   'nav.analytics': 'Analitika modullari',
+  'techbreak.title': 'Texnik tanaffus',
+  'techbreak.subtitle': 'Server bilan aloqa tiklanmoqda…',
   'analytics.title': 'Analitika modullari',
   'analytics.subtitle': "Vazifangizga mos funksiyalarni yoqing — kamera va zonalar bo'yicha",
   'analytics.tier.A': 'Ishlaydi',
@@ -641,6 +645,8 @@ const uz: typeof ru = {
 const en: typeof ru = {
   'nav.overview': 'Overview',
   'nav.analytics': 'Analytics modules',
+  'techbreak.title': 'Technical break',
+  'techbreak.subtitle': 'Reconnecting to the server…',
   'analytics.title': 'Analytics modules',
   'analytics.subtitle': 'Enable the functions you need — per camera and zone',
   'analytics.tier.A': 'Works now',

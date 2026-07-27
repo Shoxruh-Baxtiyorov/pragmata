@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { setOnUnauthorized } from '@/shared/api/client'
 import { authActions } from '@/features/auth'
 import { DsProvider, Toaster } from '@/shared/ds'
+import { TechBreak } from '@/app/TechBreak'
 
 // 401 из api-клиента → logout + redirect на /login
 function UnauthorizedBridge() {
@@ -26,6 +27,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <DsProvider>
         <UnauthorizedBridge />
         {children}
+        <TechBreak />
         <Toaster />
       </DsProvider>
     </QueryClientProvider>

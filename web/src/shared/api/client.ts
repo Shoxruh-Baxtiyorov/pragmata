@@ -42,6 +42,15 @@ export function setOnUnauthorized(fn: () => void): void {
   onUnauthorized = fn
 }
 
+// Мост к экрану «технический перерыв»: бэкенд недоступен (сеть/ngrok/сервер упал)
+// vs снова на связи. Дёргается на КАЖДОМ запросе — мгновенная реакция.
+let onBackendDown: (() => void) | undefined
+let onBackendUp: (() => void) | undefined
+export function setBackendStatusHandlers(down: () => void, up: () => void): void {
+  onBackendDown = down
+  onBackendUp = up
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -63,7 +72,16 @@ async function request<T>(path: string, init?: RequestInit, isForm = false): Pro
   // только чтобы сузить видимость — у клиента он молча игнорируется.
   const site = activeSite.get()
   if (site) headers['X-Site-Id'] = site
-  const res = await fetch(`${BASE}${path}`, { ...init, headers })
+  let res: Response
+  try {
+    res = await fetch(`${BASE}${path}`, { ...init, headers })
+  } catch {
+    // fetch бросает TypeError только когда до бэкенда не достучались (сеть/ngrok/
+    // сервер лежит) — это и есть «технический перерыв», не ошибка запроса
+    onBackendDown?.()
+    throw new ApiError(0, 'backend unreachable')
+  }
+  onBackendUp?.() // ответ пришёл (любой статус) → бэкенд на связи
   if (res.status === 401) {
     auth.clear()
     onUnauthorized?.()

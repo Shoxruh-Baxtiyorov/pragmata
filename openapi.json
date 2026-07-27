@@ -4175,6 +4175,32 @@
         ]
       }
     },
+    "/api/v1/health": {
+      "get": {
+        "description": "Тот же health, но под /api/v1 — фронт пингует его без авторизации, чтобы\nпоказать экран «технический перерыв», если бэкенд недоступен. Работает и через\ndev-прокси (/api → :8088), и через ngrok/VITE_API_URL.",
+        "operationId": "health_api_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Api Api V1 Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Api",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "description": "Кто я и что мне можно.\n\nbackoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого\nон рисует кнопки настройки тем, у кого они гарантированно дадут 403.",

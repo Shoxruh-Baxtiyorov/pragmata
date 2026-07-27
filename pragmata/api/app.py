@@ -72,3 +72,11 @@ for r in (
 @app.get("/health", tags=["meta"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/v1/health", tags=["meta"])
+def health_api() -> dict[str, str]:
+    """Тот же health, но под /api/v1 — фронт пингует его без авторизации, чтобы
+    показать экран «технический перерыв», если бэкенд недоступен. Работает и через
+    dev-прокси (/api → :8088), и через ngrok/VITE_API_URL."""
+    return {"status": "ok"}
