@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pragmata.api.middleware import AuditMiddleware, SecurityHeadersMiddleware
 from pragmata.api.routers import (
     agent,
+    analytics,
     archive,
     auth,
     backoffice,
@@ -59,6 +60,7 @@ for r in (
     users.router,
     archive.router,
     backoffice.router,
+    analytics.router,
 ):
     app.include_router(r)
 

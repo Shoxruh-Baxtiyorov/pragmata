@@ -2113,6 +2113,35 @@
         ]
       }
     },
+    "/api/v1/analytics/modules": {
+      "get": {
+        "description": "Все функции аналитики, которые клиент может включить и настроить.",
+        "operationId": "modules_api_v1_analytics_modules_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Modules Api V1 Analytics Modules Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Modules",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
     "/api/v1/archive/analyze": {
       "post": {
         "operationId": "analyze_api_v1_archive_analyze_post",
