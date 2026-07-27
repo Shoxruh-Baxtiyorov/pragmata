@@ -76,12 +76,12 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
-              {module.name}
+              {t(`an.mod.${module.key}`, { defaultValue: module.name })}
             </span>
             <Badge tone={TIER_TONE[module.tier]}>{t(`analytics.tier.${module.tier}`)}</Badge>
           </div>
           <p className="mt-1 text-[12.5px] text-[var(--color-text-secondary)]">
-            {module.description}
+            {t(`an.moddesc.${module.key}`, { defaultValue: module.description })}
           </p>
         </div>
         {!locked && !isSite && (
@@ -137,7 +137,7 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
               {module.params.map((p) => (
                 <div key={p.key} className="flex flex-col gap-1">
                   <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-                    {p.label}
+                    {t(`an.param.${p.key}`, { defaultValue: p.label })}
                     {p.unit ? `, ${p.unit}` : ''}
                   </span>
                   {p.type === 'bool' ? (
@@ -280,7 +280,7 @@ export function AnalyticsPage() {
             return (
               <section key={cat.key} className="flex flex-col gap-3">
                 <h2 className="text-[15px] font-extrabold tracking-tight text-[var(--color-text-primary)]">
-                  {cat.label}
+                  {t(`an.cat.${cat.key}`, { defaultValue: cat.label })}
                 </h2>
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                   {mods.map((m) => (
