@@ -90,6 +90,26 @@ TOOL_SPECS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "recognized_people",
+            "description": (
+                "Сколько РАЗНЫХ людей из реестра (watchlist) узнала система за период — "
+                "по именам, НЕ по числу событий (один человек может дать много "
+                "срабатываний). Используй для вопросов «сколько наших/из списка "
+                "пришло», «кто приходил сегодня». Возвращает count и список: имя, "
+                "число визитов, первый/последний раз."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "hours": {"type": "number", "default": 24},
+                    "date": {"type": "string", "description": "конкретный день YYYY-MM-DD"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "find_person",
             "description": (
                 "Поиск человека по описанию внешности (Investigation Mode). "
@@ -345,6 +365,48 @@ class AgentTools:
             "by_type": by_type,
             "by_camera": by_camera,
         }
+
+    def recognized_people(self, hours: float = 24, date: str | None = None) -> dict[str, Any]:
+        """РАЗНЫЕ узнанные люди из реестра за период — по именам, не по событиям.
+
+        Считаем distinct person_id по трекам (один человек = один пункт, сколько бы
+        раз ни мелькал), чтобы «сколько из списка пришло» не раздувалось числом
+        срабатываний.
+        """
+        from pragmata.db.models import Person, Track
+
+        start, end = self._window(hours, date)
+        with self.sf() as s:
+            pq = select(Person.id, Person.name)
+            if self.scope is not None:
+                pq = pq.where(Person.site_id == self.scope)
+            names = {pid: name for pid, name in s.execute(pq).all()}
+            if not names:
+                return {"count": 0, "people": []}
+            tq = (
+                select(
+                    Track.person_id,
+                    func.count(),
+                    func.min(Track.started_at),
+                    func.max(Track.ended_at),
+                )
+                .where(Track.person_id.is_not(None), Track.started_at >= start)
+                .group_by(Track.person_id)
+            )
+            if end is not None:
+                tq = tq.where(Track.started_at < end)
+            rows = [r for r in s.execute(tq).all() if r[0] in names]
+        people = [
+            {
+                "name": names.get(pid, "?"),
+                "visits": int(cnt),
+                "first_seen": self._t(mn),
+                "last_seen": self._t(mx),
+            }
+            for pid, cnt, mn, mx in rows
+        ]
+        people.sort(key=lambda p: p["visits"], reverse=True)
+        return {"count": len(people), "people": people}
 
     def find_person(self, description: str, hours: float = 48) -> list[dict[str, Any]]:
         if self.embedder is None:

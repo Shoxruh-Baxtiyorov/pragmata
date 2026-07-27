@@ -31,6 +31,11 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("pragmata.pipeline")
 
+# как часто пробуем распознать лицо ЖИВОГО (ещё видимого) трека — пока не узнан.
+# Дёшево (buffalo_l ~50-100мс) при 1-2 людях; даёт узнавание рано и на многих
+# кадрах, а не по одному лучшему кадру в конце трека.
+FACE_RECHECK_S = 0.8
+
 
 @dataclass
 class CameraStats:
@@ -148,6 +153,10 @@ class CameraWorker(threading.Thread):
                 self.stats.detections += len(detections)
                 self.stats.active_tracks = len(self.tracks.active)
 
+                # живое распознавание лица: пока человек в кадре — узнаём и подписываем
+                for st in updated:
+                    self._recognize_live(st, frame.image, frame.ts)
+
                 # транспорт (ANPR): отдельный YOLO-проход, дросселируем до ~1/сек —
                 # машинам не нужна частота людей, а инференс не бесплатен
                 if self.vehicle_watcher is not None and frame.ts - self._last_vehicle >= 1.0:
@@ -190,6 +199,40 @@ class CameraWorker(threading.Thread):
         except Exception:  # noqa: BLE001 — live-кадр не должен ронять камеру
             log.exception("[%s] live frame write failed", self.camera.id)
 
+    def _recognize_live(self, st: TrackState, image: np.ndarray, ts: float) -> None:
+        """Пока человек ВИДЕН — периодически пробуем узнать лицо (не ждём конца трека).
+
+        Как только узнали — сразу событие «кто это» и запоминаем имя на треке
+        (повторно модель не дёргаем). Это резко повышает частоту узнавания: клиент
+        видит подпись «пришёл X» почти в реальном времени, а не раз на трек.
+        """
+        if self.face_recog is None or self.watchlist is None:
+            return
+        if st.person_id is not None:  # уже узнан — не гоняем модель повторно
+            return
+        if ts - st.last_face_try < FACE_RECHECK_S:
+            return
+        st.last_face_try = ts
+        emb = self.face_recog.embed(image, st.bbox)
+        if emb is None:
+            return
+        st.face_emb = emb
+        hit = self.watchlist.match(None, emb)  # только канал лица (живое узнавание)
+        if hit is None:
+            return
+        st.person_id, st.person_name, st.person_watch = hit
+        ev = RuleEvent(
+            "watchlist_match" if st.person_watch else "person_recognized",
+            self.camera.id,
+            st.first_ts,
+            ts,
+            track=st,
+            meta={"person": st.person_name, "person_id": st.person_id},
+        )
+        ev.frame = image.copy()
+        self.stats.events += 1
+        self.sink.emit_event(ev)
+
     def _embed_track(self, st: TrackState) -> None:
         """CLIP-эмбеддинг тела + эмбеддинг лица + watchlist-матч — при завершении трека."""
         if self.embedder is None or st.best_frame is None:
@@ -201,6 +244,10 @@ class CameraWorker(threading.Thread):
             st.clip_emb = self.embedder.embed_image(crop)
         except Exception:  # noqa: BLE001 — эмбеддинг не должен ронять камеру
             log.exception("[%s] clip embed failed", self.camera.id)
+            return
+        # уже узнали живьём (пока трек был виден) → не дублируем событие,
+        # clip_emb выше всё равно посчитан для поиска
+        if st.person_id is not None:
             return
         # лицо (insightface) — точный канал watchlist; degradation-first внутри
         if self.face_recog is not None:
