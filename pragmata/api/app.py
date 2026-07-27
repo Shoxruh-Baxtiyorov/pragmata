@@ -46,6 +46,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in _settings.api_cors_origins.split(",") if o.strip()],
+    # фронт на Vercel (прод + preview-урлы деплоев) ходит на бэкенд с другого origin.
+    # Свой домен добавляется в API_CORS_ORIGINS; *.vercel.app покрываем regex'ом.
+    # Аутентификация — Bearer-токен (не cookie), поэтому allow_credentials не нужен.
+    allow_origin_regex=_settings.api_cors_origin_regex or None,
     allow_methods=["*"],
     allow_headers=["*"],
 )

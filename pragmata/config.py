@@ -30,6 +30,9 @@ class Settings(BaseSettings):
         "http://localhost:5175,http://127.0.0.1:5175,http://localhost:5173,http://127.0.0.1:5173,"
         "http://localhost:5176,http://127.0.0.1:5176"  # 5176 = отдельный фронт бэкофиса
     )
+    # regex origin'ов для CORS сверх списка: по умолчанию любой поддомен *.vercel.app
+    # (прод + preview-деплои фронта). Пусто = regex выключен.
+    api_cors_origin_regex: str = r"https://([a-z0-9-]+\.)*vercel\.app"
     api_enable_find: bool = False  # /find грузит CLIP вторым процессом — включать осознанно
     # Telegram: пустой токен = бот выключен. Алерты уходят ТОЛЬКО в chat_id из
     # allowlist (secure default: неизвестный чат не получает ничего).
