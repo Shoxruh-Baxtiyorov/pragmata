@@ -1,4 +1,7 @@
-const BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8088'
+// Пусто = тот же origin: запросы идут на /api/... текущего хоста. Так работает
+// и локально (Vite проксирует /api → :8088), и через один ngrok-тоннель на :5175.
+// Абсолютный адрес можно навязать через VITE_API_URL, если API на другом хосте.
+const BASE = import.meta.env.VITE_API_URL ?? ''
 const TOKEN_KEY = 'pragmata_token'
 const ROLE_KEY = 'pragmata_role'
 const NAME_KEY = 'pragmata_username'
@@ -49,8 +52,11 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit, isForm = false): Promise<T> {
-  // FormData сам ставит Content-Type с boundary — не перебиваем
-  const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' }
+  // FormData сам ставит Content-Type с boundary — не перебиваем.
+  // ngrok-skip-browser-warning — чтобы ngrok не подменял ответ страницей-заглушкой.
+  const headers: Record<string, string> = isForm
+    ? { 'ngrok-skip-browser-warning': 'true' }
+    : { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
   const token = auth.get()
   if (token) headers.Authorization = `Bearer ${token}`
   // Переключатель организаций: сервер учитывает заголовок ТОЛЬКО у админа и
@@ -94,7 +100,10 @@ export const api = {
 export async function fetchAuthedBlob(path: string): Promise<string> {
   const token = auth.get()
   const res = await fetch(`${BASE}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   })
   if (!res.ok) throw new ApiError(res.status, res.statusText)
   return URL.createObjectURL(await res.blob())
