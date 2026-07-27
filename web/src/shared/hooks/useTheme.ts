@@ -11,10 +11,15 @@ function current(): Theme {
 }
 
 function apply(theme: Theme): void {
-  // Легаси-компоненты читают data-theme, дизайн-кит (shadcn) — класс .dark.
-  // Держим оба в синхроне на время миграции.
-  document.documentElement.dataset.theme = theme
-  document.documentElement.classList.toggle('dark', theme === 'dark')
+  // Три механизма темы держим в синхроне:
+  //  - data-theme        — легаси-компоненты Ziyo,
+  //  - .dark             — shadcn-варианты кита (ремап семантических токенов),
+  //  - data-color-scheme — СЫРАЯ тёмная палитра кита (--color-bg-surface и т.д.);
+  //    без него карточки/сайдбар оставались белыми на тёмном фоне.
+  const root = document.documentElement
+  root.dataset.theme = theme
+  root.dataset.colorScheme = theme
+  root.classList.toggle('dark', theme === 'dark')
 }
 
 export function initTheme(): void {

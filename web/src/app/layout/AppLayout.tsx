@@ -97,7 +97,7 @@ export function AppLayout() {
     )
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg-app)]">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-bg-app)]">
       {open && (
         <button
           aria-label={t('common.close')}
