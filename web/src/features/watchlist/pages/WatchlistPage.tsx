@@ -159,9 +159,22 @@ function RegisterForm({ onClose }: { onClose: () => void }) {
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 8))}
+            onChange={(e) => {
+              const picked = Array.from(e.target.files ?? [])
+              setFiles((prev) => {
+                const merged = [...prev]
+                for (const f of picked) {
+                  if (!merged.some((g) => g.name === f.name && g.size === f.size)) merged.push(f)
+                }
+                return merged.slice(0, 8)
+              })
+              e.target.value = '' // сбрасываем, чтобы можно было доложить ещё фото (в т.ч. те же)
+            }}
             className="text-body text-text-secondary file:mr-3 file:rounded-button file:border-0 file:bg-brand-10 file:px-3 file:py-1.5 file:text-brand"
           />
+          <p className="mt-1 text-caption text-text-secondary">
+            {t('people.photosMulti')}
+          </p>
           {previews.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {previews.map((src, i) => (
