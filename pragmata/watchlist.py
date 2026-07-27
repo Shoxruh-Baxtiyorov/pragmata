@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 log = logging.getLogger("pragmata.watchlist")
 
 MATCH_THRESHOLD = 0.82  # косинус кроп↔эталон (одежда/фигура); выше = тот же человек
-FACE_THRESHOLD = 0.42  # косинус лицо↔лицо (insightface L2); тот же человек ≳ 0.4
+# порог лицо↔лицо — дефолт; фактический берётся из конфига (env-тюнинг на демо)
+FACE_THRESHOLD = 0.42
 REFRESH_S = 30.0  # как часто перечитывать watchlist из БД
 
 
@@ -35,11 +36,14 @@ class WatchlistMatcher:
     """Кэширует эталоны из БД, матчит эмбеддинг трека. Потокобезопасно."""
 
     def __init__(self, session_factory: sessionmaker[Session]):
+        from pragmata.config import get_settings
+
         self.sf = session_factory
         # (id, name, watch, clip_emb|None, face_emb|None)
         self._refs: list[tuple[str, str, bool, list[float] | None, list[float] | None]] = []
         self._loaded = 0.0
         self._lock = threading.Lock()
+        self._face_threshold = float(get_settings().face_match_threshold)
 
     def _refresh(self) -> None:
         from sqlalchemy import or_, select
@@ -83,7 +87,7 @@ class WatchlistMatcher:
         # канал 1: лицо (если у трека есть эмбеддинг лица и у кого-то из списка тоже)
         if face_emb is not None:
             best: tuple[str, str, bool] | None = None
-            best_sim = FACE_THRESHOLD
+            best_sim = self._face_threshold
             for pid, name, watch, _clip, face in refs:
                 if face is None:
                     continue

@@ -36,6 +36,7 @@ class FaceRecognizer:
         self._enabled = enabled
         self._app: object | None = None
         self._tried = False
+        self._min_score = 0.5  # переопределяется из конфига при _ensure
 
     def _ensure(self) -> None:
         if self._tried or not self._enabled:
@@ -44,13 +45,18 @@ class FaceRecognizer:
         try:
             from insightface.app import FaceAnalysis
 
+            from pragmata.config import get_settings
+
+            s = get_settings()
+            self._min_score = float(s.face_min_score)
+            det = int(s.face_det_size)
             root = str((self._models_dir / "insightface").resolve())
             app = FaceAnalysis(
-                name="buffalo_s", root=root, providers=["CPUExecutionProvider"]
+                name=s.face_model, root=root, providers=["CPUExecutionProvider"]
             )
-            app.prepare(ctx_id=-1, det_size=(320, 320))
+            app.prepare(ctx_id=-1, det_size=(det, det))
             self._app = app
-            log.info("face recognizer: on (insightface buffalo_s, CPU)")
+            log.info("face recognizer: on (insightface %s, det=%d, CPU)", s.face_model, det)
         except Exception:  # noqa: BLE001 — нет пакета/модели/сети → graceful off
             log.warning("face recognizer: off (insightface недоступен или модель не загрузилась)")
             self._app = None
@@ -90,7 +96,12 @@ class FaceRecognizer:
             return None
         if not faces:
             return None
-        best = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+        # гейт качества: отбрасываем неуверенные детекции (мутные/профильные/мелкие) —
+        # их эмбеддинг шумный и провоцирует ложные совпадения в watchlist
+        good = [f for f in faces if float(getattr(f, "det_score", 1.0)) >= self._min_score]
+        if not good:
+            return None
+        best = max(good, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
         emb = getattr(best, "normed_embedding", None)
         if emb is None:
             return None

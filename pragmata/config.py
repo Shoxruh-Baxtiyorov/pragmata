@@ -53,9 +53,19 @@ class Settings(BaseSettings):
     vlm_api_key: str = ""
     vlm_model: str = "qwen2.5vl:3b"
     vlm_max_per_hour: int = 60
-    # распознавание лица для watchlist (insightface buffalo_s, ~90МБ, CPU-офлайн).
-    # Точнее одежды/фигуры. Модель качается один раз; нет пакета/модели → тихо off.
+    # распознавание лица для watchlist (insightface, CPU-офлайн, качается один раз
+    # в models/insightface; нет пакета/модели → тихо off). buffalo_l (ResNet50
+    # ArcFace, w600k_r50) заметно точнее мобильной buffalo_s — лучше разделяет
+    # «тот же/другой», меньше и промахов, и ложных совпадений; цена ~326МБ и более
+    # тяжёлый инференс на CPU, но для watchlist (не каждый кадр) это ок.
     face_recognition: bool = True
+    face_model: str = "buffalo_l"
+    face_det_size: int = 640  # вход детектора лиц; больше = ловит мелкие/дальние лица
+    # гейт качества: лица с уверенностью детекции ниже порога не эмбеддим — мутный/
+    # профильный/крошечный кроп даёт шумный вектор и провоцирует ложные совпадения
+    face_min_score: float = 0.5
+    # порог косинуса лицо↔лицо; в env → можно подкрутить на демо без передеплоя
+    face_match_threshold: float = 0.42
     # детекция оружия: VLM проверяет кадр каждого входящего человека (свой бюджет)
     weapon_detection: bool = False
     weapon_max_per_hour: int = 120
