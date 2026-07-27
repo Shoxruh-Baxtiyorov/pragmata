@@ -19,6 +19,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Sun,
   TrendingUp,
@@ -58,6 +59,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     label: 'navGroup.admin',
     items: [
       { to: '/manage', key: 'nav.manage', icon: Camera },
+      { to: '/analytics', key: 'nav.analytics', icon: SlidersHorizontal },
       { to: '/system', key: 'nav.system', icon: Settings },
       { to: '/users', key: 'nav.users', icon: UserCog, admin: true },
       { to: '/security', key: 'nav.security', icon: ShieldCheck },

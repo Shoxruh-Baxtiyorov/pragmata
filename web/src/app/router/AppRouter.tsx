@@ -13,6 +13,7 @@ import { SearchPage } from '@/features/search'
 import { SystemPage } from '@/features/system'
 import { ManagePage } from '@/features/manage'
 import { WatchlistPage } from '@/features/watchlist'
+import { AnalyticsPage } from '@/features/analytics'
 
 // Гейт авторизации — одна развилка на верхнем уровне, не per-route guards
 export function AppRouter() {
@@ -37,6 +38,7 @@ export function AppRouter() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/system" element={<SystemPage />} />
         <Route path="/manage" element={<ManagePage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/archive" element={<ArchivePage />} />
         <Route path="/security" element={<SecurityPage />} />

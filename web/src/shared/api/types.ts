@@ -116,6 +116,38 @@ export interface Camera {
   enabled: boolean
   snapshot_url: string | null
   zones: Zone[]
+  analytics?: Record<string, ModuleState>
+}
+
+// состояние модуля аналитики в конфиге камеры/зоны: {enabled, ...параметры}
+export type ModuleState = { enabled?: boolean } & Record<string, unknown>
+
+// GET /api/v1/analytics/modules — каталог
+export interface AnalyticsParam {
+  key: string
+  label: string
+  type: 'bool' | 'int' | 'float' | 'text' | 'select'
+  default: unknown
+  min?: number
+  max?: number
+  options?: string[]
+  unit?: string
+}
+export interface AnalyticsModule {
+  key: string
+  name: string
+  category: string
+  scope: 'site' | 'camera' | 'zone'
+  tier: 'A' | 'B' | 'C'
+  description: string
+  event_type: string | null
+  requires_model: string | null
+  params: AnalyticsParam[]
+}
+export interface AnalyticsCatalog {
+  categories: { key: string; label: string }[]
+  tiers: { key: string; label: string }[]
+  modules: AnalyticsModule[]
 }
 
 // PersonOut
