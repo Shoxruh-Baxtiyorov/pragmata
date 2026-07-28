@@ -137,14 +137,19 @@ class CameraWorker(threading.Thread):
             _e if isinstance(_e, dict) and _e.get("enabled") else None
         )
         self._park_zones: list[tuple[ZoneRuntime, dict[str, object]]] = []
+        self._loading_zones: list[tuple[ZoneRuntime, dict[str, object]]] = []
         for _zr in self.rules.zones:
             _p = _zr.cfg.analytics.get("illegal_parking")
             if isinstance(_p, dict) and _p.get("enabled"):
                 self._park_zones.append((_zr, _p))
+            _l = _zr.cfg.analytics.get("loading_zone")
+            if isinstance(_l, dict) and _l.get("enabled"):
+                self._loading_zones.append((_zr, _l))
         _dwells: list[float] = []
         if self._veh_idle is not None:
             _dwells.append(float(self._veh_idle.get("idle_s", 300)))  # type: ignore[arg-type]
         _dwells += [float(p.get("idle_s", 120)) for _z, p in self._park_zones]  # type: ignore[arg-type]
+        _dwells += [float(v.get("dwell_s", 120)) for _z, v in self._loading_zones]  # type: ignore[arg-type]
         self._veh_dwell_s = min(_dwells) if _dwells else 0.0
         self._veh_stationary = bool(_dwells)
 
@@ -251,6 +256,15 @@ class CameraWorker(threading.Thread):
                             if zr.contains((cx, cy), frame.image.shape):
                                 ev = RuleEvent(
                                     "illegal_parking", self.camera.id, first_ts, frame.ts,
+                                    zone=zr.cfg.name, meta={"idle_s": idle},
+                                )
+                                ev.frame = frame.image.copy()
+                                self.stats.events += 1
+                                self.sink.emit_event(ev)
+                        for zr, _cfg in self._loading_zones:
+                            if zr.contains((cx, cy), frame.image.shape):
+                                ev = RuleEvent(
+                                    "loading_activity", self.camera.id, first_ts, frame.ts,
                                     zone=zr.cfg.name, meta={"idle_s": idle},
                                 )
                                 ev.frame = frame.image.copy()

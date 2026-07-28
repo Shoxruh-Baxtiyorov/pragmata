@@ -35,6 +35,7 @@ SEVERITY = {
     "abandoned_object": "alert",
     "equipment_idle": "info",
     "illegal_parking": "warning",
+    "loading_activity": "info",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

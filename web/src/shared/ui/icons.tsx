@@ -125,4 +125,5 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   abandoned_object: ShieldAlert,
   equipment_idle: Car,
   illegal_parking: Car,
+  loading_activity: Car,
 }

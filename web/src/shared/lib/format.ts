@@ -29,6 +29,7 @@ export type EventType =
   | 'abandoned_object'
   | 'equipment_idle'
   | 'illegal_parking'
+  | 'loading_activity'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -84,6 +85,11 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     ru: 'Неправильная парковка',
     uz: 'Notoʻgʻri toʻxtash',
     en: 'Illegal parking',
+  },
+  loading_activity: {
+    ru: 'Загрузочная зона',
+    uz: 'Yuklash zonasi',
+    en: 'Loading activity',
   },
 }
 
