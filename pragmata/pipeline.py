@@ -22,12 +22,13 @@ if TYPE_CHECKING:
     import numpy as np
 
     from pragmata.config import CameraConfig, GlobalRules, SiteInfo
-    from pragmata.objects import AbandonedObjectWatcher
+    from pragmata.objects import AbandonedObjectWatcher, VehicleStationaryWatcher
     from pragmata.perception.detector import PersonDetector
     from pragmata.perception.embedder import ClipEmbedder
     from pragmata.perception.face_recog import FaceRecognizer
     from pragmata.perception.faces import FaceCropper
     from pragmata.perception.tracker import TrackState
+    from pragmata.rules.engine import ZoneRuntime
     from pragmata.sinks import EventSink
     from pragmata.vehicles import VehicleWatcher
     from pragmata.watchlist import WatchlistMatcher
@@ -80,6 +81,7 @@ class CameraWorker(threading.Thread):
         face_recog: FaceRecognizer | None = None,
         vehicle_watcher: VehicleWatcher | None = None,
         object_watcher: AbandonedObjectWatcher | None = None,
+        vehicle_park_watcher: VehicleStationaryWatcher | None = None,
         base_ts: float | None = None,
         force_file: bool = False,
     ):
@@ -92,7 +94,9 @@ class CameraWorker(threading.Thread):
         self.face_recog = face_recog
         self.vehicle_watcher = vehicle_watcher
         self.object_watcher = object_watcher
+        self.vehicle_park_watcher = vehicle_park_watcher
         self._last_object = 0.0
+        self._last_veh_stat = 0.0
         # «оставленные предметы» включены на камере/зоне? берём dwell из конфига
         self._abandoned: dict[str, object] | None = None
         for _z in camera.zones:
@@ -126,6 +130,23 @@ class CameraWorker(threading.Thread):
             camera.id, faces, lost_ttl=global_rules.track_lost_ttl, fps=camera.process_fps
         )
         self.rules = RuleEngine(camera, global_rules, site)
+        # транспорт-стационарность: простой техники (камера) + неправильная парковка
+        # (в зонах). Общий порог = минимум из включённых (упрощение).
+        _e = camera.analytics.get("equipment_idle")
+        self._veh_idle: dict[str, object] | None = (
+            _e if isinstance(_e, dict) and _e.get("enabled") else None
+        )
+        self._park_zones: list[tuple[ZoneRuntime, dict[str, object]]] = []
+        for _zr in self.rules.zones:
+            _p = _zr.cfg.analytics.get("illegal_parking")
+            if isinstance(_p, dict) and _p.get("enabled"):
+                self._park_zones.append((_zr, _p))
+        _dwells: list[float] = []
+        if self._veh_idle is not None:
+            _dwells.append(float(self._veh_idle.get("idle_s", 300)))  # type: ignore[arg-type]
+        _dwells += [float(p.get("idle_s", 120)) for _z, p in self._park_zones]  # type: ignore[arg-type]
+        self._veh_dwell_s = min(_dwells) if _dwells else 0.0
+        self._veh_stationary = bool(_dwells)
 
     def run(self) -> None:
         src = make_source(
@@ -206,6 +227,35 @@ class CameraWorker(threading.Thread):
                     ):
                         self.stats.events += 1
                         self.sink.emit_event(ev)
+
+                # транспорт: простой техники / неправильная парковка (стационарность)
+                if (
+                    self.vehicle_park_watcher is not None
+                    and self._veh_stationary
+                    and frame.ts - self._last_veh_stat >= 1.0
+                ):
+                    self._last_veh_stat = frame.ts
+                    for cx, cy, _box, first_ts in self.vehicle_park_watcher.process(
+                        self.camera.id, frame.image, frame.ts, self._veh_dwell_s
+                    ):
+                        idle = round(frame.ts - first_ts, 1)
+                        if self._veh_idle is not None:
+                            ev = RuleEvent(
+                                "equipment_idle", self.camera.id, first_ts, frame.ts,
+                                meta={"idle_s": idle},
+                            )
+                            ev.frame = frame.image.copy()
+                            self.stats.events += 1
+                            self.sink.emit_event(ev)
+                        for zr, _cfg in self._park_zones:
+                            if zr.contains((cx, cy), frame.image.shape):
+                                ev = RuleEvent(
+                                    "illegal_parking", self.camera.id, first_ts, frame.ts,
+                                    zone=zr.cfg.name, meta={"idle_s": idle},
+                                )
+                                ev.frame = frame.image.copy()
+                                self.stats.events += 1
+                                self.sink.emit_event(ev)
 
                 for st in ended:
                     self._embed_track(st)

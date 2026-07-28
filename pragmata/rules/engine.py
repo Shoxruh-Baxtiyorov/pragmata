@@ -33,6 +33,8 @@ SEVERITY = {
     "ppe_violation": "warning",
     "package_damage": "warning",
     "abandoned_object": "alert",
+    "equipment_idle": "info",
+    "illegal_parking": "warning",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

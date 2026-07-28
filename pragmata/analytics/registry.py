@@ -158,6 +158,15 @@ MODULES: tuple[Module, ...] = (
         event_type="plate_recognized",
         requires_model="ALPR (детектор номера + OCR)",
     ),
+    Module(
+        "illegal_parking", "Неправильная парковка", "security", "zone", "A",
+        "Транспорт, стоящий в запретной зоне (под знаком, на газоне) дольше порога.",
+        params=(
+            ParamSpec("idle_s", "Стоит дольше", "int", 120, 10, 7200, unit="с"),
+            ParamSpec("cooldown_s", "Пауза между тревогами", "int", 300, 5, 3600, unit="с"),
+        ),
+        event_type="illegal_parking",
+    ),
     # ─ Стройка и промышленность ─
     Module(
         "ppe", "СИЗ: каска и жилет", "construction", "zone", "B",

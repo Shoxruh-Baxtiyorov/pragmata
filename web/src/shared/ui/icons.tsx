@@ -123,4 +123,6 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   ppe_violation: ShieldAlert,
   package_damage: ShieldAlert,
   abandoned_object: ShieldAlert,
+  equipment_idle: Car,
+  illegal_parking: Car,
 }

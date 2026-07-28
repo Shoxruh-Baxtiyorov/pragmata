@@ -27,6 +27,8 @@ export type EventType =
   | 'ppe_violation'
   | 'package_damage'
   | 'abandoned_object'
+  | 'equipment_idle'
+  | 'illegal_parking'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -72,6 +74,16 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     ru: 'Оставленный предмет',
     uz: 'Qarovsiz buyum',
     en: 'Abandoned object',
+  },
+  equipment_idle: {
+    ru: 'Простой техники',
+    uz: 'Texnika boʻsh turishi',
+    en: 'Equipment idle',
+  },
+  illegal_parking: {
+    ru: 'Неправильная парковка',
+    uz: 'Notoʻgʻri toʻxtash',
+    en: 'Illegal parking',
   },
 }
 
