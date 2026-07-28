@@ -118,4 +118,8 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   crowd_gathering: Users,
   queue_buildup: Timer,
   danger_zone_presence: ShieldAlert,
+  hygiene_violation: ShieldAlert,
+  fire_smoke: ShieldAlert,
+  ppe_violation: ShieldAlert,
+  package_damage: ShieldAlert,
 }

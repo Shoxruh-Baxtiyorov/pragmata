@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pragmata.config import SiteConfig
     from pragmata.perception.tracker import TrackState
     from pragmata.rules.engine import RuleEvent
-    from pragmata.vlm import VlmWorker, WeaponWorker
+    from pragmata.vlm import VisionWorker, VlmWorker, WeaponWorker
 
 
 class ClipSink:
@@ -59,6 +59,31 @@ class WeaponSink:
         frame = ev.frame if ev.frame is not None else ev.track.best_frame
         if frame is not None:
             self.worker.enqueue(ev.camera_id, [frame.copy()])
+
+    def emit_track_end(self, st: TrackState) -> None:
+        pass
+
+
+class VisionSink:
+    """person_entered → очередь ВКЛЮЧЁННЫХ VLM-проверок камеры (оружие/гигиена/
+    огонь/СИЗ/повреждение). Проверяем при входе человека — экономим VLM-бюджет."""
+
+    def __init__(self, worker: VisionWorker, enabled: dict[str, set[str]]):
+        self.worker = worker
+        self.enabled = enabled  # camera_id → набор ключей проверок
+
+    def emit_event(self, ev: RuleEvent) -> None:
+        if ev.type != "person_entered" or ev.track is None:
+            return
+        checks = self.enabled.get(ev.camera_id)
+        if not checks:
+            return
+        frame = ev.frame if ev.frame is not None else ev.track.best_frame
+        if frame is None:
+            return
+        f = frame.copy()
+        for key in checks:
+            self.worker.enqueue(ev.camera_id, key, [f])
 
     def emit_track_end(self, st: TrackState) -> None:
         pass

@@ -342,35 +342,51 @@ def main() -> None:
     else:
         log.info("vlm: off")
 
-    # --- детекция оружия: та же VLM проверяет кадр каждого входящего человека ----
-    if settings.weapon_detection and settings.llm_api_key and settings.vlm_model:
-        from pragmata.alerts import WeaponSink
-        from pragmata.vlm import HourBudget, VlmDescriber, WeaponWorker
-
-        def emit_weapon_alert(camera_id: str, frames: list[np.ndarray], kind: str) -> None:
-            now = time.time()
-            sink.emit_event(
-                RuleEvent(
-                    "weapon_detected",
-                    camera_id,
-                    now,
-                    now,
-                    meta={"weapon_type": kind} if kind else {},
-                    frame=frames[0] if frames else None,
-                )
-            )
-
-        weapon_worker = WeaponWorker(
-            VlmDescriber(*settings.vlm_endpoint, settings.vlm_model),
-            HourBudget(settings.weapon_max_per_hour),
-            emit_alert=emit_weapon_alert,
-            stop_event=stop_event,
+    # --- VLM vision-проверки входящих: оружие/гигиена/огонь/СИЗ/повреждение ------
+    if settings.llm_api_key and settings.vlm_model:
+        from pragmata.alerts import VisionSink
+        from pragmata.vlm import (
+            HourBudget,
+            VisionWorker,
+            VlmDescriber,
+            enabled_vision_checks,
         )
-        weapon_worker.start()
-        sink.sinks.append(WeaponSink(weapon_worker))
-        log.info("weapon detection: on (лимит %d/час)", settings.weapon_max_per_hour)
+
+        enabled = {
+            c.id: ks
+            for c in cfg.cameras
+            if (ks := enabled_vision_checks(c, settings.weapon_detection))
+        }
+        if enabled:
+
+            def emit_vision_alert(
+                camera_id: str, event_type: str, detail: str, frames: list[np.ndarray]
+            ) -> None:
+                now = time.time()
+                sink.emit_event(
+                    RuleEvent(
+                        event_type,
+                        camera_id,
+                        now,
+                        now,
+                        meta={"detail": detail} if detail else {},
+                        frame=frames[0] if frames else None,
+                    )
+                )
+
+            vision_worker = VisionWorker(
+                VlmDescriber(*settings.vlm_endpoint, settings.vlm_model),
+                HourBudget(settings.weapon_max_per_hour),
+                emit_alert=emit_vision_alert,
+                stop_event=stop_event,
+            )
+            vision_worker.start()
+            sink.sinks.append(VisionSink(vision_worker, enabled))
+            log.info("vision checks: on %s", {c: sorted(k) for c, k in enabled.items()})
+        else:
+            log.info("vision checks: off (нет включённых модулей)")
     else:
-        log.info("weapon detection: off")
+        log.info("vision checks: off (нет VLM)")
 
     # --- камеры: перезапускаемая группа с hot-reload по config_version --------
     reloadable = db_sink is not None and not args.loop_file

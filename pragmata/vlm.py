@@ -17,6 +17,7 @@ import queue
 import threading
 import time
 from collections import deque
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import cv2
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     import numpy as np
+
+    from pragmata.config import CameraConfig
 
 log = logging.getLogger("pragmata.vlm")
 
@@ -140,12 +143,81 @@ class VlmDescriber:
             return False, ""
         return bool(verdict.get("weapon", False)), str(verdict.get("type", ""))[:40]
 
+    def check(self, frames: list[np.ndarray], spec: VisionCheck) -> tuple[bool, str]:
+        """Обобщённая vision-проверка по реестру: (найдено, деталь). Офлайн VLM."""
+        content: list[dict[str, Any]] = [{"type": "text", "text": spec.prompt}]
+        content += [
+            {"type": "image_url", "image_url": {"url": _to_data_uri(f)}} for f in frames[:2]
+        ]
+        resp = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": content}],  # type: ignore[list-item, misc]
+            temperature=0.0,
+        )
+        v = extract_json(resp.choices[0].message.content or "")
+        if v is None:
+            return False, ""
+        return bool(v.get(spec.key, False)), str(v.get(spec.detail_key, ""))[:60]
+
 
 WEAPON_PROMPT = """Внимательно осмотри кадры с камеры. Есть ли у людей ОРУЖИЕ в руках:
 пистолет, ружьё, нож, топор, бита? Обычные предметы (телефон, сумка, зонт) — НЕ оружие.
 Ответь ТОЛЬКО JSON без пояснений:
 {"weapon": true|false, "type": "пистолет|нож|..."}
 weapon=true ТОЛЬКО если оружие явно видно. Сомневаешься — false."""
+
+HYGIENE_PROMPT = """Кадры с кухни/пищевого производства. Нарушает ли персонал гигиену:
+работает БЕЗ перчаток или БЕЗ шапочки/головного убора? Ответь ТОЛЬКО JSON:
+{"violation": true|false, "detail": "нет перчаток|нет шапочки|..."}
+violation=true только если нарушение явно видно. Сомневаешься — false."""
+
+FIRE_PROMPT = """Кадры с камеры. Виден ли ОГОНЬ или ДЫМ (возгорание, задымление)?
+Ответь ТОЛЬКО JSON: {"detected": true|false, "detail": "огонь|дым|..."}
+detected=true только если явно видно пламя/дым. Сомневаешься — false."""
+
+PPE_PROMPT = """Кадры со стройки/производства. Нарушает ли человек требования СИЗ:
+БЕЗ каски или БЕЗ сигнального жилета в рабочей зоне? Ответь ТОЛЬКО JSON:
+{"violation": true|false, "detail": "нет каски|нет жилета|..."}
+violation=true только если явно видно. Сомневаешься — false."""
+
+PKG_PROMPT = """Кадры со склада. Видны ли ПОВРЕЖДЁННЫЕ коробки/паллеты/упаковка
+(вмятины, разрывы, рассыпанное содержимое)? Ответь ТОЛЬКО JSON:
+{"damaged": true|false, "detail": "мятая коробка|разрыв|..."}
+damaged=true только если повреждение явно видно. Сомневаешься — false."""
+
+
+@dataclass(frozen=True)
+class VisionCheck:
+    prompt: str
+    key: str  # булев ключ в JSON-вердикте
+    detail_key: str  # текстовый ключ
+    event: str  # тип RuleEvent при срабатывании
+
+
+# реестр VLM-проверок: ключ модуля → спецификация промпта/события
+VISION_CHECKS: dict[str, VisionCheck] = {
+    "weapon": VisionCheck(WEAPON_PROMPT, "weapon", "type", "weapon_detected"),
+    "hygiene": VisionCheck(HYGIENE_PROMPT, "violation", "detail", "hygiene_violation"),
+    "fire_smoke": VisionCheck(FIRE_PROMPT, "detected", "detail", "fire_smoke"),
+    "ppe": VisionCheck(PPE_PROMPT, "violation", "detail", "ppe_violation"),
+    "package_damage": VisionCheck(PKG_PROMPT, "damaged", "detail", "package_damage"),
+}
+
+
+def enabled_vision_checks(cam: CameraConfig, weapon_global: bool = False) -> set[str]:
+    """Какие VLM-проверки включены на камере (её analytics + analytics её зон)."""
+    keys: set[str] = set()
+    for k in VISION_CHECKS:
+        cfg = cam.analytics.get(k)
+        if isinstance(cfg, dict) and cfg.get("enabled"):
+            keys.add(k)
+        for z in cam.zones:
+            zc = z.analytics.get(k)
+            if isinstance(zc, dict) and zc.get("enabled"):
+                keys.add(k)
+    if weapon_global:  # обратная совместимость с глобальным флагом
+        keys.add("weapon")
+    return keys
 
 
 class VlmWorker(threading.Thread):
@@ -241,3 +313,47 @@ class WeaponWorker(threading.Thread):
             if found:
                 log.warning("weapon detected cam=%s type=%s", camera_id, kind)
                 self.emit_alert(camera_id, frames, kind)
+
+
+class VisionWorker(threading.Thread):
+    """Обобщённый VLM-воркер: очередь (camera_id, check_key, frames) → проверка по
+    реестру VISION_CHECKS → колбэк при срабатывании. Один поток на все проверки
+    (оружие/гигиена/огонь/СИЗ/повреждение), общий почасовой бюджет."""
+
+    def __init__(
+        self,
+        describer: VlmDescriber,
+        budget: HourBudget,
+        emit_alert: Callable[[str, str, str, list[np.ndarray]], None],
+        stop_event: threading.Event,
+    ):
+        super().__init__(name="vision-worker", daemon=True)
+        self.describer = describer
+        self.budget = budget
+        self.emit_alert = emit_alert  # (camera_id, event_type, detail, frames)
+        self.stop_event = stop_event
+        self._q: queue.Queue[tuple[str, str, list[np.ndarray]]] = queue.Queue(maxsize=64)
+
+    def enqueue(self, camera_id: str, check_key: str, frames: list[np.ndarray]) -> None:
+        if check_key not in VISION_CHECKS or not self.budget.allow():
+            return
+        with contextlib.suppress(queue.Full):
+            self._q.put_nowait((camera_id, check_key, frames))
+
+    def run(self) -> None:
+        while not self.stop_event.is_set():
+            try:
+                camera_id, check_key, frames = self._q.get(timeout=1)
+            except queue.Empty:
+                continue
+            spec = VISION_CHECKS.get(check_key)
+            if spec is None:
+                continue
+            try:
+                found, detail = self.describer.check(frames, spec)
+            except Exception:  # noqa: BLE001 — сбой VLM не должен ничего ронять
+                log.exception("vision check %s failed cam=%s", check_key, camera_id)
+                continue
+            if found:
+                log.warning("vision %s cam=%s: %s", check_key, camera_id, detail)
+                self.emit_alert(camera_id, spec.event, detail, frames)

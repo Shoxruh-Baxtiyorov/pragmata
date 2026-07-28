@@ -28,6 +28,10 @@ SEVERITY = {
     "crowd_gathering": "warning",
     "queue_buildup": "info",
     "danger_zone_presence": "alert",
+    "hygiene_violation": "warning",
+    "fire_smoke": "alert",
+    "ppe_violation": "warning",
+    "package_damage": "warning",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

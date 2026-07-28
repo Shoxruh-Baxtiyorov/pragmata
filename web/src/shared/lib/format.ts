@@ -22,6 +22,10 @@ export type EventType =
   | 'crowd_gathering'
   | 'queue_buildup'
   | 'danger_zone_presence'
+  | 'hygiene_violation'
+  | 'fire_smoke'
+  | 'ppe_violation'
+  | 'package_damage'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -50,6 +54,18 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     ru: 'В опасной зоне',
     uz: 'Xavfli zonada',
     en: 'In danger zone',
+  },
+  hygiene_violation: {
+    ru: 'Нарушение гигиены',
+    uz: 'Gigiena buzilishi',
+    en: 'Hygiene violation',
+  },
+  fire_smoke: { ru: 'Огонь / дым', uz: 'Olov / tutun', en: 'Fire / smoke' },
+  ppe_violation: { ru: 'Нарушение СИЗ', uz: 'SHV buzilishi', en: 'PPE violation' },
+  package_damage: {
+    ru: 'Повреждение упаковки',
+    uz: 'Qadoq shikasti',
+    en: 'Package damage',
   },
 }
 
