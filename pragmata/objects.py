@@ -50,7 +50,9 @@ def _centers(dets: sv.Detections) -> list[tuple[float, float, Box]]:
     return out
 
 
-def _track(tracked: list[_Obj], curr: list[tuple[float, float, Box]], ts: float, move_thr: float) -> None:
+def _track(
+    tracked: list[_Obj], curr: list[tuple[float, float, Box]], ts: float, move_thr: float
+) -> None:
     """Продлить существующие треки ближайшей детекцией; новые — добавить; старые убрать."""
     used: set[int] = set()
     for t in tracked:
