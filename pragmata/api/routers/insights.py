@@ -74,14 +74,17 @@ def stats(
 def digest(
     hours: int = Query(24, gt=0, le=24 * 7),
     lang: Literal["ru", "uz", "en"] = Query("ru"),
-    _: str = Depends(require_auth),
+    scope: int | None = Depends(current_scope),
 ) -> DigestOut:
     from pragmata.digest import build_digest_text
 
     cfg = require_site()
-    # в вебе иконки рисует UI — эмодзи из телеграм-шаблона тут только мешают
+    # в вебе иконки рисует UI — эмодзи из телеграм-шаблона тут только мешают.
+    # scope — сводка ТОЛЬКО организации клиента (мультиаренда)
     return DigestOut(
-        text=build_digest_text(session_factory(), cfg, hours=hours, lang=lang, emoji=False)
+        text=build_digest_text(
+            session_factory(), cfg, hours=hours, lang=lang, emoji=False, scope=scope
+        )
     )
 
 

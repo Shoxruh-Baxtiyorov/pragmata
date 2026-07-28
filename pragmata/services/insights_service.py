@@ -32,9 +32,18 @@ def _tz() -> ZoneInfo:
     return ZoneInfo(cfg.site.timezone if cfg else "Asia/Tashkent")
 
 
-def _cameras_online() -> tuple[int, int]:
-    cfg = site_config()
-    ids = [c.id for c in cfg.cameras] if cfg else list(camera_names())
+def _cameras_online(scope: int | None = None) -> tuple[int, int]:
+    """(онлайн, всего) камер ОРГАНИЗАЦИИ. Считаем из БД со скоупом — иначе клиент
+    видел бы чужие камеры (мультиаренда). Всего = включённые, не удалённые."""
+    from sqlalchemy import select
+
+    from pragmata.db.models import Camera
+
+    q = select(Camera.id).where(Camera.deleted.is_(False), Camera.enabled.is_(True))
+    if scope is not None:
+        q = q.where(Camera.site_id == scope)
+    with session_factory()() as s:
+        ids = list(s.execute(q).scalars().all())
     live = data_root() / "live"
     now = time.time()
     online = sum(
@@ -62,7 +71,7 @@ def overview(scope: int | None = None) -> OverviewOut:
     tz = _tz()
     since = datetime.now(UTC) - timedelta(hours=24)
     names = camera_names()
-    online, total = _cameras_online()
+    online, total = _cameras_online(scope)
 
     with session_factory()() as s:
         by_type = {
@@ -128,7 +137,7 @@ def overview(scope: int | None = None) -> OverviewOut:
 
 
 def system_status(scope: int | None = None) -> SystemOut:
-    from pragmata.db.models import Event
+    from pragmata.db.models import Camera, Event, Site
 
     cfg = require_site()
     settings = get_settings()
@@ -156,23 +165,31 @@ def system_status(scope: int | None = None) -> SystemOut:
                 .group_by(Event.camera_id)
             ).all()
         }
+        # камеры и объект — из БД со СКОУПОМ (иначе клиент видит чужие камеры/объект)
+        cam_q = select(Camera.id, Camera.name).where(
+            Camera.deleted.is_(False), Camera.enabled.is_(True)
+        )
+        if scope is not None:
+            cam_q = cam_q.where(Camera.site_id == scope)
+        cam_rows = s.execute(cam_q).all()
+        site_row = s.get(Site, scope) if scope is not None else s.get(Site, 1)
 
     cams = []
-    for cam in cfg.cameras:
-        snap = live / f"{cam.id}.jpg"
+    for cid, cname in cam_rows:
+        snap = live / f"{cid}.jpg"
         online = snap.exists() and now - snap.stat().st_mtime < ONLINE_STALE_S
         cams.append(
             SystemCamera(
-                id=cam.id,
-                name=cam.name,
+                id=cid,
+                name=cname,
                 online=online,
-                last_event=last_by_cam.get(cam.id),
-                events_24h=cnt_by_cam.get(cam.id, 0),
+                last_event=last_by_cam.get(cid),
+                events_24h=cnt_by_cam.get(cid, 0),
             )
         )
     return SystemOut(
-        site_name=cfg.site.name,
-        timezone=cfg.site.timezone,
+        site_name=site_row.name if site_row else cfg.site.name,
+        timezone=site_row.timezone if site_row else cfg.site.timezone,
         cameras=cams,
         yolo_model=settings.yolo_model,
         agent_enabled=bool(settings.llm_api_key),

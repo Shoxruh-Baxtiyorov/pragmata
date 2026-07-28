@@ -34,7 +34,9 @@ def _img_data_uri(rel: str | None) -> str | None:
     return "data:image/jpeg;base64," + base64.b64encode(p.read_bytes()).decode()
 
 
-def build_report_pdf(hours: float, camera_id: str | None, severity: str | None) -> bytes:
+def build_report_pdf(
+    hours: float, camera_id: str | None, severity: str | None, scope: int | None = None
+) -> bytes:
     from pragmata.db.models import Event
 
     cfg = require_site()
@@ -48,6 +50,8 @@ def build_report_pdf(hours: float, camera_id: str | None, severity: str | None) 
         Event.source == "live",
         Event.type.notin_(["camera_offline", "camera_online"]),
     )
+    if scope is not None:  # мультиаренда: отчёт только по организации клиента
+        q = q.where(Event.site_id == scope)
     if camera_id:
         q = q.where(Event.camera_id == camera_id)
     if severity:
@@ -75,7 +79,7 @@ def build_report_pdf(hours: float, camera_id: str | None, severity: str | None) 
             </tr>"""
         )
 
-    scope = names.get(camera_id, camera_id) if camera_id else "все камеры"
+    cam_label = names.get(camera_id, camera_id) if camera_id else "все камеры"
     html = f"""<!doctype html><html><head><meta charset="utf-8"><style>
       @page {{ size: A4; margin: 1.6cm; @bottom-right {{ content: "Стр. " counter(page); font-size: 9px; color: #888; }} }}
       body {{ font-family: sans-serif; color: #1f2530; font-size: 12px; }}
@@ -94,7 +98,7 @@ def build_report_pdf(hours: float, camera_id: str | None, severity: str | None) 
     </style></head><body>
       <h1>Акт видеонаблюдения — {escape(cfg.site.name)}</h1>
       <div class="sub">
-        Объект: {escape(scope)} · Период: последние {hours:g} ч · Событий: {len(events)}<br/>
+        Объект: {escape(cam_label)} · Период: последние {hours:g} ч · Событий: {len(events)}<br/>
         Сформировано: {generated} ({cfg.site.timezone}) · Pragmata AI
       </div>
       <div class="badge">Доказательства с камер видеонаблюдения</div>

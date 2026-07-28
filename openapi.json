@@ -3844,6 +3844,22 @@
               "title": "Lang",
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
           }
         ],
         "responses": {
@@ -4094,6 +4110,22 @@
                 }
               ],
               "title": "Severity"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
             }
           }
         ],

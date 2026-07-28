@@ -19,11 +19,11 @@ def report(
     hours: float = Query(24, gt=0, le=24 * 30),
     camera_id: str | None = None,
     severity: str | None = None,
-    _: str = Depends(require_auth),
+    scope: int | None = Depends(current_scope),
 ) -> Response:
     from pragmata.services.report_service import build_report_pdf
 
-    pdf = build_report_pdf(hours, camera_id, severity)
+    pdf = build_report_pdf(hours, camera_id, severity, scope=scope)
     return Response(
         content=pdf,
         media_type="application/pdf",

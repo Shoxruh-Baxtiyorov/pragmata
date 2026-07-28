@@ -126,7 +126,10 @@ def build_digest_text(
     hours: int = 24,
     lang: str = "ru",
     emoji: bool = True,
+    scope: int | None = None,
 ) -> str:
+    from sqlalchemy import true
+
     from pragmata.db.models import Event, Feedback
 
     labels = _digest_labels(lang)
@@ -134,31 +137,41 @@ def build_digest_text(
     tz = ZoneInfo(cfg.site.timezone)
     since = datetime.now(UTC) - timedelta(hours=hours)
     cam_names = {c.id: c.name for c in cfg.cameras}
+    # мультиаренда: клиент видит сводку ТОЛЬКО своей организации, не чужой
+    site = true() if scope is None else Event.site_id == scope
 
     with session_factory() as s:
         by_type: dict[str, int] = {
             row[0]: row[1]
             for row in s.execute(
                 select(Event.type, func.count())
-                .where(Event.t_start >= since, Event.source == "live")
+                .where(Event.t_start >= since, Event.source == "live", site)
                 .group_by(Event.type)
             ).all()
         }
         alerts = (
             s.execute(
                 select(Event)
-                .where(Event.t_start >= since, Event.severity == "alert", Event.source == "live")
+                .where(
+                    Event.t_start >= since,
+                    Event.severity == "alert",
+                    Event.source == "live",
+                    site,
+                )
                 .order_by(Event.t_start.desc())
                 .limit(8)
             )
             .scalars()
             .all()
         )
-        fp_count = s.execute(
+        fp_q = (
             select(func.count())
             .select_from(Feedback)
             .where(Feedback.created_at >= since, Feedback.verdict == "false_positive")
-        ).scalar_one()
+        )
+        if scope is not None:
+            fp_q = fp_q.join(Event, Event.id == Feedback.event_id).where(Event.site_id == scope)
+        fp_count = s.execute(fp_q).scalar_one()
 
     visitors = by_type.get("person_entered", 0)
     alert_total = sum(
