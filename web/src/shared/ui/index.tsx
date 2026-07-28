@@ -117,7 +117,10 @@ export function Modal({
 }) {
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className={cn('max-w-lg', className)}>{children}</DialogContent>
+      {/* showCloseButton=false: экраны рисуют собственный ✕ (иначе два крестика) */}
+      <DialogContent showCloseButton={false} className={cn('max-w-lg', className)}>
+        {children}
+      </DialogContent>
     </Dialog>
   )
 }

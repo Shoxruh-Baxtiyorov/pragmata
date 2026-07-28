@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
+import queue
 import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -91,6 +93,12 @@ class CameraWorker(threading.Thread):
         self.force_file = force_file  # архив/NVR: читать URL как конечную запись
         self._last_vehicle = 0.0
         self._last_live = 0.0
+        # очередь задач распознавания лиц → отдельный поток (эмбеддинг не стопорит
+        # детекцию). Маленькая и non-blocking: если поток занят, кадр пропускаем.
+        self._face_q: queue.Queue[tuple[TrackState, np.ndarray, float] | None] = queue.Queue(
+            maxsize=4
+        )
+        self._face_thread: threading.Thread | None = None
         self.detector = detector
         self.sink = sink
         self.stop_event = stop_event
@@ -116,6 +124,11 @@ class CameraWorker(threading.Thread):
         interval = 1.0 / max(self.camera.process_fps, 0.1)
         last_processed = 0.0
         log.info("[%s] start url=%s", self.camera.id, redact_url(self.camera.url))
+        if self.face_recog is not None and self.watchlist is not None:
+            self._face_thread = threading.Thread(
+                target=self._face_worker_loop, name=f"face-{self.camera.id}", daemon=True
+            )
+            self._face_thread.start()
         try:
             for frame in src.frames():
                 if self.stop_event.is_set():
@@ -182,6 +195,10 @@ class CameraWorker(threading.Thread):
                     self._embed_track(st)
                     self.sink.emit_track_end(st)
             src.close()
+            if self._face_thread is not None:
+                with contextlib.suppress(queue.Full):
+                    self._face_q.put_nowait(None)  # разбудить поток на выход
+                self._face_thread.join(timeout=1.0)
             log.info("[%s] stopped: %s", self.camera.id, self.stats.snapshot())
 
     def _write_live(self, image: np.ndarray) -> None:
@@ -200,19 +217,41 @@ class CameraWorker(threading.Thread):
             log.exception("[%s] live frame write failed", self.camera.id)
 
     def _recognize_live(self, st: TrackState, image: np.ndarray, ts: float) -> None:
-        """Пока человек ВИДЕН — периодически пробуем узнать лицо (не ждём конца трека).
-
-        Как только узнали — сразу событие «кто это» и запоминаем имя на треке
-        (повторно модель не дёргаем). Это резко повышает частоту узнавания: клиент
-        видит подпись «пришёл X» почти в реальном времени, а не раз на трек.
-        """
+        """Пока человек ВИДЕН — ставим распознавание лица в ФОНОВЫЙ поток, чтобы
+        тяжёлый эмбеддинг (особенно на CPU, ~250мс) не стопорил цикл детекции.
+        Троттлим на трек; как узнали — модель больше не дёргаем."""
         if self.face_recog is None or self.watchlist is None:
             return
-        if st.person_id is not None:  # уже узнан — не гоняем модель повторно
+        if st.person_id is not None:  # уже узнан
             return
         if ts - st.last_face_try < FACE_RECHECK_S:
             return
         st.last_face_try = ts
+        # поток занят (очередь полна) → пропускаем кадр, повторим на след. окне
+        with contextlib.suppress(queue.Full):
+            self._face_q.put_nowait((st, image.copy(), ts))
+
+    def _face_worker_loop(self) -> None:
+        """Отдельный поток: разбирает очередь распознавания, не блокируя детекцию."""
+        while not self.stop_event.is_set():
+            try:
+                job = self._face_q.get(timeout=0.4)
+            except queue.Empty:
+                continue
+            if job is None:
+                break
+            st, image, ts = job
+            if st.person_id is not None:  # успели узнать другим кадром
+                continue
+            try:
+                self._do_recognize(st, image, ts)
+            except Exception:  # noqa: BLE001 — распознавание не должно ронять камеру
+                log.exception("[%s] face recognize failed", self.camera.id)
+
+    def _do_recognize(self, st: TrackState, image: np.ndarray, ts: float) -> None:
+        """Тяжёлая часть (в фоновом потоке): эмбеддинг лица + watchlist-матч + событие."""
+        if self.face_recog is None or self.watchlist is None:
+            return
         emb = self.face_recog.embed(image, st.bbox)
         if emb is None:
             return
@@ -229,7 +268,7 @@ class CameraWorker(threading.Thread):
             track=st,
             meta={"person": st.person_name, "person_id": st.person_id},
         )
-        ev.frame = image.copy()
+        ev.frame = image  # уже копия (из очереди)
         self.stats.events += 1
         self.sink.emit_event(ev)
 
