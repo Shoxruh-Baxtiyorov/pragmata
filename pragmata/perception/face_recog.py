@@ -10,6 +10,7 @@ available=False, пайплайн молча падает обратно на CL
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import TYPE_CHECKING
 
@@ -43,6 +44,11 @@ class FaceRecognizer:
             return
         self._tried = True
         try:
+            # torch ПЕРВЫМ: грузит CUDA-либы в процесс, чтобы onnxruntime-gpu их нашёл
+            # (иначе import onnxruntime падает на libcudart.so.13). На CPU-сборке — no-op.
+            with contextlib.suppress(Exception):
+                import torch  # noqa: F401
+
             from insightface.app import FaceAnalysis
 
             from pragmata.config import get_settings
@@ -51,12 +57,22 @@ class FaceRecognizer:
             self._min_score = float(s.face_min_score)
             det = int(s.face_det_size)
             root = str((self._models_dir / "insightface").resolve())
-            app = FaceAnalysis(
-                name=s.face_model, root=root, providers=["CPUExecutionProvider"]
-            )
-            app.prepare(ctx_id=-1, det_size=(det, det))
+            # GPU для лиц, если стоит onnxruntime-gpu И device=cuda (250мс→~20мс,
+            # важно при толпе). Нет CUDA-провайдера → тихо CPU, ничего не ломается.
+            import onnxruntime as ort
+
+            providers = ["CPUExecutionProvider"]
+            gpu_ok = "CUDAExecutionProvider" in ort.get_available_providers()
+            if s.torch_device == "cuda" and gpu_ok:
+                providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            ctx = 0 if providers[0] == "CUDAExecutionProvider" else -1
+            app = FaceAnalysis(name=s.face_model, root=root, providers=providers)
+            app.prepare(ctx_id=ctx, det_size=(det, det))
             self._app = app
-            log.info("face recognizer: on (insightface %s, det=%d, CPU)", s.face_model, det)
+            log.info(
+                "face recognizer: on (insightface %s, det=%d, %s)",
+                s.face_model, det, "GPU" if ctx == 0 else "CPU",
+            )
         except Exception:  # noqa: BLE001 — нет пакета/модели/сети → graceful off
             log.warning("face recognizer: off (insightface недоступен или модель не загрузилась)")
             self._app = None
