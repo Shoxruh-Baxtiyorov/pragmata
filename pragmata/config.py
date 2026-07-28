@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -150,6 +151,9 @@ class ZoneConfig(BaseModel):
     type: str = "restricted"
     polygon: list[tuple[float, float]]  # нормализованные [x, y], 0..1
     rules: ZoneRules = Field(default_factory=ZoneRules)
+    # сырой конфиг модулей аналитики зоны {module_key: {enabled, ...params}}
+    # (crowd/queue_length/danger_zone/abandoned_object/…) — читает RuleEngine
+    analytics: dict[str, Any] = Field(default_factory=dict)
 
 
 class ClipConfig(BaseModel):
@@ -178,6 +182,8 @@ class CameraConfig(BaseModel):
     motion: MotionConfig = Field(default_factory=MotionConfig)
     zones: list[ZoneConfig] = Field(default_factory=list)
     clips: ClipConfig = Field(default_factory=ClipConfig)
+    # конфиг камеро-ориентированных модулей аналитики {module_key: {enabled, ...}}
+    analytics: dict[str, Any] = Field(default_factory=dict)
 
 
 class GlobalRules(BaseModel):

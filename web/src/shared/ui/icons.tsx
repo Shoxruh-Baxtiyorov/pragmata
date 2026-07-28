@@ -115,4 +115,7 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   person_recognized: UserRound,
   weapon_detected: Swords,
   vehicle_seen: Car,
+  crowd_gathering: Users,
+  queue_buildup: Timer,
+  danger_zone_presence: ShieldAlert,
 }

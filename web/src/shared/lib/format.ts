@@ -19,6 +19,9 @@ export type EventType =
   | 'person_recognized'
   | 'weapon_detected'
   | 'vehicle_seen'
+  | 'crowd_gathering'
+  | 'queue_buildup'
+  | 'danger_zone_presence'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -41,6 +44,13 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
   person_recognized: { ru: 'Распознан', uz: 'Aniqlandi', en: 'Recognized' },
   weapon_detected: { ru: 'Обнаружено оружие', uz: 'Qurol aniqlandi', en: 'Weapon detected' },
   vehicle_seen: { ru: 'Транспорт', uz: 'Transport', en: 'Vehicle' },
+  crowd_gathering: { ru: 'Скопление людей', uz: 'Odamlar toʻplanishi', en: 'Crowd gathering' },
+  queue_buildup: { ru: 'Очередь', uz: 'Navbat', en: 'Queue buildup' },
+  danger_zone_presence: {
+    ru: 'В опасной зоне',
+    uz: 'Xavfli zonada',
+    en: 'In danger zone',
+  },
 }
 
 export function eventLabel(type: string, lang: 'ru' | 'uz' | 'en'): string {

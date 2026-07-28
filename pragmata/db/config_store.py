@@ -36,16 +36,25 @@ def _camera_from_row(cam: object, zones: list[object]) -> CameraConfig:
         detect_imgsz=cam.detect_imgsz,  # type: ignore[attr-defined]
         motion=MotionConfig(**(cam.motion or {})),  # type: ignore[attr-defined]
         clips=ClipConfig(**(cam.clips or {})),  # type: ignore[attr-defined]
+        analytics=cam.analytics or {},  # type: ignore[attr-defined]  # камеро-модули
         zones=[
             ZoneConfig(
                 name=z.name,  # type: ignore[attr-defined]
                 type=z.type,  # type: ignore[attr-defined]
                 polygon=[(p[0], p[1]) for p in z.polygon],  # type: ignore[attr-defined]
-                rules=ZoneRules(**(z.rules or {})),  # type: ignore[attr-defined]
+                # ZoneRules берёт только свои поля (intrusion/loitering); полный
+                # JSON модулей (crowd/queue/…) кладём в analytics для RuleEngine
+                rules=ZoneRules(**_known_zone_rules(z.rules or {})),  # type: ignore[attr-defined]
+                analytics=z.rules or {},  # type: ignore[attr-defined]
             )
             for z in zones
         ],
     )
+
+
+def _known_zone_rules(rules: dict[str, object]) -> dict[str, object]:
+    """Только поля ZoneRules — чтобы модульные ключи (crowd/queue/…) её не ломали."""
+    return {k: v for k, v in rules.items() if k in ("zone_intrusion", "loitering")}
 
 
 def load_config_from_db(session_factory: sessionmaker[Session]) -> SiteConfig:

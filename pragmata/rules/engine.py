@@ -25,6 +25,9 @@ SEVERITY = {
     "person_recognized": "info",
     "weapon_detected": "alert",
     "vehicle_seen": "info",
+    "crowd_gathering": "warning",
+    "queue_buildup": "info",
+    "danger_zone_presence": "alert",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -86,6 +89,7 @@ class RuleEngine:
         self.site = site
         self.zones = [ZoneRuntime(z) for z in camera.zones]
         self._cooldown_until: dict[tuple[str, str, int], float] = {}  # (rule, zone, track_id) → ts
+        self._queue_since: dict[str, float] = {}  # зона → когда набралось ≥ порога (очередь)
 
     def _cooldown_ok(
         self, rule: str, zone: str, track_id: int, ts: float, cooldown_s: float
@@ -202,6 +206,29 @@ class RuleEngine:
                         )
                     )
 
+                # опасная зона: как вторжение, но семантика «зона у механизмов»
+                dz = zr.cfg.analytics.get("danger_zone")
+                if (
+                    isinstance(dz, dict)
+                    and dz.get("enabled")
+                    and st.zone_hits[zname] >= 6
+                    and self._cooldown_ok(
+                        "danger_zone", zname, st.track_id, ts, float(dz.get("cooldown_s", 120))
+                    )
+                ):
+                    events.append(
+                        RuleEvent(
+                            "danger_zone_presence",
+                            self.camera.id,
+                            ts,
+                            ts,
+                            zone=zname,
+                            track=st,
+                            meta={"track_id": st.track_id},
+                        )
+                    )
+
+        self._crowd_queue(updated, ts, frame_shape, events)
         for st in ended:
             if st.entered_emitted:
                 events.append(
@@ -215,3 +242,57 @@ class RuleEngine:
                     )
                 )
         return events
+
+    def _crowd_queue(
+        self,
+        updated: list[TrackState],
+        ts: float,
+        frame_shape: tuple[int, ...],
+        events: list[RuleEvent],
+    ) -> None:
+        """Скопление/очередь: считаем людей в зоне СЕЙЧАС (по кадру, не по треку)."""
+        for zr in self.zones:
+            an = zr.cfg.analytics
+            crowd = an.get("crowd")
+            queue = an.get("queue_length")
+            crowd_on = isinstance(crowd, dict) and crowd.get("enabled")
+            queue_on = isinstance(queue, dict) and queue.get("enabled")
+            if not crowd_on and not queue_on:
+                continue
+            zname = zr.cfg.name
+            n_in = sum(1 for st in updated if zr.contains(st.foot, frame_shape))
+            if crowd_on and isinstance(crowd, dict):
+                thr = int(crowd.get("threshold", 8))
+                cd = float(crowd.get("cooldown_s", 300))
+                if n_in >= thr and self._cooldown_ok("crowd", zname, 0, ts, cd):
+                    events.append(
+                        RuleEvent(
+                            "crowd_gathering",
+                            self.camera.id,
+                            ts,
+                            ts,
+                            zone=zname,
+                            meta={"people": n_in, "threshold": thr},
+                        )
+                    )
+            if queue_on and isinstance(queue, dict):
+                thr = int(queue.get("threshold", 4))
+                if n_in >= thr:
+                    self._queue_since.setdefault(zname, ts)
+                    held = ts - self._queue_since[zname]
+                    cd = float(queue.get("cooldown_s", 300))
+                    if held >= float(queue.get("wait_s", 30)) and self._cooldown_ok(
+                        "queue", zname, 0, ts, cd
+                    ):
+                        events.append(
+                            RuleEvent(
+                                "queue_buildup",
+                                self.camera.id,
+                                self._queue_since[zname],
+                                ts,
+                                zone=zname,
+                                meta={"people": n_in, "held_s": round(held, 1)},
+                            )
+                        )
+                else:
+                    self._queue_since.pop(zname, None)
