@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Archive,
   Camera,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -43,6 +44,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: '/live', key: 'nav.live', icon: RadioTower },
       { to: '/events', key: 'nav.events', icon: ShieldAlert },
+      { to: '/journal', key: 'nav.journal', icon: ClipboardList },
       { to: '/stats', key: 'nav.stats', icon: TrendingUp },
     ],
   },

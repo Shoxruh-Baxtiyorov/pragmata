@@ -13,7 +13,14 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import func, select
 
 from pragmata.api.deps import camera_names, data_root, safe_file, session_factory
-from pragmata.api.schemas import CameraOut, EventOut, EventsPage, ZoneOut
+from pragmata.api.schemas import (
+    AppearanceRow,
+    AppearancesPage,
+    CameraOut,
+    EventOut,
+    EventsPage,
+    ZoneOut,
+)
 from pragmata.config import get_settings
 
 if TYPE_CHECKING:
@@ -68,6 +75,69 @@ def list_cameras(include_disabled: bool = False, scope: int | None = None) -> li
                 )
             )
     return out
+
+
+def list_appearances(
+    scope: int | None = None,
+    only_named: bool = False,
+    camera_id: str | None = None,
+    hours: float = 24.0,
+    limit: int = 50,
+    offset: int = 0,
+) -> AppearancesPage:
+    """Журнал вход/выход: недавние визиты (треки), у распознанных — имя из списка.
+
+    scope — организация клиента (треки скоупятся через камеру); only_named —
+    только распознанные (кто есть в реестре людей).
+    """
+    from pragmata.db.models import Camera, Person, Track
+
+    start = datetime.now(UTC) - timedelta(hours=hours)
+    conds: list[Any] = [Track.started_at >= start]
+    if camera_id:
+        conds.append(Track.camera_id == camera_id)
+    if only_named:
+        conds.append(Track.person_id.is_not(None))
+
+    with session_factory()() as s:
+        base = (
+            select(Track, Camera.name, Person.name, Person.watch, Person.category)
+            .join(Camera, Camera.id == Track.camera_id)
+            .join(Person, Person.id == Track.person_id, isouter=True)
+            .where(*conds)
+        )
+        cnt = (
+            select(func.count())
+            .select_from(Track)
+            .join(Camera, Camera.id == Track.camera_id)
+            .where(*conds)
+        )
+        if scope is not None:
+            base = base.where(Camera.site_id == scope)
+            cnt = cnt.where(Camera.site_id == scope)
+        total = int(s.execute(cnt).scalar_one())
+        rows = s.execute(
+            base.order_by(Track.started_at.desc()).limit(min(limit, 100)).offset(max(offset, 0))
+        ).all()
+
+    return AppearancesPage(
+        total=total,
+        items=[
+            AppearanceRow(
+                track_id=t.id,
+                camera=cam_name,
+                person_id=t.person_id,
+                person_name=p_name,
+                watch=bool(p_watch),
+                category=p_cat,
+                entered=t.started_at,
+                left=t.ended_at,
+                duration_s=round((t.ended_at - t.started_at).total_seconds(), 1),
+                photo_url=f"/api/v1/tracks/{t.id}/photo" if t.best_frame_path else None,
+            )
+            for t, cam_name, p_name, p_watch, p_cat in rows
+        ],
+    )
 
 
 def snapshot_file(camera_id: str) -> FileResponse:

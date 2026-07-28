@@ -150,6 +150,24 @@ export interface AnalyticsCatalog {
   modules: AnalyticsModule[]
 }
 
+// AppearanceRow — один визит (вход→выход), с именем у распознанных
+export interface Appearance {
+  track_id: string
+  camera: string
+  person_id: string | null
+  person_name: string | null
+  watch: boolean
+  category: string | null
+  entered: string
+  left: string
+  duration_s: number
+  photo_url: string | null
+}
+export interface AppearancesPage {
+  items: Appearance[]
+  total: number
+}
+
 // PersonOut
 export interface Person {
   id: string

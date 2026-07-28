@@ -40,6 +40,118 @@
         "title": "AgentAsk",
         "type": "object"
       },
+      "AppearanceRow": {
+        "description": "Один визит: человек вошёл (entered) и вышел (left) на камере. Имя есть, если\nчеловек распознан по списку; иначе person_name=None — «Неизвестный».",
+        "properties": {
+          "camera": {
+            "title": "Camera",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "duration_s": {
+            "title": "Duration S",
+            "type": "number"
+          },
+          "entered": {
+            "format": "date-time",
+            "title": "Entered",
+            "type": "string"
+          },
+          "left": {
+            "format": "date-time",
+            "title": "Left",
+            "type": "string"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          },
+          "person_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Name"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          },
+          "track_id": {
+            "format": "uuid",
+            "title": "Track Id",
+            "type": "string"
+          },
+          "watch": {
+            "title": "Watch",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "track_id",
+          "camera",
+          "person_id",
+          "person_name",
+          "watch",
+          "category",
+          "entered",
+          "left",
+          "duration_s",
+          "photo_url"
+        ],
+        "title": "AppearanceRow",
+        "type": "object"
+      },
+      "AppearancesPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AppearanceRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "AppearancesPage",
+        "type": "object"
+      },
       "ArchiveJobOut": {
         "properties": {
           "camera_id": {
@@ -2196,6 +2308,122 @@
         "summary": "Modules",
         "tags": [
           "analytics"
+        ]
+      }
+    },
+    "/api/v1/appearances": {
+      "get": {
+        "description": "Журнал вход/выход: кто входил/проходил/выходил; распознанные — с именем.",
+        "operationId": "appearances_api_v1_appearances_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "only_named",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Only Named",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "camera_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Camera Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "default": 24.0,
+              "maximum": 720,
+              "minimum": 0.1,
+              "title": "Hours",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppearancesPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Appearances",
+        "tags": [
+          "events"
         ]
       }
     },

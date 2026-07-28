@@ -7,7 +7,7 @@ import uuid  # noqa: TC003 — uuid.UUID в сигнатурах роутов р
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response  # noqa: TC002 — FastAPI резолвит в рантайме
 
-from pragmata.api.schemas import EventsPage, FeedbackIn, OkOut
+from pragmata.api.schemas import AppearancesPage, EventsPage, FeedbackIn, OkOut
 from pragmata.api.security import current_scope, require_auth
 from pragmata.services import events_service as svc
 
@@ -80,3 +80,16 @@ def event_feedback(
 @router.get("/tracks/{track_id}/photo")
 def track_photo(track_id: uuid.UUID, _: str = Depends(require_auth)) -> FileResponse:
     return svc.track_photo(track_id)
+
+
+@router.get("/appearances", response_model=AppearancesPage)
+def appearances(
+    only_named: bool = False,
+    camera_id: str | None = None,
+    hours: float = Query(24.0, ge=0.1, le=720),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    scope: int | None = Depends(current_scope),
+) -> AppearancesPage:
+    """Журнал вход/выход: кто входил/проходил/выходил; распознанные — с именем."""
+    return svc.list_appearances(scope, only_named, camera_id, hours, limit, offset)

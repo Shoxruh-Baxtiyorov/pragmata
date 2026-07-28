@@ -206,6 +206,27 @@ class PersonAppearance(BaseModel):
     photo_url: str | None
 
 
+class AppearanceRow(BaseModel):
+    """Один визит: человек вошёл (entered) и вышел (left) на камере. Имя есть, если
+    человек распознан по списку; иначе person_name=None — «Неизвестный»."""
+
+    track_id: uuid.UUID
+    camera: str
+    person_id: uuid.UUID | None
+    person_name: str | None
+    watch: bool
+    category: str | None
+    entered: datetime
+    left: datetime
+    duration_s: float
+    photo_url: str | None
+
+
+class AppearancesPage(BaseModel):
+    items: list[AppearanceRow]
+    total: int
+
+
 class DigestOut(BaseModel):
     text: str
 
