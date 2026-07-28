@@ -122,4 +122,5 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   fire_smoke: ShieldAlert,
   ppe_violation: ShieldAlert,
   package_damage: ShieldAlert,
+  abandoned_object: ShieldAlert,
 }

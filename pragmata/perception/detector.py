@@ -12,6 +12,8 @@ PERSON_CLASS_ID = 0
 # COCO: car / motorcycle / bus / truck — для ANPR/учёта транспорта
 VEHICLE_CLASS_IDS = (2, 3, 5, 7)
 VEHICLE_NAMES = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
+# COCO: рюкзак/сумка/чемодан — для «оставленных предметов»
+BAG_CLASS_IDS = (24, 26, 28)
 
 
 class PersonDetector:
@@ -49,10 +51,16 @@ class PersonDetector:
 
     def detect_vehicles(self, image: np.ndarray, conf: float, imgsz: int = 640) -> sv.Detections:
         """Тот же YOLO, но классы транспорта (car/moto/bus/truck)."""
+        return self.detect_classes(image, VEHICLE_CLASS_IDS, conf, imgsz)
+
+    def detect_classes(
+        self, image: np.ndarray, class_ids: tuple[int, ...], conf: float, imgsz: int = 640
+    ) -> sv.Detections:
+        """Тот же YOLO для произвольных COCO-классов (транспорт, сумки, …)."""
         with self._lock:
             result = self.model.predict(
                 image,
-                classes=list(VEHICLE_CLASS_IDS),
+                classes=list(class_ids),
                 conf=conf,
                 imgsz=imgsz,
                 device=self.device,

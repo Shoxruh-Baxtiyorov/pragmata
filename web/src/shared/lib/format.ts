@@ -26,6 +26,7 @@ export type EventType =
   | 'fire_smoke'
   | 'ppe_violation'
   | 'package_damage'
+  | 'abandoned_object'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -66,6 +67,11 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     ru: 'Повреждение упаковки',
     uz: 'Qadoq shikasti',
     en: 'Package damage',
+  },
+  abandoned_object: {
+    ru: 'Оставленный предмет',
+    uz: 'Qarovsiz buyum',
+    en: 'Abandoned object',
   },
 }
 

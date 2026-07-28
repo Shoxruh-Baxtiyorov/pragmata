@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     import numpy as np
 
+    from pragmata.objects import AbandonedObjectWatcher
     from pragmata.perception.face_recog import FaceRecognizer
     from pragmata.vehicles import VehicleWatcher
     from pragmata.watchlist import WatchlistMatcher
@@ -94,6 +95,7 @@ class _CameraGroup:
         watchlist: WatchlistMatcher | None = None,
         face_recog: FaceRecognizer | None = None,
         vehicle_watcher: VehicleWatcher | None = None,
+        object_watcher: AbandonedObjectWatcher | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -134,6 +136,7 @@ class _CameraGroup:
                 watchlist=watchlist,
                 face_recog=face_recog,
                 vehicle_watcher=vehicle_watcher,
+                object_watcher=object_watcher,
             )
             for cam in cfg.cameras
         ]
@@ -245,6 +248,12 @@ def main() -> None:
         log.info("vehicle detection: on (номер — best-effort, если OCR доступен)")
     else:
         log.info("vehicle detection: off")
+
+    # оставленные предметы: watcher создаём всегда (дёшево), стреляет только на
+    # камерах, где модуль включён (проверка в CameraWorker по конфигу)
+    from pragmata.objects import AbandonedObjectWatcher
+
+    object_watcher = AbandonedObjectWatcher(detector)
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -416,6 +425,7 @@ def main() -> None:
                 watchlist=matcher,
                 face_recog=face_recog,
                 vehicle_watcher=vehicle_watcher,
+                object_watcher=object_watcher,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

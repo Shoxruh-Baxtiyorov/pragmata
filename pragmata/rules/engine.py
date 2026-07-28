@@ -32,6 +32,7 @@ SEVERITY = {
     "fire_smoke": "alert",
     "ppe_violation": "warning",
     "package_damage": "warning",
+    "abandoned_object": "alert",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

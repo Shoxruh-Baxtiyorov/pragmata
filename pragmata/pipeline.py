@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     import numpy as np
 
     from pragmata.config import CameraConfig, GlobalRules, SiteInfo
+    from pragmata.objects import AbandonedObjectWatcher
     from pragmata.perception.detector import PersonDetector
     from pragmata.perception.embedder import ClipEmbedder
     from pragmata.perception.face_recog import FaceRecognizer
@@ -78,6 +79,7 @@ class CameraWorker(threading.Thread):
         watchlist: WatchlistMatcher | None = None,
         face_recog: FaceRecognizer | None = None,
         vehicle_watcher: VehicleWatcher | None = None,
+        object_watcher: AbandonedObjectWatcher | None = None,
         base_ts: float | None = None,
         force_file: bool = False,
     ):
@@ -89,6 +91,19 @@ class CameraWorker(threading.Thread):
         self.watchlist = watchlist
         self.face_recog = face_recog
         self.vehicle_watcher = vehicle_watcher
+        self.object_watcher = object_watcher
+        self._last_object = 0.0
+        # «оставленные предметы» включены на камере/зоне? берём dwell из конфига
+        self._abandoned: dict[str, object] | None = None
+        for _z in camera.zones:
+            _a = _z.analytics.get("abandoned_object")
+            if isinstance(_a, dict) and _a.get("enabled"):
+                self._abandoned = _a
+                break
+        if self._abandoned is None:
+            _a = camera.analytics.get("abandoned_object")
+            if isinstance(_a, dict) and _a.get("enabled"):
+                self._abandoned = _a
         self.base_ts = base_ts  # архив: реальное время начала записи
         self.force_file = force_file  # архив/NVR: читать URL как конечную запись
         self._last_vehicle = 0.0
@@ -175,6 +190,20 @@ class CameraWorker(threading.Thread):
                 if self.vehicle_watcher is not None and frame.ts - self._last_vehicle >= 1.0:
                     self._last_vehicle = frame.ts
                     for ev in self.vehicle_watcher.process(self.camera.id, frame.image, frame.ts):
+                        self.stats.events += 1
+                        self.sink.emit_event(ev)
+
+                # оставленные предметы: дросселируем до ~1/сек (сумки не спешат)
+                if (
+                    self.object_watcher is not None
+                    and self._abandoned is not None
+                    and frame.ts - self._last_object >= 1.0
+                ):
+                    self._last_object = frame.ts
+                    dwell = float(self._abandoned.get("dwell_s", 30))  # type: ignore[arg-type]
+                    for ev in self.object_watcher.process(
+                        self.camera.id, frame.image, frame.ts, dwell
+                    ):
                         self.stats.events += 1
                         self.sink.emit_event(ev)
 
