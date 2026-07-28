@@ -30,6 +30,8 @@ export type EventType =
   | 'equipment_idle'
   | 'illegal_parking'
   | 'loading_activity'
+  | 'plate_recognized'
+  | 'plate_unlisted'
 
 // Подписи типов событий — вне i18n-ресурсов (доменные, не интерфейсные)
 const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = {
@@ -90,6 +92,16 @@ const EVENT_LABELS: Record<EventType, { ru: string; uz: string; en: string }> = 
     ru: 'Загрузочная зона',
     uz: 'Yuklash zonasi',
     en: 'Loading activity',
+  },
+  plate_recognized: {
+    ru: 'Госномер распознан',
+    uz: 'Davlat raqami aniqlandi',
+    en: 'Plate recognized',
+  },
+  plate_unlisted: {
+    ru: 'Номер не в списке',
+    uz: "Raqam ro'yxatda yo'q",
+    en: 'Plate not listed',
   },
 }
 

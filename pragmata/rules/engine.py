@@ -36,6 +36,8 @@ SEVERITY = {
     "equipment_idle": "info",
     "illegal_parking": "warning",
     "loading_activity": "info",
+    "plate_recognized": "info",
+    "plate_unlisted": "warning",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -59,6 +61,8 @@ class RuleEvent:
     track: TrackState | None = None
     meta: dict[str, Any] = field(default_factory=dict)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    # готовое описание (напр. текст госномера) — минуя VLM-очередь
+    description: str | None = None
     # кадр момента срабатывания (только для alert; иначе best_frame трека)
     frame: np.ndarray | None = None
     # bbox остальных людей в зоне в момент срабатывания — для оверлея на доказательстве

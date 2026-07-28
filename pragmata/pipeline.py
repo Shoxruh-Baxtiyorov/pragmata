@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from pragmata.config import CameraConfig, GlobalRules, SiteInfo
     from pragmata.heatmap import HeatmapAccumulator
+    from pragmata.lpr import LprReader
     from pragmata.objects import AbandonedObjectWatcher, VehicleStationaryWatcher
     from pragmata.perception.detector import PersonDetector
     from pragmata.perception.embedder import ClipEmbedder
@@ -84,6 +85,7 @@ class CameraWorker(threading.Thread):
         object_watcher: AbandonedObjectWatcher | None = None,
         vehicle_park_watcher: VehicleStationaryWatcher | None = None,
         heatmap: HeatmapAccumulator | None = None,
+        lpr_reader: LprReader | None = None,
         base_ts: float | None = None,
         force_file: bool = False,
     ):
@@ -100,6 +102,15 @@ class CameraWorker(threading.Thread):
         self.heatmap = heatmap
         _hm = camera.analytics.get("heatmap")
         self._heatmap_on = isinstance(_hm, dict) and bool(_hm.get("enabled"))
+        # LPR (автономера): включён на камере? берём whitelist из конфига модуля
+        self.lpr_reader = lpr_reader
+        _lpr = camera.analytics.get("lpr")
+        self._lpr: str | None = (
+            str(_lpr.get("whitelist", ""))
+            if isinstance(_lpr, dict) and _lpr.get("enabled")
+            else None
+        )
+        self._last_plate = 0.0
         self._last_object = 0.0
         self._last_veh_stat = 0.0
         # «оставленные предметы» включены на камере/зоне? берём dwell из конфига
@@ -227,6 +238,19 @@ class CameraWorker(threading.Thread):
                 if self.vehicle_watcher is not None and frame.ts - self._last_vehicle >= 1.0:
                     self._last_vehicle = frame.ts
                     for ev in self.vehicle_watcher.process(self.camera.id, frame.image, frame.ts):
+                        self.stats.events += 1
+                        self.sink.emit_event(ev)
+
+                # LPR (автономера): OCR дороже YOLO — дросселируем до ~1/2 сек
+                if (
+                    self.lpr_reader is not None
+                    and self._lpr is not None
+                    and frame.ts - self._last_plate >= 2.0
+                ):
+                    self._last_plate = frame.ts
+                    for ev in self.lpr_reader.process(
+                        self.camera.id, frame.image, frame.ts, self._lpr
+                    ):
                         self.stats.events += 1
                         self.sink.emit_event(ev)
 

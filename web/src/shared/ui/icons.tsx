@@ -126,4 +126,6 @@ export const eventIcon: Record<EventType, LucideIcon> = {
   equipment_idle: Car,
   illegal_parking: Car,
   loading_activity: Car,
+  plate_recognized: Car,
+  plate_unlisted: ShieldAlert,
 }

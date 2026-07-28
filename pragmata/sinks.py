@@ -148,6 +148,7 @@ class DbSink:
                     frame_path=frame_path,
                     face_path=face_path,
                     source=self.source,
+                    description=ev.description,
                     meta=ev.meta,
                 )
             )
