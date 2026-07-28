@@ -108,6 +108,8 @@ def create_user(payload: UserCreate) -> uuid.UUID:
     if len(payload.password) < 8:
         raise HTTPException(422, "пароль минимум 8 символов")
     role = payload.role if payload.role in ("user", "admin") else "user"
+    # admin — платформа (видит всё, без организации); user — привязан к своей орге
+    site_id = None if role == "admin" else payload.site_id
     with session_factory()() as s:
         exists = s.execute(select(User.id).where(User.username == uname)).first()
         if exists is not None:
@@ -118,6 +120,7 @@ def create_user(payload: UserCreate) -> uuid.UUID:
             role=role,
             full_name=payload.full_name,
             email=payload.email,
+            site_id=site_id,
         )
         s.add(user)
         s.commit()
@@ -140,6 +143,7 @@ def list_users() -> list[UserOut]:
                 email=u.email,
                 last_login_at=u.last_login_at,
                 locked=u.locked_until is not None and u.locked_until > _now(),
+                site_id=u.site_id,
             )
             for u in users
         ]
@@ -173,6 +177,11 @@ def patch_user(user_id: uuid.UUID, patch: UserPatch) -> None:
             if patch.is_active:  # реактивация снимает блокировку
                 user.failed_attempts = 0
                 user.locked_until = None
+        if patch.site_id is not None:
+            user.site_id = patch.site_id
+        # админ — платформенная роль без организации: смена на admin обнуляет оргу
+        if user.role == "admin":
+            user.site_id = None
         s.commit()
 
 

@@ -27,9 +27,16 @@ import {
 } from '@/shared/ui'
 import { KeyRound, Lock, Plus, ShieldCheck, Shield, User } from '@/shared/ui/icons'
 import { ApiError } from '@/api/client'
-import { useCreateUser, usePatchUser, useUserAction, useUsers, type UserRow } from '@/api/queries'
+import {
+  useCreateUser,
+  usePatchUser,
+  useSites,
+  useUserAction,
+  useUsers,
+  type UserRow,
+} from '@/api/queries'
 
-function Row({ u }: { u: UserRow }) {
+function Row({ u, siteName }: { u: UserRow; siteName: string | null }) {
   const patch = usePatchUser()
   const action = useUserAction()
   const isAdmin = u.role === 'admin'
@@ -54,7 +61,12 @@ function Row({ u }: { u: UserRow }) {
         </div>
       </TableCell>
       <TableCell>
-        <StatusBadge tone={isAdmin ? 'info' : 'neutral'}>{isAdmin ? 'админ' : 'юзер'}</StatusBadge>
+        <div className="flex flex-col gap-1">
+          <StatusBadge tone={isAdmin ? 'info' : 'neutral'}>{isAdmin ? 'админ' : 'юзер'}</StatusBadge>
+          <span className="text-[11px] text-[var(--color-text-muted)]">
+            {isAdmin ? 'платформа' : (siteName ?? '⚠ без организации')}
+          </span>
+        </div>
       </TableCell>
       <TableCell>
         {!u.is_active ? (
@@ -133,21 +145,35 @@ function Row({ u }: { u: UserRow }) {
 
 function CreateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const create = useCreateUser()
+  const sites = useSites()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState('user')
+  const [site, setSite] = useState('')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (role === 'user' && !site) {
+      toast.error('Выберите организацию для клиента')
+      return
+    }
     create
-      .mutateAsync({ username: username.trim(), password, role, full_name: fullName.trim() || null })
+      .mutateAsync({
+        username: username.trim(),
+        password,
+        role,
+        full_name: fullName.trim() || null,
+        // клиент привязан к своей организации; админ — платформа, без организации
+        site_id: role === 'user' ? Number(site) : null,
+      })
       .then(() => {
         toast.success('Пользователь создан')
         setUsername('')
         setPassword('')
         setFullName('')
         setRole('user')
+        setSite('')
         onOpenChange(false)
       })
       .catch((e) => toast.error(e instanceof ApiError ? e.message : 'Ошибка создания'))
@@ -184,6 +210,27 @@ function CreateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
               <option value="admin">админ</option>
             </select>
           </div>
+          {role === 'user' && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cs">Организация</Label>
+              <select
+                id="cs"
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
+                className="h-9 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 text-sm"
+              >
+                <option value="">— выберите —</option>
+                {(sites.data ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-[var(--color-text-muted)]">
+                Клиент увидит только камеры и события этой организации.
+              </p>
+            </div>
+          )}
           <div className="mt-1 flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Отмена
@@ -200,8 +247,11 @@ function CreateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
 
 export function UsersPage() {
   const q = useUsers()
+  const sites = useSites()
   const [creating, setCreating] = useState(false)
   const users = q.data ?? []
+  const siteName = (id: number | null): string | null =>
+    id == null ? null : ((sites.data ?? []).find((s) => s.id === id)?.name ?? `#${id}`)
 
   return (
     <AppPage
@@ -233,7 +283,7 @@ export function UsersPage() {
               </TableHeader>
               <TableBody>
                 {users.map((u) => (
-                  <Row key={u.id} u={u} />
+                  <Row key={u.id} u={u} siteName={siteName(u.site_id)} />
                 ))}
               </TableBody>
             </Table>

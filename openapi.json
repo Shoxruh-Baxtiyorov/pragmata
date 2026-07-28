@@ -1769,6 +1769,17 @@
             "title": "Role",
             "type": "string"
           },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
           "username": {
             "title": "Username",
             "type": "string"
@@ -1834,6 +1845,17 @@
             "title": "Role",
             "type": "string"
           },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
           "username": {
             "title": "Username",
             "type": "string"
@@ -1886,6 +1908,17 @@
               }
             ],
             "title": "Role"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
           }
         },
         "title": "UserPatch",

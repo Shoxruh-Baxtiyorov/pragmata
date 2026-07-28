@@ -44,6 +44,7 @@ export interface UserRow {
   email: string | null
   last_login_at: string | null
   locked: boolean
+  site_id: number | null
 }
 
 export interface CameraRow {
@@ -112,8 +113,13 @@ export const useAudit = (onlyWrites: boolean) =>
 export function useCreateUser() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { username: string; password: string; role: string; full_name?: string | null }) =>
-      api.post('/api/v1/users', body),
+    mutationFn: (body: {
+      username: string
+      password: string
+      role: string
+      full_name?: string | null
+      site_id?: number | null
+    }) => api.post('/api/v1/users', body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   })
 }

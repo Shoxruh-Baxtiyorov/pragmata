@@ -44,6 +44,8 @@ class UserCreate(BaseModel):
     role: str = "user"  # user | admin
     full_name: str | None = None
     email: str | None = None
+    # организация клиента для role=user (видит только её данные); admin — платформа, None
+    site_id: int | None = None
 
 
 class UserOut(BaseModel):
@@ -55,12 +57,14 @@ class UserOut(BaseModel):
     email: str | None
     last_login_at: datetime | None
     locked: bool
+    site_id: int | None = None
 
 
 class UserPatch(BaseModel):
     role: str | None = None
     full_name: str | None = None
     is_active: bool | None = None
+    site_id: int | None = None
 
 
 class PasswordChange(BaseModel):
