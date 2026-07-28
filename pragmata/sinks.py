@@ -117,7 +117,25 @@ class DbSink:
         self._session_factory = make_session_factory()
         self.media = media
         self.source = source  # live | archive (ретро-анализ записи)
+        # camera_id → site_id: тенант события берём от ВЛАДЕЛЬЦА камеры, не хардкодим.
+        # Резолвим из БД (источник истины) с ленивым кэшем — DbSink живёт весь процесс
+        # и не пересоздаётся на hot-reload, поэтому карту из конфига держать нельзя.
+        self._site_by_cam: dict[str, int] = {}
         self._ensure_site(site_cfg)
+
+    def _site_for(self, camera_id: str) -> int:
+        """site_id владельца камеры (кэш; на промахе — из БД, для камер, добавленных
+        после старта). Изоляция тенантов: события не должны утекать между сайтами."""
+        sid = self._site_by_cam.get(camera_id)
+        if sid is not None:
+            return sid
+        from pragmata.db.models import Camera
+
+        with self._session_factory() as s:
+            cam = s.get(Camera, camera_id)
+            sid = cam.site_id if cam is not None else 1
+        self._site_by_cam[camera_id] = sid
+        return sid
 
     def _ensure_site(self, cfg: SiteConfig) -> None:
         # только сам ряд site (для FK событий). Камеры/зоны — через
@@ -137,7 +155,7 @@ class DbSink:
             s.add(
                 Event(
                     id=ev.id,
-                    site_id=1,
+                    site_id=self._site_for(ev.camera_id),
                     camera_id=ev.camera_id,
                     type=ev.type,
                     severity=ev.severity,
@@ -171,6 +189,7 @@ class DbSink:
         with self._session_factory() as s:
             s.add(
                 Track(
+                    site_id=self._site_for(st.camera_id),
                     camera_id=st.camera_id,
                     track_id=st.track_id,
                     started_at=_dt(st.first_ts),
