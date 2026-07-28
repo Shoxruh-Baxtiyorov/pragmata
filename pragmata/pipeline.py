@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     import numpy as np
 
     from pragmata.config import CameraConfig, GlobalRules, SiteInfo
+    from pragmata.heatmap import HeatmapAccumulator
     from pragmata.objects import AbandonedObjectWatcher, VehicleStationaryWatcher
     from pragmata.perception.detector import PersonDetector
     from pragmata.perception.embedder import ClipEmbedder
@@ -82,6 +83,7 @@ class CameraWorker(threading.Thread):
         vehicle_watcher: VehicleWatcher | None = None,
         object_watcher: AbandonedObjectWatcher | None = None,
         vehicle_park_watcher: VehicleStationaryWatcher | None = None,
+        heatmap: HeatmapAccumulator | None = None,
         base_ts: float | None = None,
         force_file: bool = False,
     ):
@@ -95,6 +97,9 @@ class CameraWorker(threading.Thread):
         self.vehicle_watcher = vehicle_watcher
         self.object_watcher = object_watcher
         self.vehicle_park_watcher = vehicle_park_watcher
+        self.heatmap = heatmap
+        _hm = camera.analytics.get("heatmap")
+        self._heatmap_on = isinstance(_hm, dict) and bool(_hm.get("enabled"))
         self._last_object = 0.0
         self._last_veh_stat = 0.0
         # «оставленные предметы» включены на камере/зоне? берём dwell из конфига
@@ -207,9 +212,15 @@ class CameraWorker(threading.Thread):
                 self.stats.detections += len(detections)
                 self.stats.active_tracks = len(self.tracks.active)
 
-                # живое распознавание лица: пока человек в кадре — узнаём и подписываем
+                # живое распознавание лица + тепловая карта (foot-точки)
+                _hm_h, _hm_w = frame.image.shape[:2]
                 for st in updated:
                     self._recognize_live(st, frame.image, frame.ts)
+                    if self._heatmap_on and self.heatmap is not None:
+                        _fx, _fy = st.foot
+                        self.heatmap.add(self.camera.id, _fx / _hm_w, _fy / _hm_h)
+                if self._heatmap_on and self.heatmap is not None:
+                    self.heatmap.maybe_flush(self.camera.id, frame.ts)
 
                 # транспорт (ANPR): отдельный YOLO-проход, дросселируем до ~1/сек —
                 # машинам не нужна частота людей, а инференс не бесплатен

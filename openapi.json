@@ -853,6 +853,52 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HeatmapOut": {
+        "description": "Тепловая карта камеры: сетка w×h счётчиков присутствия людей.",
+        "properties": {
+          "grid": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Grid",
+            "type": "array"
+          },
+          "h": {
+            "title": "H",
+            "type": "integer"
+          },
+          "max": {
+            "title": "Max",
+            "type": "number"
+          },
+          "snapshot_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Url"
+          },
+          "w": {
+            "title": "W",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "w",
+          "h",
+          "grid",
+          "max"
+        ],
+        "title": "HeatmapOut",
+        "type": "object"
+      },
       "HourBucket": {
         "properties": {
           "alerts": {
@@ -3673,6 +3719,69 @@
           }
         ],
         "summary": "Set Camera Module",
+        "tags": [
+          "cameras"
+        ]
+      }
+    },
+    "/api/v1/cameras/{camera_id}/heatmap": {
+      "get": {
+        "operationId": "heatmap_api_v1_cameras__camera_id__heatmap_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camera_id",
+            "required": true,
+            "schema": {
+              "title": "Camera Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeatmapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Heatmap",
         "tags": [
           "cameras"
         ]

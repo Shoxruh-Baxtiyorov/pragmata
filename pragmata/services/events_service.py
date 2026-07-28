@@ -147,6 +147,25 @@ def snapshot_file(camera_id: str) -> FileResponse:
     return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
+def heatmap_grid(camera_id: str) -> dict[str, Any]:
+    """Тепловая сетка камеры: {w, h, grid, max}. Пусто, если ещё не копилась."""
+    import json
+
+    from pragmata.heatmap import GRID_H, GRID_W
+
+    empty: dict[str, Any] = {"w": GRID_W, "h": GRID_H, "grid": [], "max": 0.0}
+    path = get_settings().media_dir / "heatmap" / f"{camera_id}.json"
+    if not path.exists():
+        return empty
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return empty
+    grid = data.get("grid") or []
+    mx = max((max(row) for row in grid if row), default=0.0)
+    return {"w": data.get("w", GRID_W), "h": data.get("h", GRID_H), "grid": grid, "max": mx}
+
+
 def _event_out(ev: Any, names: dict[str, str]) -> EventOut:
     return EventOut(
         id=ev.id,

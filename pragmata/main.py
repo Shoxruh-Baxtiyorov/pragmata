@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     import numpy as np
 
+    from pragmata.heatmap import HeatmapAccumulator
     from pragmata.objects import AbandonedObjectWatcher, VehicleStationaryWatcher
     from pragmata.perception.face_recog import FaceRecognizer
     from pragmata.vehicles import VehicleWatcher
@@ -97,6 +98,7 @@ class _CameraGroup:
         vehicle_watcher: VehicleWatcher | None = None,
         object_watcher: AbandonedObjectWatcher | None = None,
         vehicle_park_watcher: VehicleStationaryWatcher | None = None,
+        heatmap: HeatmapAccumulator | None = None,
     ):
         self.group_stop = group_stop
         self.recorders: list[SegmentRecorder] = []
@@ -139,6 +141,7 @@ class _CameraGroup:
                 vehicle_watcher=vehicle_watcher,
                 object_watcher=object_watcher,
                 vehicle_park_watcher=vehicle_park_watcher,
+                heatmap=heatmap,
             )
             for cam in cfg.cameras
         ]
@@ -253,10 +256,12 @@ def main() -> None:
 
     # оставленные предметы: watcher создаём всегда (дёшево), стреляет только на
     # камерах, где модуль включён (проверка в CameraWorker по конфигу)
+    from pragmata.heatmap import HeatmapAccumulator
     from pragmata.objects import AbandonedObjectWatcher, VehicleStationaryWatcher
 
     object_watcher = AbandonedObjectWatcher(detector)
     vehicle_park_watcher = VehicleStationaryWatcher(detector)
+    heatmap_acc = HeatmapAccumulator(settings.media_dir)
 
     # --- telegram ------------------------------------------------------------
     bot = None
@@ -430,6 +435,7 @@ def main() -> None:
                 vehicle_watcher=vehicle_watcher,
                 object_watcher=object_watcher,
                 vehicle_park_watcher=vehicle_park_watcher,
+                heatmap=heatmap_acc,
             )
             group.start()
             log.info("camera group up: %d камер (config v%d)", len(group.workers), cur_ver)

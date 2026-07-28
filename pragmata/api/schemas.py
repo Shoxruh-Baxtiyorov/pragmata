@@ -246,6 +246,16 @@ class OkOut(BaseModel):
     ok: bool = True
 
 
+class HeatmapOut(BaseModel):
+    """Тепловая карта камеры: сетка w×h счётчиков присутствия людей."""
+
+    w: int
+    h: int
+    grid: list[list[float]]
+    max: float
+    snapshot_url: str | None = None
+
+
 class AgentAsk(BaseModel):
     question: str
     session_id: str = "web"

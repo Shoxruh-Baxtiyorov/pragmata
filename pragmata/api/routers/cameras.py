@@ -17,6 +17,7 @@ from pragmata.api.schemas import (
     CameraIn,
     CameraOut,
     CameraPatch,
+    HeatmapOut,
     ModuleConfigIn,
     OkOut,
     ZoneIn,
@@ -40,6 +41,15 @@ def cameras(
 def snapshot(camera_id: str, scope: int | None = Depends(current_scope)) -> FileResponse:
     own_camera_or_404(camera_id, scope)
     return svc.snapshot_file(camera_id)
+
+
+@router.get("/cameras/{camera_id}/heatmap", response_model=HeatmapOut)
+def heatmap(camera_id: str, scope: int | None = Depends(current_scope)) -> HeatmapOut:
+    own_camera_or_404(camera_id, scope)
+    grid = svc.heatmap_grid(camera_id)
+    return HeatmapOut(
+        **grid, snapshot_url=f"/api/v1/cameras/{camera_id}/snapshot"
+    )
 
 
 @router.post("/cameras", response_model=OkOut)

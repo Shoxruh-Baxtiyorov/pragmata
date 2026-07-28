@@ -15,6 +15,7 @@ import { ManagePage } from '@/features/manage'
 import { WatchlistPage } from '@/features/watchlist'
 import { AnalyticsPage } from '@/features/analytics'
 import { JournalPage } from '@/features/journal'
+import { HeatmapPage } from '@/features/heatmap'
 
 // Гейт авторизации — одна развилка на верхнем уровне, не per-route guards
 export function AppRouter() {
@@ -36,6 +37,7 @@ export function AppRouter() {
         <Route path="/live" element={<LivePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/journal" element={<JournalPage />} />
+        <Route path="/heatmap" element={<HeatmapPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/system" element={<SystemPage />} />
