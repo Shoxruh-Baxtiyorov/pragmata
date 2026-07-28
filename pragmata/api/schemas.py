@@ -344,6 +344,18 @@ class SiteSettingsPatch(BaseModel):
     media_quota_gb: int | None = None
 
 
+class OrgHoursOut(BaseModel):
+    """Рабочий календарь организации — дефолт для after_hours на всех камерах."""
+
+    timezone: str
+    working_hours: dict[str, object] | None  # {days, open, close} | null = after_hours off
+
+
+class OrgHoursPatch(BaseModel):
+    timezone: str | None = None
+    working_hours: dict[str, object] | None = None  # {} → отключить after_hours
+
+
 class NvrPlaybackIn(BaseModel):
     """Разбор архива прямо с регистратора: камера + интервал вместо ссылки."""
 

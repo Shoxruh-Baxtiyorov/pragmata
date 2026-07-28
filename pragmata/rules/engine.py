@@ -51,6 +51,49 @@ def is_outside_hours(ts: float, tz: str, wh: WorkingHours) -> bool:
     return not (wh.open <= now < wh.close)
 
 
+def _parse_days(raw: str) -> list[str]:
+    """«mon,tue» и диапазоны «mon-fri» → список валидных дней (порядок _DAY_KEYS)."""
+    out: set[str] = set()
+    for part in raw.split(","):
+        part = part.strip().lower()
+        if not part:
+            continue
+        if "-" in part:  # диапазон mon-fri (с переносом через воскресенье: sat-mon)
+            a, _, b = part.partition("-")
+            a, b = a.strip()[:3], b.strip()[:3]
+            if a in _DAY_KEYS and b in _DAY_KEYS:
+                ia, ib = _DAY_KEYS.index(a), _DAY_KEYS.index(b)
+                span = _DAY_KEYS[ia : ib + 1] if ia <= ib else _DAY_KEYS[ia:] + _DAY_KEYS[: ib + 1]
+                out.update(span)
+        elif part[:3] in _DAY_KEYS:
+            out.add(part[:3])
+    return [d for d in _DAY_KEYS if d in out]
+
+
+def effective_working_hours(
+    cam_after_hours: object, site_wh: WorkingHours | None
+) -> WorkingHours | None:
+    """Эффективное рабочее расписание камеры для after_hours.
+
+    Камера переопределяет организацию: модуль after_hours на камере с
+    enabled=true → mode «always» (круглосуточно, тревог нет → None) или
+    «custom» (свои дни/часы). Иначе наследуется расписание организации.
+    """
+    from pragmata.config import WorkingHours
+
+    if isinstance(cam_after_hours, dict) and cam_after_hours.get("enabled"):
+        if str(cam_after_hours.get("mode", "custom")) == "always":
+            return None  # 24/7 — понятия «вне часов» нет
+        days = _parse_days(str(cam_after_hours.get("days", "")))
+        base = site_wh or WorkingHours()
+        return WorkingHours(
+            days=days or base.days,
+            open=str(cam_after_hours.get("open") or base.open),
+            close=str(cam_after_hours.get("close") or base.close),
+        )
+    return site_wh  # нет переопределения → расписание организации
+
+
 @dataclass
 class RuleEvent:
     type: str
@@ -135,12 +178,16 @@ class RuleEngine:
                     )
                 )
 
+            eff_hours = effective_working_hours(
+                self.camera.analytics.get("after_hours"),
+                self.site.working_hours if self.site is not None else None,
+            )
             if (
                 self.site is not None
-                and self.site.working_hours is not None
+                and eff_hours is not None
                 and st.entered_emitted
                 and not st.after_hours_emitted
-                and is_outside_hours(ts, self.site.timezone, self.site.working_hours)
+                and is_outside_hours(ts, self.site.timezone, eff_hours)
             ):
                 st.after_hours_emitted = True
                 events.append(

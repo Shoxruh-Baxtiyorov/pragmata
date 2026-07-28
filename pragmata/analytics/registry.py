@@ -85,8 +85,15 @@ MODULES: tuple[Module, ...] = (
         event_type="loitering",
     ),
     Module(
-        "after_hours", "Присутствие вне рабочих часов", "general", "site", "A",
-        "Тревога о людях на объекте вне рабочего календаря (настраивается в «Настройках»).",
+        "after_hours", "Присутствие вне рабочих часов", "general", "camera", "A",
+        "Тревога о людях вне рабочего календаря. По умолчанию — часы организации "
+        "из «Настроек»; включите, чтобы переопределить на этой камере.",
+        params=(
+            ParamSpec("mode", "Режим", "select", "custom", options=("custom", "always")),
+            ParamSpec("days", "Рабочие дни (mon,tue,...)", "text", "mon,tue,wed,thu,fri"),
+            ParamSpec("open", "Открытие (ЧЧ:ММ)", "text", "09:00"),
+            ParamSpec("close", "Закрытие (ЧЧ:ММ)", "text", "18:00"),
+        ),
         event_type="after_hours_presence",
     ),
     Module(

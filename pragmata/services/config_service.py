@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         CameraIn,
         CameraPatch,
         ModuleConfigIn,
+        OrgHoursPatch,
         SiteSettingsPatch,
         ZoneIn,
     )
@@ -245,3 +246,51 @@ def patch_site_settings(patch: SiteSettingsPatch) -> dict[str, object]:
         s.commit()
     _bump()
     return get_site_settings()
+
+
+# --- рабочие часы организации: правит АДМИН СВОЕЙ организации (scoped) ---------
+# Отдельно от бэкофисного get/patch_site_settings (тот всегда Site 1, платформа).
+
+
+def _validate_working_hours(wh: dict[str, object]) -> None:
+    """Расписание должно строиться в WorkingHours, иначе пайплайн упадёт на загрузке."""
+    from pydantic import ValidationError
+
+    from pragmata.config import WorkingHours
+
+    try:
+        WorkingHours(**wh)
+    except (ValidationError, TypeError) as err:
+        raise HTTPException(422, f"неверное расписание: {err}") from err
+
+
+def get_org_settings(scope: int | None) -> dict[str, object]:
+    from pragmata.db.models import Site
+
+    site_id = scope if scope is not None else 1
+    with session_factory()() as s:
+        site = s.get(Site, site_id)
+        if site is None:
+            raise HTTPException(404, "организация не найдена")
+        return {"timezone": site.timezone, "working_hours": site.working_hours}
+
+
+def patch_org_settings(scope: int | None, patch: OrgHoursPatch) -> dict[str, object]:
+    """Часы своей организации. Влияет на after_hours всех камер (если камера не
+    задала своё расписание). bump конфига → пайплайн подхватит на hot-reload."""
+    from pragmata.db.models import Site
+
+    site_id = scope if scope is not None else 1
+    with session_factory()() as s:
+        site = s.get(Site, site_id)
+        if site is None:
+            raise HTTPException(404, "организация не найдена")
+        if patch.timezone is not None:
+            site.timezone = patch.timezone
+        if patch.working_hours is not None:
+            if patch.working_hours:  # непустой → валидируем; {} → выключить after_hours
+                _validate_working_hours(patch.working_hours)
+            site.working_hours = patch.working_hours or None
+        s.commit()
+    _bump()
+    return get_org_settings(scope)

@@ -9,6 +9,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Archive,
+  CalendarClock,
   Camera,
   ClipboardList,
   LayoutDashboard,
@@ -65,6 +66,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: '/manage', key: 'nav.manage', icon: Camera },
       { to: '/analytics', key: 'nav.analytics', icon: SlidersHorizontal },
       { to: '/system', key: 'nav.system', icon: Settings },
+      { to: '/settings', key: 'nav.settings', icon: CalendarClock, admin: true },
       { to: '/users', key: 'nav.users', icon: UserCog, admin: true },
       { to: '/security', key: 'nav.security', icon: ShieldCheck },
     ],

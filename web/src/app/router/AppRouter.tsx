@@ -16,6 +16,7 @@ import { WatchlistPage } from '@/features/watchlist'
 import { AnalyticsPage } from '@/features/analytics'
 import { JournalPage } from '@/features/journal'
 import { HeatmapPage } from '@/features/heatmap'
+import { SettingsPage } from '@/features/settings'
 
 // Гейт авторизации — одна развилка на верхнем уровне, не per-route guards
 export function AppRouter() {
@@ -47,6 +48,7 @@ export function AppRouter() {
         <Route path="/archive" element={<ArchivePage />} />
         <Route path="/security" element={<SecurityPage />} />
         {isAdmin && <Route path="/users" element={<UsersPage />} />}
+        {isAdmin && <Route path="/settings" element={<SettingsPage />} />}
         <Route path="*" element={<Navigate to="/overview" replace />} />
       </Route>
     </Routes>
