@@ -205,8 +205,8 @@ export function UsersPage() {
 
   return (
     <AppPage
-      title="Доступ"
-      description="Пользователи, роли, восстановление входа"
+      title="Администраторы"
+      description="Пользователи платформы, роли и восстановление входа"
       toolbar={
         <Button onClick={() => setCreating(true)}>
           <Plus size={16} /> Добавить

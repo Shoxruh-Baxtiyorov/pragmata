@@ -90,7 +90,12 @@ const NAV: NavGroup[] = [
   {
     caption: 'АДМИНИСТРИРОВАНИЕ',
     items: [
-      { label: 'Доступ', to: '/users', icon: KeyRound, isActive: (p) => p.startsWith('/users') },
+      {
+        label: 'Администраторы',
+        to: '/users',
+        icon: KeyRound,
+        isActive: (p) => p.startsWith('/users'),
+      },
       { label: 'Журнал', to: '/audit', icon: ScrollText, isActive: (p) => p.startsWith('/audit') },
       {
         label: 'Настройки',
