@@ -18,10 +18,21 @@ class PersonDetector:
     """YOLO, только класс person. Один инстанс на процесс, потокобезопасен (lock)."""
 
     def __init__(self, weights: str = "yolo11n.pt", device: str | None = None):
+        import logging
+
         from ultralytics import YOLO  # ленивый импорт: тянет torch
 
         self.model = YOLO(weights)
         self.device = device
+        # переносим веса на GPU один раз (детекция ~5мс вместо ~60мс на CPU);
+        # если CUDA недоступна — тихо остаёмся на cpu, пайплайн не падает
+        if device and device != "cpu":
+            try:
+                self.model.to(device)
+                logging.getLogger("pragmata").info("detector: on %s", device)
+            except Exception:  # noqa: BLE001 — нет CUDA/драйвера → cpu
+                logging.getLogger("pragmata").warning("detector: %s недоступен, cpu", device)
+                self.device = None
         self._lock = threading.Lock()
 
     def detect(self, image: np.ndarray, conf: float, imgsz: int = 640) -> sv.Detections:

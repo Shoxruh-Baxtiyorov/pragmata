@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     models_dir: Path = Path("./models")
     # yolo11n = скорость; yolo11s = recall в группах людей (для демо на GPU/сильном CPU)
     yolo_model: str = "yolo11n.pt"
+    # устройство инференса YOLO/CLIP: auto = cuda при наличии GPU, иначе cpu.
+    # На GPU (даже RTX 3050) детекция ~5мс вместо ~60мс на CPU → выше fps, реалтайм.
+    compute_device: str = "auto"
     # Fernet-ключ для шифрования колонок (RTSP-креды камер). Вне APP_ENV=test
     # обязателен при первом обращении к шифрованию — см. pragmata/core/encryption.py.
     encryption_key: str = ""
@@ -102,6 +105,18 @@ class Settings(BaseSettings):
     def vlm_endpoint(self) -> tuple[str, str]:
         """(base_url, api_key) для VLM: свой, иначе тот же, что у LLM."""
         return (self.vlm_base_url or self.llm_base_url, self.vlm_api_key or self.llm_api_key)
+
+    @property
+    def torch_device(self) -> str:
+        """Устройство для YOLO/CLIP: cpu | cuda. auto → cuda при наличии GPU."""
+        if self.compute_device in ("cpu", "cuda"):
+            return self.compute_device
+        try:
+            import torch
+
+            return "cuda" if torch.cuda.is_available() else "cpu"
+        except Exception:  # noqa: BLE001 — нет torch/CUDA → безопасно cpu
+            return "cpu"
 
 
 @lru_cache

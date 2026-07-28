@@ -206,11 +206,12 @@ def main() -> None:
     else:
         cfg = yaml_cfg  # jsonl-режим без БД — статичный YAML, без hot-reload
 
-    log.info("loading detector %s ...", settings.yolo_model)
-    detector = PersonDetector(weights=settings.yolo_model)
+    device = settings.torch_device
+    log.info("loading detector %s (device=%s) ...", settings.yolo_model, device)
+    detector = PersonDetector(weights=settings.yolo_model, device=device)
     faces = FaceCropper(settings.models_dir)
     log.info("face detector (L0): %s", "on" if faces.available else "OFF (нет models/yunet)")
-    embedder = ClipEmbedder()  # ленивый: веса скачаются при первом завершённом треке
+    embedder = ClipEmbedder(device=device)  # ленивый: веса скачаются при первом треке
 
     stop_event = threading.Event()
     signal.signal(signal.SIGINT, lambda *_: stop_event.set())
