@@ -35,8 +35,10 @@ import Calendar01IconSvg from '@hugeicons/core-free-icons/Calendar01Icon'
 import Calendar02IconSvg from '@hugeicons/core-free-icons/Calendar02Icon'
 import CalendarCheckIn01IconSvg from '@hugeicons/core-free-icons/CalendarCheckIn01Icon'
 import Camera01IconSvg from '@hugeicons/core-free-icons/Camera01Icon'
+import CameraOff01IconSvg from '@hugeicons/core-free-icons/CameraOff01Icon'
 import Cancel01IconSvg from '@hugeicons/core-free-icons/Cancel01Icon'
 import CancelCircleIconSvg from '@hugeicons/core-free-icons/CancelCircleIcon'
+import Car01IconSvg from '@hugeicons/core-free-icons/Car01Icon'
 import ChampionIconSvg from '@hugeicons/core-free-icons/ChampionIcon'
 import ChartBarLineIconSvg from '@hugeicons/core-free-icons/ChartBarLineIcon'
 import ChartColumnIconSvg from '@hugeicons/core-free-icons/ChartColumnIcon'
@@ -60,6 +62,7 @@ import CloudUploadIconSvg from '@hugeicons/core-free-icons/CloudUploadIcon'
 import Coffee01IconSvg from '@hugeicons/core-free-icons/Coffee01Icon'
 import Coins01IconSvg from '@hugeicons/core-free-icons/Coins01Icon'
 import Copy01IconSvg from '@hugeicons/core-free-icons/Copy01Icon'
+import CpuIconSvg from '@hugeicons/core-free-icons/CpuIcon'
 import CreditCardIconSvg from '@hugeicons/core-free-icons/CreditCardIcon'
 import CrownIconSvg from '@hugeicons/core-free-icons/CrownIcon'
 import DashboardSquare01IconSvg from '@hugeicons/core-free-icons/DashboardSquare01Icon'
@@ -76,6 +79,7 @@ import FavouriteIconSvg from '@hugeicons/core-free-icons/FavouriteIcon'
 import File02IconSvg from '@hugeicons/core-free-icons/File02Icon'
 import FileBracesIconSvg from '@hugeicons/core-free-icons/FileBracesIcon'
 import FileChartColumnIconSvg from '@hugeicons/core-free-icons/FileChartColumnIcon'
+import FileDownloadIconSvg from '@hugeicons/core-free-icons/FileDownloadIcon'
 import FilePenIconSvg from '@hugeicons/core-free-icons/FilePenIcon'
 import FilePlusIconSvg from '@hugeicons/core-free-icons/FilePlusIcon'
 import FileSpreadsheetIconSvg from '@hugeicons/core-free-icons/FileSpreadsheetIcon'
@@ -87,6 +91,7 @@ import GlobeIconSvg from '@hugeicons/core-free-icons/GlobeIcon'
 import HappyIconSvg from '@hugeicons/core-free-icons/HappyIcon'
 import HierarchyFilesIconSvg from '@hugeicons/core-free-icons/HierarchyFilesIcon'
 import Image01IconSvg from '@hugeicons/core-free-icons/Image01Icon'
+import ImageAdd01IconSvg from '@hugeicons/core-free-icons/ImageAdd01Icon'
 import InboxIconSvg from '@hugeicons/core-free-icons/InboxIcon'
 import InformationCircleIconSvg from '@hugeicons/core-free-icons/InformationCircleIcon'
 import InternetAntenna01IconSvg from '@hugeicons/core-free-icons/InternetAntenna01Icon'
@@ -127,9 +132,11 @@ import PencilEdit02IconSvg from '@hugeicons/core-free-icons/PencilEdit02Icon'
 import PinIconSvg from '@hugeicons/core-free-icons/PinIcon'
 import PinOffIconSvg from '@hugeicons/core-free-icons/PinOffIcon'
 import PlayIconSvg from '@hugeicons/core-free-icons/PlayIcon'
+import PlaySquareIconSvg from '@hugeicons/core-free-icons/PlaySquareIcon'
 import Plug01IconSvg from '@hugeicons/core-free-icons/Plug01Icon'
 import RefreshIconSvg from '@hugeicons/core-free-icons/RefreshIcon'
 import RepeatIconSvg from '@hugeicons/core-free-icons/RepeatIcon'
+import Robot01IconSvg from '@hugeicons/core-free-icons/Robot01Icon'
 import RotateLeft01IconSvg from '@hugeicons/core-free-icons/RotateLeft01Icon'
 import RssIconSvg from '@hugeicons/core-free-icons/RssIcon'
 import ScrollIconSvg from '@hugeicons/core-free-icons/ScrollIcon'
@@ -148,10 +155,14 @@ import SparklesIconSvg from '@hugeicons/core-free-icons/SparklesIcon'
 import SpoonAndForkIconSvg from '@hugeicons/core-free-icons/SpoonAndForkIcon'
 import StarIconSvg from '@hugeicons/core-free-icons/StarIcon'
 import Sun01IconSvg from '@hugeicons/core-free-icons/Sun01Icon'
+import Sword03IconSvg from '@hugeicons/core-free-icons/Sword03Icon'
 import Table01IconSvg from '@hugeicons/core-free-icons/Table01Icon'
 import Tick01IconSvg from '@hugeicons/core-free-icons/Tick01Icon'
 import TickDouble01IconSvg from '@hugeicons/core-free-icons/TickDouble01Icon'
 import TimeScheduleIconSvg from '@hugeicons/core-free-icons/TimeScheduleIcon'
+import Timer01IconSvg from '@hugeicons/core-free-icons/Timer01Icon'
+import TranslateIconSvg from '@hugeicons/core-free-icons/TranslateIcon'
+import Undo02IconSvg from '@hugeicons/core-free-icons/Undo02Icon'
 import Unlink02IconSvg from '@hugeicons/core-free-icons/Unlink02Icon'
 import Upload01IconSvg from '@hugeicons/core-free-icons/Upload01Icon'
 import UserAdd01IconSvg from '@hugeicons/core-free-icons/UserAdd01Icon'
@@ -161,8 +172,11 @@ import UserIconSvg from '@hugeicons/core-free-icons/UserIcon'
 import UserMinus01IconSvg from '@hugeicons/core-free-icons/UserMinus01Icon'
 import UserMultipleIconSvg from '@hugeicons/core-free-icons/UserMultipleIcon'
 import UserRemove01IconSvg from '@hugeicons/core-free-icons/UserRemove01Icon'
+import UserSearch01IconSvg from '@hugeicons/core-free-icons/UserSearch01Icon'
 import UserSettings01IconSvg from '@hugeicons/core-free-icons/UserSettings01Icon'
 import UserSquareIconSvg from '@hugeicons/core-free-icons/UserSquareIcon'
+import Video01IconSvg from '@hugeicons/core-free-icons/Video01Icon'
+import VideoOffIconSvg from '@hugeicons/core-free-icons/VideoOffIcon'
 import ViewIconSvg from '@hugeicons/core-free-icons/ViewIcon'
 import ViewOffIconSvg from '@hugeicons/core-free-icons/ViewOffIcon'
 import Wallet01IconSvg from '@hugeicons/core-free-icons/Wallet01Icon'
@@ -221,6 +235,7 @@ export const BellOff = createHugeIcon(NotificationOff01IconSvg, 'BellOff')
 export const BellRing = createHugeIcon(NotificationBubbleIconSvg, 'BellRing')
 export const BookCheck = createHugeIcon(BookBookmark01IconSvg, 'BookCheck')
 export const BookOpen = createHugeIcon(BookOpen01IconSvg, 'BookOpen')
+export const Bot = createHugeIcon(Robot01IconSvg, 'Bot')
 export const BriefcaseBusiness = createHugeIcon(Briefcase02IconSvg, 'BriefcaseBusiness')
 export const Building2 = createHugeIcon(Building02IconSvg, 'Building2')
 export const Calendar = createHugeIcon(Calendar01IconSvg, 'Calendar')
@@ -228,6 +243,8 @@ export const CalendarCheck = createHugeIcon(CalendarCheckIn01IconSvg, 'CalendarC
 export const CalendarClock = createHugeIcon(TimeScheduleIconSvg, 'CalendarClock')
 export const CalendarDays = createHugeIcon(Calendar02IconSvg, 'CalendarDays')
 export const Camera = createHugeIcon(Camera01IconSvg, 'Camera')
+export const CameraOff = createHugeIcon(CameraOff01IconSvg, 'CameraOff')
+export const Car = createHugeIcon(Car01IconSvg, 'Car')
 export const Check = createHugeIcon(Tick01IconSvg, 'Check')
 export const CheckCheck = createHugeIcon(TickDouble01IconSvg, 'CheckCheck')
 export const CheckCircle2 = createHugeIcon(CheckmarkCircle02IconSvg, 'CheckCircle2')
@@ -258,6 +275,7 @@ export const Cog = createHugeIcon(Settings01IconSvg, 'Cog')
 export const Columns3 = createHugeIcon(LayoutThreeColumnIconSvg, 'Columns3')
 export const Copy = createHugeIcon(Copy01IconSvg, 'Copy')
 export const CornerUpLeft = createHugeIcon(ArrowTurnUpIconSvg, 'CornerUpLeft')
+export const Cpu = createHugeIcon(CpuIconSvg, 'Cpu')
 export const CreditCard = createHugeIcon(CreditCardIconSvg, 'CreditCard')
 export const Crown = createHugeIcon(CrownIconSvg, 'Crown')
 export const Database = createHugeIcon(DatabaseIconSvg, 'Database')
@@ -271,6 +289,7 @@ export const ExternalLink = createHugeIcon(ArrowUpRight01IconSvg, 'ExternalLink'
 export const Eye = createHugeIcon(ViewIconSvg, 'Eye')
 export const EyeOff = createHugeIcon(ViewOffIconSvg, 'EyeOff')
 export const FileBarChart = createHugeIcon(FileChartColumnIconSvg, 'FileBarChart')
+export const FileDown = createHugeIcon(FileDownloadIconSvg, 'FileDown')
 export const FileJson = createHugeIcon(FileBracesIconSvg, 'FileJson')
 export const FilePlus2 = createHugeIcon(FilePlusIconSvg, 'FilePlus2')
 export const FileSignature = createHugeIcon(FilePenIconSvg, 'FileSignature')
@@ -287,11 +306,13 @@ export const HandCoins = createHugeIcon(Coins01IconSvg, 'HandCoins')
 export const Heart = createHugeIcon(FavouriteIconSvg, 'Heart')
 export const History = createHugeIcon(WorkHistoryIconSvg, 'History')
 export const ImageIcon = createHugeIcon(Image01IconSvg, 'ImageIcon')
+export const ImagePlus = createHugeIcon(ImageAdd01IconSvg, 'ImagePlus')
 export const Inbox = createHugeIcon(InboxIconSvg, 'Inbox')
 export const Info = createHugeIcon(InformationCircleIconSvg, 'Info')
 export const InfoIcon = createHugeIcon(InformationCircleIconSvg, 'InfoIcon')
 export const KeyRound = createHugeIcon(Key02IconSvg, 'KeyRound')
 export const Landmark = createHugeIcon(Building03IconSvg, 'Landmark')
+export const Languages = createHugeIcon(TranslateIconSvg, 'Languages')
 export const Layers = createHugeIcon(Layers01IconSvg, 'Layers')
 export const Layers3 = createHugeIcon(Layers02IconSvg, 'Layers3')
 export const LayoutDashboard = createHugeIcon(DashboardSquare01IconSvg, 'LayoutDashboard')
@@ -314,6 +335,7 @@ export const MessageCircle = createHugeIcon(BubbleChatIconSvg, 'MessageCircle')
 export const MessageSquare = createHugeIcon(Message01IconSvg, 'MessageSquare')
 export const Mic = createHugeIcon(Mic01IconSvg, 'Mic')
 export const Minus = createHugeIcon(MinusSignIconSvg, 'Minus')
+export const MonitorPlay = createHugeIcon(PlaySquareIconSvg, 'MonitorPlay')
 export const Moon = createHugeIcon(Moon02IconSvg, 'Moon')
 export const MoreHorizontal = createHugeIcon(MoreHorizontalIconSvg, 'MoreHorizontal')
 export const MoreVertical = createHugeIcon(MoreVerticalIconSvg, 'MoreVertical')
@@ -361,13 +383,16 @@ export const Sparkles = createHugeIcon(SparklesIconSvg, 'Sparkles')
 export const SquarePen = createHugeIcon(PencilEdit02IconSvg, 'SquarePen')
 export const Star = createHugeIcon(StarIconSvg, 'Star')
 export const Sun = createHugeIcon(Sun01IconSvg, 'Sun')
+export const Swords = createHugeIcon(Sword03IconSvg, 'Swords')
 export const Table2 = createHugeIcon(Table01IconSvg, 'Table2')
+export const Timer = createHugeIcon(Timer01IconSvg, 'Timer')
 export const Trash2 = createHugeIcon(Delete02IconSvg, 'Trash2')
 export const TrendingDown = createHugeIcon(AnalyticsDownIconSvg, 'TrendingDown')
 export const TrendingUp = createHugeIcon(AnalyticsUpIconSvg, 'TrendingUp')
 export const TriangleAlert = createHugeIcon(Alert01IconSvg, 'TriangleAlert')
 export const TriangleAlertIcon = createHugeIcon(Alert01IconSvg, 'TriangleAlertIcon')
 export const Trophy = createHugeIcon(ChampionIconSvg, 'Trophy')
+export const Undo2 = createHugeIcon(Undo02IconSvg, 'Undo2')
 export const Unlink2 = createHugeIcon(Unlink02IconSvg, 'Unlink2')
 export const Upload = createHugeIcon(Upload01IconSvg, 'Upload')
 export const UploadCloud = createHugeIcon(CloudUploadIconSvg, 'UploadCloud')
@@ -379,9 +404,12 @@ export const UserPlus = createHugeIcon(UserAdd01IconSvg, 'UserPlus')
 export const UserRound = createHugeIcon(UserCircleIconSvg, 'UserRound')
 export const UserRoundCheck = createHugeIcon(UserCheck01IconSvg, 'UserRoundCheck')
 export const UserRoundX = createHugeIcon(UserRemove01IconSvg, 'UserRoundX')
+export const UserSearch = createHugeIcon(UserSearch01IconSvg, 'UserSearch')
 export const UserSquare = createHugeIcon(UserSquareIconSvg, 'UserSquare')
 export const Users = createHugeIcon(UserMultipleIconSvg, 'Users')
 export const UtensilsCrossed = createHugeIcon(SpoonAndForkIconSvg, 'UtensilsCrossed')
+export const Video = createHugeIcon(Video01IconSvg, 'Video')
+export const VideoOff = createHugeIcon(VideoOffIconSvg, 'VideoOff')
 export const Vote = createHugeIcon(CheckListIconSvg, 'Vote')
 export const Wallet = createHugeIcon(Wallet01IconSvg, 'Wallet')
 export const WalletCards = createHugeIcon(Wallet03IconSvg, 'WalletCards')

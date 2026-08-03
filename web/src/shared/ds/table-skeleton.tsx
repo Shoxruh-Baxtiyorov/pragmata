@@ -58,6 +58,7 @@ export function TableSkeleton({
                 {Array.from({ length: colCount }).map((__, colIndex) => (
                   <TableCell key={colIndex}>
                     <Skeleton
+                      className="h-3"
                       width={CELL_WIDTHS[(rowIndex + colIndex) % CELL_WIDTHS.length]}
                     />
                   </TableCell>

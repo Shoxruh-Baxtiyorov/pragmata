@@ -21,7 +21,7 @@ export function DigestText({ text }: { text: string }) {
         if (!headerUsed && !nested) {
           headerUsed = true
           return (
-            <p key={i} className="mb-1 text-label font-semibold text-text-placeholder">
+            <p key={i} className="mb-1 text-label font-semibold text-[var(--color-text-subtle)]">
               {line}
             </p>
           )
@@ -36,14 +36,14 @@ export function DigestText({ text }: { text: string }) {
             key={i}
             className={cn(
               'text-body',
-              nested ? 'pl-4 text-text-secondary' : 'text-text-primary',
-              isSection && 'mt-2 text-label font-semibold text-text-placeholder',
+              nested ? 'pl-4 text-[var(--color-text-secondary)]' : 'text-[var(--color-text-primary)]',
+              isSection && 'mt-2 text-label font-semibold text-[var(--color-text-subtle)]',
             )}
           >
             {m ? (
               <>
                 {m[1]}:{' '}
-                <span className="font-semibold tabular-nums text-text-primary">{m[2]}</span>
+                <span className="font-semibold tabular-nums text-[var(--color-text-primary)]">{m[2]}</span>
                 {m[3]}
               </>
             ) : (

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-// Тёмная тема обязательна (iqbola-design). Переключение — data-theme на <html>.
+// Тёмная тема обязательна (iqbola-design). Переключение — data-color-scheme на <html>.
 const THEME_KEY = 'pragmata_theme'
 type Theme = 'light' | 'dark'
 
@@ -11,13 +11,11 @@ function current(): Theme {
 }
 
 function apply(theme: Theme): void {
-  // Три механизма темы держим в синхроне:
-  //  - data-theme        — легаси-компоненты Ziyo,
+  // Два механизма темы держим в синхроне:
   //  - .dark             — shadcn-варианты кита (ремап семантических токенов),
   //  - data-color-scheme — СЫРАЯ тёмная палитра кита (--color-bg-surface и т.д.);
   //    без него карточки/сайдбар оставались белыми на тёмном фоне.
   const root = document.documentElement
-  root.dataset.theme = theme
   root.dataset.colorScheme = theme
   root.classList.toggle('dark', theme === 'dark')
 }

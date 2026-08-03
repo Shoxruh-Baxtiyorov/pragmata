@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, EmptyState, PageHeader, Select, Skeleton } from '@/shared/ui'
+import { Button, EmptyState, PageHeader, Select, SkeletonList, StaleBadge } from '@/shared/ui'
 import { Pagination } from '@/shared/ui/pagination'
 import { FileDown } from '@/shared/ui/icons'
 import { fetchAuthedBlob } from '@/shared/api/client'
+import { apiErrorMessage } from '@/shared/lib/apiError'
 import { eventLabel, type EventType } from '@/shared/lib/format'
 import type { EventOut, Severity } from '@/shared/api/types'
 import { EVENTS_PER_PAGE, useEvents, type EventFilters } from '../api/eventsApi'
@@ -92,7 +93,7 @@ export function EventsPage() {
     type: type || undefined,
     severity: severity || undefined,
   }
-  const { data, isLoading, isError, refetch } = useEvents(filters, page)
+  const { data, isLoading, isError, error, refetch } = useEvents(filters, page)
   const items = data?.items ?? []
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / EVENTS_PER_PAGE))
 
@@ -102,7 +103,9 @@ export function EventsPage() {
         title={t('events.title')}
         subtitle={t('events.subtitle')}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Лента опрашивается каждые 5с: обрыв связи — метка, список остаётся */}
+            <StaleBadge show={isError && items.length > 0} />
             <Select value={hours} onChange={(v) => setParam('hours', v)}>
               <option value={1}>{t('events.h1')}</option>
               <option value={24}>{t('events.h24')}</option>
@@ -124,7 +127,7 @@ export function EventsPage() {
                 </option>
               ))}
             </Select>
-            <Button variant="secondary" size="sm" onClick={() => void downloadReport(filters)}>
+            <Button variant="secondary" onClick={() => void downloadReport(filters)}>
               <FileDown size={16} /> PDF
             </Button>
           </div>
@@ -132,13 +135,9 @@ export function EventsPage() {
       />
 
       {isLoading ? (
-        <div className="space-y-2">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[68px]" />
-          ))}
-        </div>
-      ) : isError ? (
-        <EmptyState text={t('common.noConnection')} onRetry={refetch} />
+        <SkeletonList rows={5} className="h-18" />
+      ) : isError && items.length === 0 ? (
+        <EmptyState text={apiErrorMessage(error, t)} onRetry={refetch} />
       ) : items.length === 0 ? (
         <EmptyState text={t('events.empty')} />
       ) : (

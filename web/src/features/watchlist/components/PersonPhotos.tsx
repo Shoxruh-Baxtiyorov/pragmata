@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Modal, Skeleton } from '@/shared/ui'
+import { Button, EmptyState, ErrorNote, Modal, Skeleton, SkeletonGrid } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { ApiError } from '@/shared/api/client'
-import { ImagePlus, Trash2, X } from '@/shared/ui/icons'
+import { apiErrorMessage } from '@/shared/lib/apiError'
+import { ImagePlus, Trash2 } from '@/shared/ui/icons'
 import type { Person } from '@/shared/api/types'
 import {
   useAddPersonPhotos,
@@ -15,21 +15,23 @@ import {
 const MAX_FILES = 8
 
 function Thumb({ photo, onDelete, busy }: { photo: PersonPhoto; onDelete: () => void; busy: boolean }) {
+  const { t } = useTranslation()
   const src = useAuthedMedia(photo.url)
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-card border border-border-default bg-bg-secondary">
+    <div className="group relative aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-[var(--color-bg-muted)] transition hover:border-[var(--color-border-strong)]">
       {src ? (
         <img src={src} alt="" className="h-full w-full object-cover" />
       ) : (
         <Skeleton className="h-full w-full" />
       )}
+      {/* кнопка появляется по наведению, но остаётся достижимой с клавиатуры */}
       <button
         onClick={onDelete}
         disabled={busy}
-        className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition-opacity hover:bg-error group-hover:opacity-100 disabled:opacity-40"
-        aria-label="delete"
+        className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white opacity-0 outline-none transition hover:bg-[var(--color-error-500)] focus-visible:opacity-100 focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)] group-hover:opacity-100 disabled:opacity-40"
+        aria-label={t('manage.delete')}
       >
-        <Trash2 size={15} />
+        <Trash2 size={16} />
       </button>
     </div>
   )
@@ -54,7 +56,7 @@ export function PersonPhotos({ person, onClose }: { person: Person; onClose: () 
     add.mutate(
       { id: person.id, files: Array.from(files).slice(0, MAX_FILES) },
       {
-        onError: (e) => setError(e instanceof ApiError ? e.message : t('common.noConnection')),
+        onError: (e) => setError(apiErrorMessage(e, t)),
       },
     )
     if (fileRef.current) fileRef.current.value = ''
@@ -62,27 +64,15 @@ export function PersonPhotos({ person, onClose }: { person: Person; onClose: () 
 
   return (
     <Modal onClose={onClose} className="max-w-2xl">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="truncate text-h3">{t('watchlist.photos')}</h2>
-          <p className="truncate text-body text-text-secondary">{person.name}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="shrink-0 rounded-card p-1.5 text-text-secondary hover:bg-bg-secondary"
-        >
-          <X size={20} />
-        </button>
+      <div className="pr-8">
+        <h2 className="truncate text-h3">{t('watchlist.photos')}</h2>
+        <p className="truncate text-body text-[var(--color-text-secondary)]">{person.name}</p>
       </div>
 
-      <p className="mt-3 text-label text-text-secondary">{t('watchlist.photosHint')}</p>
+      <p className="mt-3 text-label text-[var(--color-text-secondary)]">{t('watchlist.photosHint')}</p>
 
       {photos.isLoading ? (
-        <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square" />
-          ))}
-        </div>
+        <SkeletonGrid count={4} item="aspect-square" cols="mt-4 grid-cols-3 gap-3 sm:grid-cols-4" />
       ) : photos.data && photos.data.length > 0 ? (
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {photos.data.map((p) => (
@@ -95,14 +85,16 @@ export function PersonPhotos({ person, onClose }: { person: Person; onClose: () 
           ))}
         </div>
       ) : (
-        <p className="mt-4 rounded-card border border-dashed border-border-default p-6 text-center text-label text-text-secondary">
-          {t('watchlist.noPhotos')}
-        </p>
+        <EmptyState
+          icon={<ImagePlus size={24} />}
+          text={t('watchlist.noPhotos')}
+          className="mt-4 p-6"
+        />
       )}
 
-      {error && <p className="mt-3 text-label text-error">{error}</p>}
+      {error && <ErrorNote className="mt-3">{error}</ErrorNote>}
 
-      <div className="mt-4 flex items-center gap-3 border-t border-border-default pt-4">
+      <div className="mt-4 flex items-center gap-3 border-t border-[var(--color-border-soft)] pt-4">
         <input
           ref={fileRef}
           type="file"
@@ -114,7 +106,7 @@ export function PersonPhotos({ person, onClose }: { person: Person; onClose: () 
         <Button onClick={() => fileRef.current?.click()} loading={add.isPending}>
           <ImagePlus size={16} /> {t('watchlist.addPhotos')}
         </Button>
-        <span className="text-caption text-text-placeholder">
+        <span className="text-caption text-[var(--color-text-subtle)]">
           {t('watchlist.photosCount', { count: photos.data?.length ?? 0 })}
         </span>
       </div>

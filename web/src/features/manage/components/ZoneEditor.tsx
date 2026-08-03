@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Modal } from '@/shared/ui'
+import { Button, ErrorNote, FieldLabel, Input, Modal } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { Undo2, X } from '@/shared/ui/icons'
+import { Undo2 } from '@/shared/ui/icons'
 import { cn } from '@/shared/lib/utils'
 import { ApiError } from '@/shared/api/client'
+import { apiErrorMessage } from '@/shared/lib/apiError'
 import type { Camera } from '@/shared/api/types'
 import { useAddZone } from '../api/manageApi'
 
@@ -88,25 +89,21 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
 
   return (
     <Modal onClose={onClose} className="max-w-2xl">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2 pr-8">
         <div className="min-w-0">
-          <h2 className="truncate text-h3 text-text-primary">{t('manage.drawZone')}</h2>
-          <p className="truncate text-body text-text-secondary" title={camera.name}>
+          <h2 className="truncate text-base font-bold text-[var(--color-text-primary)]">
+            {t('manage.drawZone')}
+          </h2>
+          <p className="truncate text-sm text-[var(--color-text-secondary)]" title={camera.name}>
             {camera.name}
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 rounded-card p-1.5 text-text-secondary hover:bg-bg-secondary"
-        >
-          <X size={20} />
-        </button>
       </div>
 
       <div
         ref={boxRef}
         onClick={onClick}
-        className="relative mt-4 aspect-video cursor-crosshair select-none overflow-hidden rounded-card bg-black"
+        className="relative mt-4 aspect-video cursor-crosshair select-none overflow-hidden rounded-[var(--radius-lg)] bg-black"
       >
         {snap && (
           <img
@@ -128,8 +125,8 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
             {points.length >= 3 && (
               <polygon
                 points={points.map(([x, y]) => `${x * 100},${y * 100}`).join(' ')}
-                fill="color-mix(in srgb, var(--color-brand) 20%, transparent)"
-                stroke="var(--color-brand)"
+                fill="color-mix(in srgb, var(--color-brand-500) 20%, transparent)"
+                stroke="var(--color-brand-500)"
                 strokeWidth="0.6"
               />
             )}
@@ -137,12 +134,12 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
               <polyline
                 points={points.map(([x, y]) => `${x * 100},${y * 100}`).join(' ')}
                 fill="none"
-                stroke="var(--color-brand)"
+                stroke="var(--color-brand-500)"
                 strokeWidth="0.6"
               />
             )}
             {points.map(([x, y], i) => (
-              <circle key={i} cx={x * 100} cy={y * 100} r="1.2" fill="var(--color-brand)" />
+              <circle key={i} cx={x * 100} cy={y * 100} r="1.2" fill="var(--color-brand-500)" />
             ))}
           </svg>
         )}
@@ -150,7 +147,7 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
         {/* Пустой холст молчал — теперь прямо говорит, что делать */}
         {points.length === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-4">
-            <span className="rounded-pill bg-black/65 px-3 py-1.5 text-label font-semibold text-white backdrop-blur-sm">
+            <span className="rounded-pill bg-black/65 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
               {t('manage.zoneHint')}
             </span>
           </div>
@@ -160,9 +157,7 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
       {/* Настройки зоны: подписанные поля, а не свалка контролов в одну строку */}
       <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
         <label className="flex flex-col gap-1.5">
-          <span className="text-label font-semibold text-text-secondary">
-            {t('manage.zoneName')}
-          </span>
+          <FieldLabel>{t('manage.zoneName')}</FieldLabel>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -171,40 +166,40 @@ export function ZoneEditor({ camera, onClose }: { camera: Camera; onClose: () =>
           />
         </label>
 
-        <label className="flex cursor-pointer items-center gap-2.5 self-end rounded-button border border-border-default px-3 py-2.5">
+        <label className="flex h-11 cursor-pointer items-center gap-2.5 self-end rounded-[var(--radius-md)] border border-[var(--color-border-strong)] px-3 transition-colors duration-[var(--dur-fast)] hover:border-[var(--color-brand-500)] has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-[var(--color-brand-ring)]">
           <input
             type="checkbox"
-            className="size-4 accent-[var(--color-brand)]"
+            className="size-4 accent-[var(--color-brand-500)]"
             checked={loitering}
             onChange={(e) => setLoitering(e.target.checked)}
           />
-          <span className="text-label text-text-secondary">{t('manage.loitering')}</span>
+          <FieldLabel>{t('manage.loitering')}</FieldLabel>
         </label>
       </div>
 
       {/* Молчащая ошибка — худшее: юзер жал «Сохранить» 11 раз и не видел 403 */}
       {addZone.isError && (
-        <p className="mt-3 rounded-input bg-error/10 px-3 py-2 text-label text-error">
+        <ErrorNote className="mt-3">
           {addZone.error instanceof ApiError && addZone.error.status === 403
             ? t('manage.noRights')
-            : addZone.error instanceof ApiError
-              ? addZone.error.message
-              : t('common.noConnection')}
-        </p>
+            : apiErrorMessage(addZone.error, t)}
+        </ErrorNote>
       )}
 
       {/* Футер отделён линией: слева — состояние и правка точек, справа — решение */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-default pt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--color-border-soft)] pt-4">
         <span
           className={cn(
-            'rounded-pill px-2.5 py-1 text-caption font-semibold',
-            points.length >= 3 ? 'bg-brand-10 text-brand' : 'bg-bg-secondary text-text-secondary',
+            'rounded-pill px-2.5 py-1 text-xs font-semibold tabular-nums transition-colors duration-[var(--dur-fast)]',
+            points.length >= 3
+              ? 'bg-[var(--color-brand-50)] text-[var(--color-brand-text)]'
+              : 'bg-[var(--color-bg-muted)] text-[var(--color-text-secondary)]',
           )}
         >
           {t('manage.points')}: {points.length}
         </span>
         {points.length < 3 && (
-          <span className="text-caption text-text-placeholder">{t('manage.needPoints')}</span>
+          <span className="text-xs text-[var(--color-text-muted)]">{t('manage.needPoints')}</span>
         )}
 
         <Button

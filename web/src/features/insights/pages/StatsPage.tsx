@@ -1,90 +1,92 @@
+import { useCallback } from 'react'
 import { DigestText } from '../components/DigestText'
 import { useTranslation } from 'react-i18next'
-import { Card, EmptyState, PageHeader, Skeleton, SkeletonTiles, StatTile } from '@/shared/ui'
+import {
+  Card,
+  EmptyState,
+  PageHeader,
+  Skeleton,
+  SkeletonGrid,
+  StaleBadge,
+  StatTile,
+} from '@/shared/ui'
+// Напрямую из кита, а не через '@/shared/ui': барель тянет recharts во все чанки
+import { CategoryBarChart } from '@/shared/ds/charts'
 import { eventLabel, type EventType } from '@/shared/lib/format'
 import { eventIcon } from '@/shared/ui/icons'
 import { useDigest, useStats } from '../api/insightsApi'
 
-// Горизонтальные бары в стиле HourlyBars — чистый CSS, без графических библиотек.
-function Bars({ data, labelType, lang }: { data: Record<string, number>; labelType?: boolean; lang: 'ru' | 'uz' | 'en' }) {
-  const { t } = useTranslation()
-  const max = Math.max(1, ...Object.values(data))
-  const rows = Object.entries(data).sort((a, b) => b[1] - a[1])
-  // без этого пустые данные давали глухую пустую карточку — выглядело как поломка
-  if (rows.length === 0)
-    return (
-      <p className="rounded-card border border-dashed border-border-default px-4 py-6 text-center text-label text-text-secondary">
-        {t('common.empty')}
-      </p>
-    )
-  return (
-    <div className="space-y-2.5">
-      {rows.map(([k, v]) => {
-        const Icon = labelType ? eventIcon[k as EventType] : null
-        return (
-          <div key={k} className="flex items-center gap-3">
-            <span className="flex w-44 shrink-0 items-center gap-1.5 truncate text-body text-text-secondary" title={k}>
-              {Icon && <Icon size={16} className="shrink-0 text-text-secondary" />}
-              <span className="truncate">{labelType ? eventLabel(k, lang) : k}</span>
-            </span>
-            <div className="h-3 flex-1 overflow-hidden rounded-pill bg-bg-secondary">
-              <div className="h-full rounded-pill bg-brand" style={{ width: `${(v / max) * 100}%` }} />
-            </div>
-            <span className="w-10 shrink-0 text-right font-mono text-body">{v}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+// Иконка типа события от языка не зависит — держим её вне компонента, чтобы
+// проп графика не менялся на каждом опросе (раз в 30с).
+const iconForType = (key: string) => eventIcon[key as EventType]
 
 export function StatsPage() {
   const { t, i18n } = useTranslation()
   const lang = (['ru', 'uz', 'en'].includes(i18n.language) ? i18n.language : 'uz') as 'ru' | 'uz' | 'en'
+  const formatType = useCallback((key: string) => eventLabel(key, lang), [lang])
   const stats = useStats(24)
   const digest = useDigest(24, lang)
-
-  if (stats.isLoading)
-    return (
-      <div className="space-y-4">
-        <SkeletonTiles count={3} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-56" />
-          <Skeleton className="h-56" />
-        </div>
-      </div>
-    )
-  if (stats.isError || !stats.data) return <EmptyState text={t('common.noConnection')} onRetry={stats.refetch} />
+  const data = stats.data
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t('stats.title')} subtitle={t('stats.subtitle')} />
+      <PageHeader
+        title={t('stats.title')}
+        subtitle={t('stats.subtitle')}
+        // цифры на экране уже устарели — говорим об этом, а не стираем весь экран
+        actions={<StaleBadge show={stats.isError && !!data} />}
+      />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatTile label={t('stats.visitors')} value={stats.data.visitors_entered} />
-        <StatTile label={t('stats.alerts')} value={stats.data.alerts} />
-        <StatTile label={t('stats.fp')} value={stats.data.false_positives} />
-      </div>
+      {stats.isLoading ? (
+        <>
+          {/* сетки скелетонов повторяют боевые — иначе на загрузке плитки прыгают */}
+          <SkeletonGrid count={3} item="h-24" cols="gap-4 sm:grid-cols-3" />
+          <SkeletonGrid count={2} item="h-56" cols="gap-4 lg:grid-cols-2" />
+        </>
+      ) : !data ? (
+        <EmptyState text={t('common.noConnection')} onRetry={stats.refetch} />
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatTile label={t('stats.visitors')} value={data.visitors_entered} />
+            <StatTile label={t('stats.alerts')} value={data.alerts} />
+            <StatTile label={t('stats.fp')} value={data.false_positives} />
+          </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-4 text-h4">{t('stats.byType')}</h2>
-          <Bars data={stats.data.by_type} labelType lang={lang} />
-        </Card>
-        <Card>
-          <h2 className="mb-4 text-h4">{t('stats.byCamera')}</h2>
-          <Bars data={stats.data.by_camera} lang={lang} />
-        </Card>
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <h2 className="text-h4">{t('stats.byType')}</h2>
+              <CategoryBarChart
+                data={data.by_type}
+                ariaLabel={t('stats.byType')}
+                emptyText={t('common.empty')}
+                formatLabel={formatType}
+                icon={iconForType}
+              />
+            </Card>
+            <Card>
+              <h2 className="text-h4">{t('stats.byCamera')}</h2>
+              <CategoryBarChart
+                data={data.by_camera}
+                ariaLabel={t('stats.byCamera')}
+                emptyText={t('common.empty')}
+              />
+            </Card>
+          </div>
+        </>
+      )}
 
+      {/* дайджест — независимый запрос: своя загрузка/ошибка/пустота, не зависит от stats */}
       <Card>
-        <h2 className="mb-3 text-h4">{t('stats.digest')}</h2>
-        {digest.isError ? (
+        <h2 className="text-h4">{t('stats.digest')}</h2>
+        {digest.isLoading ? (
+          <Skeleton className="h-40" />
+        ) : digest.isError ? (
           <EmptyState text={t('common.noConnection')} onRetry={digest.refetch} />
-        ) : digest.data ? (
+        ) : digest.data?.text.trim() ? (
           <DigestText text={digest.data.text} />
         ) : (
-          <Skeleton className="h-40" />
+          <EmptyState text={t('common.empty')} />
         )}
       </Card>
     </div>

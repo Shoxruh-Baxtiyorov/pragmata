@@ -8,9 +8,13 @@ export interface SkeletonProps {
 }
 
 export function Skeleton({ className, height, width }: SkeletonProps) {
+  // Only emit height/width when a caller passes them explicitly. Inline styles
+  // beat classes, so the old `height ?? 12` / `width ?? '100%'` defaults
+  // silently overrode every `h-*` / `aspect-*` className — all callers size via
+  // className, so every skeleton rendered as a 12px bar.
   const style: CSSProperties = {
-    height: height ?? 12,
-    width: width ?? '100%',
+    ...(height !== undefined && { height }),
+    ...(width !== undefined && { width }),
     background:
       'linear-gradient(90deg, var(--color-neutral-100) 0%, var(--color-bg-muted) 50%, var(--color-neutral-100) 100%)',
     backgroundSize: '800px 100%',

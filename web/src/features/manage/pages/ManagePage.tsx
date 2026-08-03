@@ -1,8 +1,20 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, SkeletonList } from '@/shared/ui'
-import { ApiError } from '@/shared/api/client'
-import { MapPin, Pencil, Plus, Trash2, Video, VideoOff } from '@/shared/ui/icons'
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  ConfirmDialog,
+  EmptyState,
+  ErrorNote,
+  FieldLabel,
+  Input,
+  PageHeader,
+  SkeletonList,
+} from '@/shared/ui'
+import { apiErrorMessage } from '@/shared/lib/apiError'
+import { MapPin, Pencil, Plus, Trash2, Video, VideoOff, X } from '@/shared/ui/icons'
 import type { Camera, CameraInput } from '@/shared/api/types'
 import {
   useCreateCamera,
@@ -12,6 +24,7 @@ import {
   usePatchCamera,
 } from '../api/manageApi'
 import { ZoneEditor } from '../components/ZoneEditor'
+
 
 function EditCameraForm({ cam, onDone }: { cam: Camera; onDone: () => void }) {
   const { t } = useTranslation()
@@ -30,43 +43,44 @@ function EditCameraForm({ cam, onDone }: { cam: Camera; onDone: () => void }) {
   }
 
   return (
-    <div className="mt-2 flex flex-wrap items-end gap-2 rounded-card bg-bg-secondary p-3">
-      <label className="flex flex-col gap-1">
-        <span className="text-caption text-text-secondary">{t('manage.cameraName')}</span>
-        <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 w-44" />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-caption text-text-secondary">{t('manage.newUrl')}</span>
-        <Input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={t('manage.keepUrl')}
-          className="h-9 min-w-64 flex-1"
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-caption text-text-secondary">fps</span>
-        <Input
-          type="number"
-          step="0.5"
-          min="0"
-          value={fps}
-          onChange={(e) => setFps(e.target.value)}
-          placeholder="—"
-          className="h-9 w-20"
-        />
-      </label>
-      <Button size="sm" onClick={save} loading={patch.isPending}>
-        {t('manage.save')}
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onDone}>
-        {t('common.close')}
-      </Button>
-      {patch.isError && (
-        <p className="w-full text-caption text-error">
-          {patch.error instanceof ApiError ? patch.error.message : t('common.noConnection')}
-        </p>
-      )}
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-[var(--color-bg-muted)] p-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_auto]">
+        <label>
+          <FieldLabel className="mb-1.5">{t('manage.cameraName')}</FieldLabel>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label>
+          <FieldLabel className="mb-1.5">{t('manage.newUrl')}</FieldLabel>
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={t('manage.keepUrl')}
+          />
+        </label>
+        <label>
+          <FieldLabel className="mb-1.5">fps</FieldLabel>
+          <Input
+            type="number"
+            step="0.5"
+            min="0"
+            value={fps}
+            onChange={(e) => setFps(e.target.value)}
+            placeholder="—"
+            className="w-24"
+          />
+        </label>
+      </div>
+
+      {patch.isError && <ErrorNote className="mt-3">{apiErrorMessage(patch.error, t)}</ErrorNote>}
+
+      <div className="mt-4 flex items-center gap-2 border-t border-[var(--color-border-soft)] pt-3">
+        <Button size="sm" onClick={save} loading={patch.isPending}>
+          {t('manage.save')}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDone}>
+          {t('common.close')}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -78,18 +92,21 @@ function CameraRow({ cam }: { cam: Camera }) {
   const delZone = useDeleteZone()
   const [editZone, setEditZone] = useState(false)
   const [editCam, setEditCam] = useState(false)
+  const [confirmDelCam, setConfirmDelCam] = useState(false)
+  const [zoneToDel, setZoneToDel] = useState<Camera['zones'][number] | null>(null)
 
   return (
-    <div className="flex flex-col gap-2 border-b border-border-default py-3 last:border-0">
+    <div className="-mx-4 flex flex-col gap-2 border-b border-[var(--color-border-soft)] px-4 py-3 transition-colors duration-[var(--dur-fast)] last:border-0 hover:bg-[var(--color-row-alt)]">
       <div className="flex items-center gap-3">
-        <span className={cam.online ? 'text-success' : 'text-text-placeholder'}>
-          {cam.online ? <Video size={18} /> : <VideoOff size={18} />}
+        {/* Цвет статуса несёт бейдж — иконка остаётся нейтральной */}
+        <span className="text-[var(--color-text-muted)]">
+          {cam.online ? <Video size={16} /> : <VideoOff size={16} />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-body font-semibold" title={cam.name}>
+          <p className="truncate text-sm font-semibold" title={cam.name}>
             {cam.name}
           </p>
-          <p className="font-mono text-caption text-text-secondary">{cam.id}</p>
+          <p className="truncate font-mono text-xs text-[var(--color-text-secondary)]">{cam.id}</p>
         </div>
         {cam.enabled ? (
           <Badge tone={cam.online ? 'success' : 'warning'}>
@@ -110,6 +127,7 @@ function CameraRow({ cam }: { cam: Camera }) {
         <Button
           variant="ghost"
           size="sm"
+          disabled={patch.isPending}
           onClick={() => patch.mutate({ id: cam.id, patch: { enabled: !cam.enabled } })}
         >
           {cam.enabled ? t('manage.disable') : t('manage.enable')}
@@ -118,58 +136,76 @@ function CameraRow({ cam }: { cam: Camera }) {
           variant="ghost"
           size="icon"
           aria-label={t('manage.delete')}
+          title={t('manage.delete')}
           disabled={del.isPending}
-          onClick={() => {
-            if (window.confirm(t('manage.confirmDelete', { name: cam.name })))
-              del.mutate(cam.id)
-          }}
+          className="text-[var(--color-error-text)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error-text)]"
+          onClick={() => setConfirmDelCam(true)}
         >
-          <Trash2 size={16} className="text-error" />
+          <Trash2 size={16} />
         </Button>
       </div>
 
-      {(patch.isError || del.isError) && (
-        <p className="pl-7 text-caption text-error">
-          {(patch.error ?? del.error) instanceof ApiError
-            ? (patch.error ?? del.error)?.message
-            : t('common.noConnection')}
-        </p>
+      <ConfirmDialog
+        open={confirmDelCam}
+        title={t('manage.delete')}
+        description={t('manage.confirmDelete', { name: cam.name })}
+        confirmLabel={t('manage.delete')}
+        busy={del.isPending}
+        onConfirm={() => {
+          del.mutate(cam.id)
+          setConfirmDelCam(false)
+        }}
+        onCancel={() => setConfirmDelCam(false)}
+      />
+
+      {(patch.isError || del.isError || delZone.isError) && (
+        <ErrorNote className="ml-7">
+          {apiErrorMessage(patch.error ?? del.error ?? delZone.error, t)}
+        </ErrorNote>
       )}
 
       {editCam && <EditCameraForm cam={cam} onDone={() => setEditCam(false)} />}
 
       <div className="flex flex-wrap items-center gap-2 pl-7">
         {cam.zones.map((z) => (
-          <span
+          <Chip
             key={z.id ?? z.name}
-            className="inline-flex items-center gap-1 rounded-pill border border-border-default px-2 py-0.5 text-caption"
+            // Зона рисуется вручную по кадру — случайный клик по крестику
+            // стирал её без предупреждения (как и удаление камеры, спрашиваем)
+            onDismiss={z.id ? () => setZoneToDel(z) : undefined}
           >
-            <MapPin size={11} className="text-brand" />
-            {z.name}
-            {z.id && (
-              <button
-                className="ml-0.5 text-text-secondary hover:text-error"
-                onClick={() => delZone.mutate(z.id as string)}
-              >
-                ×
-              </button>
-            )}
-          </span>
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin size={16} className="text-[var(--color-text-muted)]" />
+              {z.name}
+            </span>
+          </Chip>
         ))}
         <Button variant="secondary" size="sm" onClick={() => setEditZone(true)}>
-          <Plus size={12} /> {t('manage.addZone')}
+          <Plus size={16} /> {t('manage.addZone')}
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={zoneToDel !== null}
+        title={t('manage.delete')}
+        description={zoneToDel ? t('manage.confirmDeleteZone', { name: zoneToDel.name }) : ''}
+        confirmLabel={t('manage.delete')}
+        busy={delZone.isPending}
+        onConfirm={() => {
+          if (zoneToDel?.id) delZone.mutate(zoneToDel.id)
+          setZoneToDel(null)
+        }}
+        onCancel={() => setZoneToDel(null)}
+      />
 
       {editZone && <ZoneEditor camera={cam} onClose={() => setEditZone(false)} />}
     </div>
   )
 }
 
-function AddCameraForm() {
+function AddCameraForm({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation()
   const create = useCreateCamera()
-  const [open, setOpen] = useState(false)
   const [id, setId] = useState('')
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -181,79 +217,95 @@ function AddCameraForm() {
     const payload: CameraInput = { id: id.trim(), name: name.trim(), url: url.trim(), clips_enabled: true }
     if (fps) payload.process_fps = Number(fps)
     if (conf) payload.detect_conf = Number(conf)
-    create.mutate(payload, {
-      onSuccess: () => {
-        setId('')
-        setName('')
-        setUrl('')
-        setFps('')
-        setConf('')
-        setOpen(false)
-      },
-    })
+    create.mutate(payload, { onSuccess: onDone })
   }
 
-  if (!open)
-    return (
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        <Plus size={15} /> {t('manage.addCamera')}
-      </Button>
-    )
-
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
-      <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="id (cam7)" className="h-9 w-28" required />
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={t('manage.cameraName')}
-        className="h-9 w-40"
-        required
-      />
-      <Input
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="rtsp://… | http://…:8080/video"
-        className="h-9 min-w-56 flex-1"
-        required
-      />
-      <Input
-        type="number"
-        step="0.1"
-        min="0"
-        value={fps}
-        onChange={(e) => setFps(e.target.value)}
-        placeholder="fps"
-        className="h-9 w-20"
-      />
-      <Input
-        type="number"
-        step="0.05"
-        min="0"
-        max="1"
-        value={conf}
-        onChange={(e) => setConf(e.target.value)}
-        placeholder="conf"
-        className="h-9 w-20"
-      />
-      <Button type="submit" size="sm" disabled={create.isPending}>
-        {t('manage.add')}
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
-        {t('common.close')}
-      </Button>
-      {create.isError && (
-        <p className="w-full text-caption text-error">
-          {create.error instanceof ApiError ? create.error.message : t('common.noConnection')}
-        </p>
-      )}
-    </form>
+    <Card className="mb-4 p-4">
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-[var(--color-text-primary)]">
+            {t('manage.addCamera')}
+          </h2>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDone}
+            aria-label={t('common.close')}
+            title={t('common.close')}
+          >
+            <X size={16} />
+          </Button>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label>
+            <FieldLabel className="mb-1.5">id</FieldLabel>
+            <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="cam7" required />
+          </label>
+          <label className="lg:col-span-3">
+            <FieldLabel className="mb-1.5">{t('manage.cameraName')}</FieldLabel>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('manage.cameraName')}
+              required
+            />
+          </label>
+          <label className="sm:col-span-2">
+            <FieldLabel className="mb-1.5">URL</FieldLabel>
+            <Input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="rtsp://… | http://…:8080/video"
+              required
+            />
+          </label>
+          <label>
+            <FieldLabel className="mb-1.5">fps</FieldLabel>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              value={fps}
+              onChange={(e) => setFps(e.target.value)}
+              placeholder="—"
+            />
+          </label>
+          <label>
+            <FieldLabel className="mb-1.5">conf</FieldLabel>
+            <Input
+              type="number"
+              step="0.05"
+              min="0"
+              max="1"
+              value={conf}
+              onChange={(e) => setConf(e.target.value)}
+              placeholder="—"
+            />
+          </label>
+        </div>
+
+        {create.isError && <ErrorNote>{apiErrorMessage(create.error, t)}</ErrorNote>}
+
+        <div className="flex items-center gap-2 border-t border-[var(--color-border-soft)] pt-4">
+          <Button type="submit" size="sm" loading={create.isPending}>
+            {t('manage.add')}
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onDone}>
+            {t('common.close')}
+          </Button>
+        </div>
+      </form>
+    </Card>
   )
 }
 
 export function ManagePage() {
   const { t } = useTranslation()
   const cams = useManageCameras()
+  const [adding, setAdding] = useState(false)
 
   // Камерами управляет любой сотрудник организации — это его объект, а не
   // работа владельца платформы. Ограничение по организации держит бэкенд
@@ -263,18 +315,33 @@ export function ManagePage() {
       <PageHeader
         title={t('manage.title')}
         subtitle={t('manage.subtitle')}
-        actions={<AddCameraForm />}
+        actions={
+          !adding && (
+            <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>
+              <Plus size={16} /> {t('manage.addCamera')}
+            </Button>
+          )
+        }
       />
+
+      {/* Форма раньше жила в шапке и ломала её вёрстку — теперь отдельная панель */}
+      {adding && <AddCameraForm onDone={() => setAdding(false)} />}
 
       {cams.isLoading ? (
         <SkeletonList rows={4} />
       ) : cams.isError || !cams.data ? (
         <EmptyState text={t('common.noConnection')} onRetry={cams.refetch} />
+      ) : cams.data.length === 0 ? (
+        <EmptyState text={t('common.empty')} />
       ) : (
-        <Card>
-          {cams.data.map((cam) => (
-            <CameraRow key={cam.id} cam={cam} />
-          ))}
+        <Card className="p-4">
+          {/* Card кита — flex-колонка с gap-4; строки идут одним блоком,
+              иначе к их отступам прибавляется gap и разделители «отлипают» */}
+          <div>
+            {cams.data.map((cam) => (
+              <CameraRow key={cam.id} cam={cam} />
+            ))}
+          </div>
         </Card>
       )}
     </>

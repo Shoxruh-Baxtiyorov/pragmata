@@ -1,8 +1,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
- * Дизайн-кит iqbola (shadcn) — основной слой: tailwind + tw-animate + shadcn
- * + полный набор токенов. Ниже — ЛЕГАСИ-слой Ziyo, чтобы ещё не мигрированные
- * на кит экраны продолжали резолвить свои утилиты (bg-surface, text-primary,
- * rounded-card…). По мере перевода экранов легаси-слой будет уменьшаться.
+ * Дизайн-кит iqbola (shadcn) — единственный слой токенов: tailwind +
+ * tw-animate + shadcn + полный набор токенов из ds-styles/tailwind.css.
+ * Легаси-слой Ziyo полностью выведен (2026-07-29) — все экраны читают кит.
  * ───────────────────────────────────────────────────────────────────────── */
 @import './ds-styles/tailwind.css';
 @import './ds-styles/globals.css';
@@ -17,125 +16,10 @@
 /* @source ПОСЛЕ всех @import */
 @source './**/*.{ts,tsx}';
 
-/* ── ЛЕГАСИ Ziyo (транзитивный слой миграции) ───────────────────────────── */
-:root {
-  --brand: #2f6bff;
-  --brand-hi: #5b8bff;
-  --brand-soft: #9ab8ff;
-  --brand-pressed: #2558d6;
-  --on-brand: #ffffff;
-  --brand-mark: #0d9488;
-  --grey-1: #f7f8fa;
-  --grey-2: #eef0f3;
-  --grey-3: #99a1b7;
-  --grey-4: #5b6472;
-  --bg-app: #f7f8fa;
-  --bg-surface: #ffffff;
-  --bg-secondary: #f4f5f7;
-  --text-primary: #1f2530;
-  --text-secondary: #5b6472;
-  --text-muted: #78808f;
-  --text-placeholder: #99a1b7;
-  --border-default: #eef0f3;
-  --border-strong: #e2e6ec;
-  --border-focused: var(--brand);
-  --error: #f8285a;
-  --success: #17c653;
-  --warning: #f6b100;
-  --accent: #7239ea;
-  --brand-10: color-mix(in srgb, var(--brand) 10%, transparent);
-  --brand-20: color-mix(in srgb, var(--brand) 20%, transparent);
-  --ring: 0 0 0 3px rgb(47 107 255 / 0.12);
-}
-
-[data-theme='dark'] {
-  --brand: #4f82ff;
-  --brand-hi: #7ba3ff;
-  --brand-pressed: #3a6ae0;
-  --brand-mark: #34cbb9;
-  --grey-1: #1c2434;
-  --grey-2: #2a3446;
-  --bg-app: #151b28;
-  --bg-surface: #1c2434;
-  --bg-secondary: #232c3e;
-  --text-primary: #eef1f6;
-  --text-secondary: #a8b1c2;
-  --text-muted: #8b93a3;
-  --text-placeholder: #6b7488;
-  --border-default: #2a3446;
-  --border-strong: #354054;
-  --error: #ff5c7d;
-  --success: #3ad46f;
-  --warning: #ffbe2e;
-  --ring: 0 0 0 3px rgb(79 130 255 / 0.22);
-}
-
-@theme inline {
-  --color-brand: var(--brand);
-  --color-brand-hi: var(--brand-hi);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-mark: var(--brand-mark);
-  --color-brand-pressed: var(--brand-pressed);
-  --color-on-brand: var(--on-brand);
-  --color-brand-10: var(--brand-10);
-  --color-brand-20: var(--brand-20);
-  --color-grey-1: var(--grey-1);
-  --color-grey-2: var(--grey-2);
-  --color-grey-3: var(--grey-3);
-  --color-grey-4: var(--grey-4);
-  --color-bg-app: var(--bg-app);
-  --color-surface: var(--bg-surface);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-placeholder: var(--text-placeholder);
-  --color-border-default: var(--border-default);
-  --color-border-strong: var(--border-strong);
-  --color-border-focused: var(--border-focused);
-  --color-error: var(--error);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-accent: var(--accent);
-
-  --radius-button: 11px;
-  --radius-input: 11px;
-  --radius-card: 15px;
-  --radius-modal: 20px;
-  --radius-pill: 999px;
-
-  --shadow-xs: 0 1px 2px rgb(20 30 50 / 0.03);
-  --shadow-s: 0 4px 10px rgb(20 30 50 / 0.08);
-  --shadow-m: 0 12px 30px rgb(15 23 42 / 0.12);
-  --shadow-l: 0 30px 70px rgb(15 23 42 / 0.18);
-  --shadow-brand: 0 4px 10px rgb(47 107 255 / 0.35);
-
-  --text-h1: 30px;
-  --text-h1--line-height: 36px;
-  --text-h1--font-weight: 800;
-  --text-h2: 26px;
-  --text-h2--line-height: 32px;
-  --text-h2--font-weight: 800;
-  --text-h3: 21px;
-  --text-h3--line-height: 27px;
-  --text-h3--font-weight: 700;
-  --text-h4: 16px;
-  --text-h4--line-height: 22px;
-  --text-h4--font-weight: 700;
-  --text-body: 13.5px;
-  --text-body--line-height: 20px;
-  --text-label: 12.5px;
-  --text-label--line-height: 17px;
-  --text-label--font-weight: 600;
-  --text-caption: 11.5px;
-  --text-caption--line-height: 15px;
-  --text-caption--font-weight: 600;
-}
-
 body {
   font-family: var(--font-sans);
-  background: var(--bg-app);
-  color: var(--text-primary);
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
   font-size: 13.5px;
   line-height: 20px;
   -webkit-font-smoothing: antialiased;
@@ -146,9 +30,9 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: var(--color-border-strong);
   border-radius: 8px;
-  border: 2px solid var(--bg-app);
+  border: 2px solid var(--color-bg-app);
 }
 
 @keyframes shimmer {
@@ -162,9 +46,9 @@ body {
 .sk {
   background: linear-gradient(
     90deg,
-    var(--bg-secondary) 0px,
-    var(--bg-surface) 200px,
-    var(--bg-secondary) 400px
+    var(--color-bg-muted) 0px,
+    var(--color-bg-surface) 200px,
+    var(--color-bg-muted) 400px
   );
   background-size: 800px 100%;
   animation: shimmer 1.2s infinite linear;

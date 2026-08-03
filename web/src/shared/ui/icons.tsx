@@ -1,8 +1,8 @@
 // Единый слой иконок (правило DS: иконки только отсюда, не из lucide напрямую).
 // Размеры — только 16/20/24/32.
-import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
+  ArrowRight,
   Bell,
   BellOff,
   Bot,
@@ -20,6 +20,7 @@ import {
   KeyRound,
   Languages,
   LayoutDashboard,
+  LayoutGrid,
   LogOut,
   MapPin,
   Menu,
@@ -39,6 +40,7 @@ import {
   Trash2,
   TrendingUp,
   Undo2,
+  User,
   UserCog,
   UserPlus,
   UserRound,
@@ -48,11 +50,13 @@ import {
   Video,
   VideoOff,
   X,
-} from 'lucide-react'
+  type LucideIcon,
+} from '@/shared/ds/icons'
 import type { EventType } from '@/shared/lib/format'
 
 export {
   AlertTriangle,
+  ArrowRight,
   Bell,
   BellOff,
   Bot,
@@ -70,6 +74,7 @@ export {
   KeyRound,
   Languages,
   LayoutDashboard,
+  LayoutGrid,
   LogOut,
   MapPin,
   Menu,
@@ -89,6 +94,7 @@ export {
   Trash2,
   TrendingUp,
   Undo2,
+  User,
   UserCog,
   UserPlus,
   UserRound,

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EmptyState, PageHeader, Select, SkeletonList } from '@/shared/ui'
+import { EmptyState, PageHeader, Select, Skeleton } from '@/shared/ui'
+import { LayoutGrid } from '@/shared/ui/icons'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { LayoutGrid } from '@/shared/ds/icons'
+import { apiErrorMessage } from '@/shared/lib/apiError'
 import { useHeatmap, useHeatmapCameras, type Heatmap } from '../api/heatmapApi'
 
 // Тепловое наложение: сетка счётчиков → canvas, hue от синего (мало) к красному
@@ -44,10 +45,11 @@ function HeatCanvas({ hm }: { hm: Heatmap }) {
 function Legend() {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+    <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text-secondary)]">
       <span>{t('heatmap.low')}</span>
+      {/* Те же hue, что и у canvas (240→0), чтобы шкала читалась буквально */}
       <div
-        className="h-2.5 w-40 rounded-full"
+        className="h-2 w-40 rounded-[var(--radius-pill)]"
         style={{
           background: 'linear-gradient(90deg, hsl(240 95% 50%), hsl(120 95% 50%), hsl(0 95% 50%))',
         }}
@@ -59,25 +61,28 @@ function Legend() {
 
 function HeatView({ cameraId }: { cameraId: string }) {
   const { t } = useTranslation()
-  const { data, isLoading } = useHeatmap(cameraId)
+  const { data, isLoading, isError, error, refetch } = useHeatmap(cameraId)
   const snap = useAuthedMedia(data?.snapshot_url ?? null)
-  if (isLoading) return <SkeletonList rows={1} className="aspect-video w-full" />
+  if (isLoading) return <Skeleton className="aspect-video w-full" />
+  if (isError && !data) return <EmptyState text={apiErrorMessage(error, t)} onRetry={refetch} />
   if (!data) return <EmptyState text={t('heatmap.empty')} />
   const hasData = data.max > 0
   return (
     <div className="space-y-3">
       <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-[var(--color-bg-muted)]">
         {snap ? (
-          <img src={snap} alt="" className="h-full w-full object-cover" />
+          <img src={snap} alt="" decoding="async" className="h-full w-full object-cover" />
         ) : (
           <div className="grid h-full place-items-center text-[var(--color-text-muted)]">
-            <LayoutGrid size={28} />
+            <LayoutGrid size={32} />
           </div>
         )}
         {hasData && <HeatCanvas hm={data} />}
         {!hasData && (
-          <div className="absolute inset-0 grid place-items-center bg-black/30">
-            <p className="rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] font-medium text-[var(--color-text-secondary)]">
+          // Затемнение через токен фона: на светлой теме чёрная пелена выглядит
+          // как ошибка, а тут это просто «данных пока нет».
+          <div className="absolute inset-0 grid place-items-center bg-[var(--color-bg-app)]/60 backdrop-blur-[1px]">
+            <p className="rounded-[var(--radius-md)] border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] shadow-[var(--shadow-xs)]">
               {t('heatmap.collecting')}
             </p>
           </div>
@@ -113,7 +118,7 @@ export function HeatmapPage() {
         }
       />
       {isLoading ? (
-        <SkeletonList rows={1} className="aspect-video w-full" />
+        <Skeleton className="aspect-video w-full" />
       ) : active ? (
         <HeatView cameraId={active} />
       ) : (

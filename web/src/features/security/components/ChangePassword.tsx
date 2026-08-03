@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Card, Input } from '@/shared/ui'
-import { ApiError } from '@/shared/api/client'
+import { Button, Card, ErrorNote, FieldLabel, Input } from '@/shared/ui'
+import { apiErrorMessage } from '@/shared/lib/apiError'
 import { Check, KeyRound } from '@/shared/ui/icons'
 import { useChangeOwnPassword } from '../api/securityApi'
 
@@ -36,15 +36,13 @@ export function ChangePassword() {
   }
 
   return (
-    <Card className="max-w-2xl p-6">
-      <h2 className="mb-4 flex items-center gap-2 text-h3">
-        <KeyRound size={20} className="text-brand" /> {t('security.passwordTitle')}
+    <Card className="p-6">
+      <h2 className="flex items-center gap-2 text-base font-bold text-[var(--color-text-primary)]">
+        <KeyRound size={20} className="text-[var(--color-text-muted)]" /> {t('security.passwordTitle')}
       </h2>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-label font-semibold text-text-secondary">
-            {t('security.newPassword')}
-          </span>
+          <FieldLabel>{t('security.newPassword')}</FieldLabel>
           <Input
             type="password"
             value={pw}
@@ -53,41 +51,41 @@ export function ChangePassword() {
               setDone(false)
             }}
             autoComplete="new-password"
+            aria-invalid={tooShort || undefined}
             className="max-w-sm"
           />
           {tooShort && (
-            <span className="text-caption text-error">{t('security.passwordShort')}</span>
+            <span className="text-xs font-medium text-[var(--color-error-text)]">
+              {t('security.passwordShort')}
+            </span>
           )}
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-label font-semibold text-text-secondary">
-            {t('security.repeatPassword')}
-          </span>
+          <FieldLabel>{t('security.repeatPassword')}</FieldLabel>
           <Input
             type="password"
             value={repeat}
             onChange={(e) => setRepeat(e.target.value)}
             autoComplete="new-password"
+            aria-invalid={mismatch || undefined}
             className="max-w-sm"
           />
           {mismatch && (
-            <span className="text-caption text-error">{t('security.passwordMismatch')}</span>
+            <span className="text-xs font-medium text-[var(--color-error-text)]">
+              {t('security.passwordMismatch')}
+            </span>
           )}
         </label>
 
-        {change.isError && (
-          <p className="text-label text-error">
-            {change.error instanceof ApiError ? change.error.message : t('common.noConnection')}
-          </p>
-        )}
+        {change.isError && <ErrorNote>{apiErrorMessage(change.error, t)}</ErrorNote>}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 border-t border-[var(--color-border-soft)] pt-4">
           <Button type="submit" disabled={!canSubmit} loading={change.isPending}>
             {t('security.changePassword')}
           </Button>
           {done && (
-            <span className="inline-flex items-center gap-1.5 text-label text-success">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-success-text)]">
               <Check size={16} /> {t('security.passwordChanged')}
             </span>
           )}

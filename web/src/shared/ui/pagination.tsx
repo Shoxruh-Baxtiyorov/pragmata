@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Button } from './button'
+import { Button } from '@/shared/ui'
 import { cn } from '@/shared/lib/utils'
 
 // Постраничная навигация: ← Назад · «Стр. X из Y» · Вперёд →. Прячется при 1 странице.
@@ -21,7 +21,7 @@ export function Pagination({
       <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         ← {t('common.prev')}
       </Button>
-      <span className="min-w-24 text-center text-label tabular-nums text-text-secondary">
+      <span className="min-w-24 text-center text-label tabular-nums text-[var(--color-text-secondary)]">
         {t('common.page', { page, total: totalPages })}
       </span>
       <Button

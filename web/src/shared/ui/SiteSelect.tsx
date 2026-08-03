@@ -36,8 +36,8 @@ export function SiteSelect() {
   return (
     <label
       className={cn(
-        'flex h-9 items-center gap-2 rounded-button border border-border-default px-2.5',
-        current && 'border-brand text-brand',
+        'flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border-soft)] px-2.5',
+        current && 'border-[var(--color-brand-500)] text-[var(--color-brand-text)]',
       )}
       title={t('site.switch')}
     >

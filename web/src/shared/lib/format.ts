@@ -111,9 +111,9 @@ export function eventLabel(type: string, lang: 'ru' | 'uz' | 'en'): string {
 
 // Цвет по важности — CSS-переменные токенов (inline: рамка/иконка)
 export const severityColor: Record<Severity, string> = {
-  alert: 'var(--color-error)',
-  warning: 'var(--color-warning)',
-  info: 'var(--color-brand)',
+  alert: 'var(--color-error-500)',
+  warning: 'var(--color-warning-500)',
+  info: 'var(--color-brand-500)',
 }
 
 // Тон Badge по важности (tone из scaffold: neutral|brand|success|warning|error)

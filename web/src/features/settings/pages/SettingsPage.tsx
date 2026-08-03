@@ -1,15 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Button, Card, Input, PageHeader, SkeletonList } from '@/shared/ui'
+import {
+  Button,
+  Card,
+  EmptyState,
+  FieldLabel,
+  Input,
+  PageHeader,
+  SkeletonList,
+} from '@/shared/ui'
 import { cn } from '@/shared/lib/utils'
 import { useOrgHours, useSaveOrgHours } from '../api/settingsApi'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
+
 export function SettingsPage() {
   const { t } = useTranslation()
-  const { data, isLoading } = useOrgHours()
+  const { data, isLoading, isError, refetch } = useOrgHours()
   const save = useSaveOrgHours()
 
   const [enabled, setEnabled] = useState(false)
@@ -51,86 +60,97 @@ export function SettingsPage() {
     })
   }
 
-  if (isLoading) return <SkeletonList rows={3} className="h-24" />
+  if (isLoading)
+    return (
+      <div className="max-w-2xl">
+        <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
+        <SkeletonList rows={3} className="h-24" />
+      </div>
+    )
+
+  // Раньше сбой загрузки молча показывал форму с дефолтами — юзер сохранял
+  // «09:00–18:00», не зная, что настоящие настройки не доехали.
+  if (isError)
+    return (
+      <div className="max-w-2xl">
+        <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
+        <EmptyState text={t('common.noConnection')} onRetry={() => void refetch()} />
+      </div>
+    )
 
   return (
     <div className="max-w-2xl">
       <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
-      <Card className="space-y-5 p-5">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="mt-1 size-4 accent-[var(--color-brand-500)]"
-          />
-          <span>
-            <span className="block text-[14px] font-semibold text-[var(--color-text-primary)]">
-              {t('settings.afterHoursOn')}
-            </span>
-            <span className="block text-[12.5px] text-[var(--color-text-secondary)]">
-              {t('settings.afterHoursHint')}
-            </span>
-          </span>
-        </label>
-
-        {enabled && (
-          <>
-            <div>
-              <span className="mb-2 block text-[13px] font-medium text-[var(--color-text-secondary)]">
-                {t('settings.workDays')}
+      {/* Card кита — flex-колонка с gap-4; всё содержимое в одном ребёнке,
+          иначе gap и собственные отступы секций складываются */}
+      <Card className="p-5">
+        <div className="space-y-5">
+          <label className="-mx-2 flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] px-2 py-1.5 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-row-alt)]">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="mt-0.5 size-4 accent-[var(--color-brand-500)]"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">
+                {t('settings.afterHoursOn')}
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {DAY_KEYS.map((d, i) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => toggleDay(d)}
-                    className={cn(
-                      'h-9 min-w-11 rounded-[var(--radius-md)] border px-3 text-[13px] font-semibold transition',
-                      days.includes(d)
-                        ? 'border-transparent bg-[var(--color-brand-500)] text-white'
-                        : 'border-[var(--color-border-strong)] text-[var(--color-text-secondary)] hover:border-[var(--color-brand-500)]',
-                    )}
-                  >
-                    {dayLabels[i] ?? d}
-                  </button>
-                ))}
+              <span className="mt-0.5 block text-xs text-[var(--color-text-secondary)]">
+                {t('settings.afterHoursHint')}
+              </span>
+            </span>
+          </label>
+
+          {enabled && (
+            <div className="space-y-5 border-t border-[var(--color-border-soft)] pt-5">
+              <div>
+                <FieldLabel className="mb-1.5">{t('settings.workDays')}</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {DAY_KEYS.map((d, i) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={days.includes(d)}
+                      onClick={() => toggleDay(d)}
+                      className={cn(
+                        'h-9 min-w-11 rounded-[var(--radius-md)] border px-3 text-xs font-bold transition-all duration-[var(--dur-fast)] outline-none focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)] active:translate-y-px',
+                        days.includes(d)
+                          ? 'border-transparent bg-[var(--color-brand-500)] text-white shadow-[var(--shadow-brand)]'
+                          : 'border-[var(--color-border-strong)] text-[var(--color-text-secondary)] hover:border-[var(--color-brand-500)] hover:text-[var(--color-text-primary)]',
+                      )}
+                    >
+                      {dayLabels[i] ?? d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <label className="min-w-36 flex-1">
+                  <FieldLabel className="mb-1.5">{t('settings.open')}</FieldLabel>
+                  <Input type="time" value={open} onChange={(e) => setOpen(e.target.value)} />
+                </label>
+                <label className="min-w-36 flex-1">
+                  <FieldLabel className="mb-1.5">{t('settings.close')}</FieldLabel>
+                  <Input type="time" value={close} onChange={(e) => setClose(e.target.value)} />
+                </label>
               </div>
             </div>
+          )}
 
-            <div className="flex flex-wrap gap-4">
-              <label className="flex-1">
-                <span className="mb-1.5 block text-[13px] font-medium text-[var(--color-text-secondary)]">
-                  {t('settings.open')}
-                </span>
-                <Input type="time" value={open} onChange={(e) => setOpen(e.target.value)} />
-              </label>
-              <label className="flex-1">
-                <span className="mb-1.5 block text-[13px] font-medium text-[var(--color-text-secondary)]">
-                  {t('settings.close')}
-                </span>
-                <Input type="time" value={close} onChange={(e) => setClose(e.target.value)} />
-              </label>
-            </div>
-          </>
-        )}
+          <label className="block border-t border-[var(--color-border-soft)] pt-5">
+            <FieldLabel className="mb-1.5">{t('settings.timezone')}</FieldLabel>
+            <Input value={tz} onChange={(e) => setTz(e.target.value)} />
+          </label>
 
-        <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-[var(--color-text-secondary)]">
-            {t('settings.timezone')}
-          </span>
-          <Input value={tz} onChange={(e) => setTz(e.target.value)} />
-        </label>
-
-        <div className="flex items-center gap-3 pt-1">
-          <Button onClick={onSave} loading={save.isPending}>
-            {t('settings.save')}
-          </Button>
-          <span className="text-[12px] text-[var(--color-text-placeholder)]">
-            {t('settings.applyNote')}
-          </span>
+          <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border-soft)] pt-5">
+            <Button onClick={onSave} loading={save.isPending}>
+              {t('settings.save')}
+            </Button>
+            <span className="text-xs text-[var(--color-text-muted)]">{t('settings.applyNote')}</span>
+          </div>
         </div>
       </Card>
     </div>

@@ -48,9 +48,9 @@ export function LangSelect() {
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'flex h-9 items-center gap-1.5 rounded-button px-2.5 text-label font-semibold',
-          'text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary',
-          open && 'bg-bg-secondary text-text-primary',
+          'flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] px-2.5 text-label font-semibold',
+          'text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+          open && 'bg-[var(--color-bg-muted)] text-[var(--color-text-primary)]',
         )}
       >
         <Languages size={17} />
@@ -62,8 +62,8 @@ export function LangSelect() {
         <ul
           role="listbox"
           className={cn(
-            'absolute right-0 top-full z-50 mt-1.5 min-w-44 overflow-hidden rounded-card',
-            'border border-border-default bg-surface py-1 shadow-m',
+            'absolute right-0 top-full z-50 mt-1.5 min-w-44 overflow-hidden rounded-[var(--radius-lg)]',
+            'border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] py-1 shadow-[var(--shadow-md)]',
           )}
         >
           {LANGS.map((l) => {
@@ -78,11 +78,11 @@ export function LangSelect() {
                   className={cn(
                     'flex w-full items-center gap-2 px-3 py-2 text-left text-body transition-colors',
                     active
-                      ? 'font-semibold text-brand'
-                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
+                      ? 'font-semibold text-[var(--color-brand-text)]'
+                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
                   )}
                 >
-                  <span className="w-7 text-caption font-bold text-text-placeholder">
+                  <span className="w-7 text-caption font-bold text-[var(--color-text-subtle)]">
                     {l.short}
                   </span>
                   <span className="flex-1">{l.label}</span>

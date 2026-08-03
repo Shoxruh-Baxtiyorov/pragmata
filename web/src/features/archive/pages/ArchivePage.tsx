@@ -1,7 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Select, SkeletonList } from '@/shared/ui'
-import { ApiError } from '@/shared/api/client'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorNote,
+  Input,
+  PageHeader,
+  Select,
+  SkeletonList,
+} from '@/shared/ui'
+import { apiErrorMessage } from '@/shared/lib/apiError'
+import { cn } from '@/shared/lib/utils'
 import { dateTime } from '@/shared/lib/format'
 import { Database, Search } from '@/shared/ui/icons'
 import type { ArchiveJob } from '@/shared/api/types'
@@ -69,19 +80,20 @@ function AnalyzeForm() {
 
   return (
     <Card className="mb-5 p-5">
-      <h2 className="mb-1 text-body font-bold">{t('archive.newTitle')}</h2>
-      <p className="mb-4 text-label text-text-secondary">{t('archive.newHint')}</p>
+      <h2 className="mb-1 text-h4">{t('archive.newTitle')}</h2>
+      <p className="mb-4 text-label text-[var(--color-text-secondary)]">{t('archive.newHint')}</p>
       <div className="mb-3 flex gap-1">
         {(['nvr', 'file', 'url'] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={
+            className={cn(
+              'rounded-[var(--radius-md)] px-3 py-1.5 text-label outline-none transition focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]',
               mode === m
-                ? 'rounded-button bg-brand-10 px-3 py-1.5 text-label font-semibold text-brand'
-                : 'rounded-button px-3 py-1.5 text-label text-text-secondary hover:bg-bg-secondary'
-            }
+                ? 'bg-[var(--color-brand-500)]/10 font-semibold text-[var(--color-brand-text)]'
+                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+            )}
           >
             {t(`archive.mode.${m}`)}
           </button>
@@ -91,7 +103,7 @@ function AnalyzeForm() {
         <div className="flex flex-wrap items-end gap-3">
           {mode === 'nvr' ? (
             <label className="flex flex-col gap-1">
-              <span className="text-label text-text-secondary">{t('archive.toTime')}</span>
+              <span className="text-label text-[var(--color-text-secondary)]">{t('archive.toTime')}</span>
               <Input
                 type="datetime-local"
                 className="w-52"
@@ -101,17 +113,17 @@ function AnalyzeForm() {
             </label>
           ) : mode === 'file' ? (
             <label className="flex flex-col gap-1">
-              <span className="text-label text-text-secondary">{t('archive.file')}</span>
+              <span className="text-label text-[var(--color-text-secondary)]">{t('archive.file')}</span>
               <input
                 type="file"
                 accept="video/*"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="text-body text-text-secondary file:mr-3 file:rounded-button file:border-0 file:bg-brand-10 file:px-3 file:py-1.5 file:text-brand"
+                className="text-body text-[var(--color-text-secondary)] file:mr-3 file:rounded-[var(--radius-md)] file:border-0 file:bg-[var(--color-brand-500)]/10 file:px-3 file:py-1.5 file:text-[var(--color-brand-text)]"
               />
             </label>
           ) : (
             <label className="flex flex-col gap-1">
-              <span className="text-label text-text-secondary">{t('archive.url')}</span>
+              <span className="text-label text-[var(--color-text-secondary)]">{t('archive.url')}</span>
               <Input
                 className="w-80"
                 placeholder="rtsp://…/playback?starttime=…"
@@ -121,7 +133,7 @@ function AnalyzeForm() {
             </label>
           )}
           <label className="flex flex-col gap-1">
-            <span className="text-label text-text-secondary">{t('archive.recordedAt')}</span>
+            <span className="text-label text-[var(--color-text-secondary)]">{t('archive.recordedAt')}</span>
             <Input
               type="datetime-local"
               className="w-56"
@@ -131,7 +143,7 @@ function AnalyzeForm() {
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-label text-text-secondary">{t('archive.camera')}</span>
+            <span className="text-label text-[var(--color-text-secondary)]">{t('archive.camera')}</span>
             <Select value={cameraId} onChange={setCameraId}>
               <option value="">—</option>
               {(cams.data ?? []).map((c) => (
@@ -146,12 +158,7 @@ function AnalyzeForm() {
           </Button>
         </div>
         {(analyze.isError || nvr.isError) && (
-          <p className="text-label text-error">
-            {(() => {
-              const err = analyze.error ?? nvr.error
-              return err instanceof ApiError ? err.message : t('common.noConnection')
-            })()}
-          </p>
+          <ErrorNote>{apiErrorMessage(analyze.error ?? nvr.error, t)}</ErrorNote>
         )}
       </form>
     </Card>
@@ -165,7 +172,7 @@ function ArchiveEvents({ cameraId }: { cameraId: string }) {
   const items = data?.items ?? []
   if (items.length === 0) return <EmptyState text={t('archive.noEvents')} />
   return (
-    <div className="space-y-2 pt-2">
+    <div className="space-y-2 pt-3">
       {items.map((ev) => (
         <EventCard key={ev.id} event={ev} onClick={() => {}} />
       ))}
@@ -177,21 +184,21 @@ function JobRow({ job }: { job: ArchiveJob }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-border-default py-3 last:border-0">
+    <div className="border-b border-[var(--color-border-soft)] py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-3">
-        <Database size={18} className="text-text-secondary" />
+        <Database size={20} className="shrink-0 text-[var(--color-text-secondary)]" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-body font-semibold" title={job.filename}>
             {job.filename}
           </p>
-          <p className="text-label text-text-secondary">
+          <p className="text-label text-[var(--color-text-secondary)]">
             {job.camera_id} · {dateTime(job.recorded_at)}
           </p>
         </div>
         <Badge tone={STATUS_TONE[job.status]}>{t(`archive.status.${job.status}`)}</Badge>
         {job.status === 'done' && (
           <>
-            <span className="text-label tabular-nums text-text-secondary">
+            <span className="text-label tabular-nums text-[var(--color-text-secondary)]">
               {t('archive.foundN', { count: job.events_found })}
             </span>
             {job.events_found > 0 && (
@@ -204,14 +211,19 @@ function JobRow({ job }: { job: ArchiveJob }) {
       </div>
 
       {job.status === 'running' && (
-        <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-bg-secondary">
-          <div
-            className="h-full rounded-pill bg-brand transition-all"
-            style={{ width: `${Math.round(job.progress * 100)}%` }}
-          />
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-pill bg-[var(--color-bg-muted)]">
+            <div
+              className="h-full rounded-pill bg-[var(--color-brand-500)] transition-[width] duration-500 ease-out"
+              style={{ width: `${Math.round(job.progress * 100)}%` }}
+            />
+          </div>
+          <span className="w-9 shrink-0 text-right font-mono text-caption text-[var(--color-text-secondary)]">
+            {Math.round(job.progress * 100)}%
+          </span>
         </div>
       )}
-      {job.error && <p className="mt-1 text-label text-error">{job.error}</p>}
+      {job.error && <ErrorNote className="mt-2">{job.error}</ErrorNote>}
       {open && <ArchiveEvents cameraId={job.camera_id} />}
     </div>
   )
@@ -227,8 +239,14 @@ export function ArchivePage() {
       <AnalyzeForm />
       {jobs.isLoading ? (
         <SkeletonList rows={3} />
+      ) : jobs.isError ? (
+        <EmptyState text={t('common.noConnection')} onRetry={jobs.refetch} />
       ) : !jobs.data || jobs.data.length === 0 ? (
-        <EmptyState text={t('archive.empty')} />
+        <EmptyState
+          icon={<Database size={24} />}
+          text={t('archive.empty')}
+          hint={t('archive.newHint')}
+        />
       ) : (
         <Card className="p-4">
           {jobs.data.map((j) => (

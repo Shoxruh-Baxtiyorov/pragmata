@@ -4,14 +4,16 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   EmptyState,
+  ErrorNote,
   Input,
   PageHeader,
   Select,
   SkeletonGrid,
 } from '@/shared/ui'
 import { useAuthedMedia } from '@/shared/hooks/useAuthedMedia'
-import { ApiError } from '@/shared/api/client'
+import { apiErrorMessage } from '@/shared/lib/apiError'
 import { cn } from '@/shared/lib/utils'
 import { Bell, BellOff, ImagePlus, Trash2, UserPlus, X } from '@/shared/ui/icons'
 import { PersonPhotos } from '../components/PersonPhotos'
@@ -23,14 +25,10 @@ import {
   usePersons,
 } from '../api/watchlistApi'
 
-type BadgeTone = 'neutral' | 'brand' | 'success' | 'warning' | 'error'
-const CAT_TONE: Record<string, BadgeTone> = {
-  employee: 'success',
-  visitor: 'brand',
-  contractor: 'neutral',
+// Цвет = смысл: тревожные категории видны, обычные остаются нейтральными
+const CAT_TONE: Record<string, 'warning' | 'error'> = {
   watchlist: 'warning',
   banned: 'error',
-  other: 'neutral',
 }
 
 function PersonCard({ p }: { p: Person }) {
@@ -39,40 +37,48 @@ function PersonCard({ p }: { p: Person }) {
   const patch = usePatchPerson()
   const del = useDeletePerson()
   const [photosOpen, setPhotosOpen] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
 
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="aspect-[3/4] bg-black">
+    <Card className="flex flex-col overflow-hidden p-0 transition hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-md)]">
+      <div className="relative aspect-[3/4] bg-black">
         {photo ? (
           <img src={photo} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center bg-bg-secondary text-text-placeholder">
-            <UserPlus size={28} />
+          <div className="flex h-full items-center justify-center bg-[var(--color-bg-muted)] text-[var(--color-text-subtle)]">
+            <UserPlus size={32} />
           </div>
         )}
+        {/* под наблюдением — единственное состояние, о котором оператор должен узнать с карточки */}
+        {p.watch && (
+          <Badge tone="warning" className="absolute left-2 top-2">
+            <Bell size={16} /> {t('watchlist.watched')}
+          </Badge>
+        )}
       </div>
-      <div className="space-y-1 px-3 pt-2">
-        <p className="truncate text-body font-medium text-text-primary" title={p.name}>
+      <div className="flex-1 space-y-1.5 px-3 py-3">
+        <p className="truncate text-body font-medium text-[var(--color-text-primary)]" title={p.name}>
           {p.name}
         </p>
         <Badge tone={CAT_TONE[p.category] ?? 'neutral'}>{t(`people.cat.${p.category}`)}</Badge>
         {p.position && (
-          <p className="truncate text-caption text-text-secondary" title={p.position}>
+          <p className="truncate text-caption text-[var(--color-text-secondary)]" title={p.position}>
             {p.position}
           </p>
         )}
-        <p className="text-caption text-text-secondary">
+        <p className="text-caption text-[var(--color-text-secondary)]">
           {t('watchlist.seen')}: {p.seen_count} · {t('people.photoCount', { count: p.photo_count })}
         </p>
       </div>
-      <div className="flex gap-1 p-2">
+      <div className="flex gap-1 px-2 pb-2">
         <Button
           variant="ghost"
           size="sm"
           className="flex-1"
+          loading={patch.isPending}
           onClick={() => patch.mutate({ id: p.id, patch: { watch: !p.watch } })}
         >
-          {p.watch ? <BellOff size={14} /> : <Bell size={14} />}
+          {p.watch ? <BellOff size={16} /> : <Bell size={16} />}
           {p.watch ? t('watchlist.unwatch') : t('watchlist.watch')}
         </Button>
         <Button
@@ -81,12 +87,33 @@ function PersonCard({ p }: { p: Person }) {
           onClick={() => setPhotosOpen(true)}
           title={t('watchlist.photos')}
         >
-          <ImagePlus size={14} />
+          <ImagePlus size={16} />
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => del.mutate(p.id)}>
-          <Trash2 size={14} />
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={del.isPending}
+          title={t('manage.delete')}
+          onClick={() => setConfirmDel(true)}
+        >
+          <Trash2 size={16} />
         </Button>
       </div>
+
+      {/* Человек удалялся с одного клика, без вопроса — вместе с ним пропадают
+          все его фото и эталон лица. Спрашиваем, как и при удалении камеры. */}
+      <ConfirmDialog
+        open={confirmDel}
+        title={t('manage.delete')}
+        description={t('watchlist.confirmDelete', { name: p.name })}
+        confirmLabel={t('manage.delete')}
+        busy={del.isPending}
+        onConfirm={() => {
+          del.mutate(p.id)
+          setConfirmDel(false)
+        }}
+        onCancel={() => setConfirmDel(false)}
+      />
 
       {photosOpen && <PersonPhotos person={p} onClose={() => setPhotosOpen(false)} />}
     </Card>
@@ -146,13 +173,13 @@ function RegisterForm({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        <label className="flex items-center gap-2 text-body text-text-secondary">
+        <label className="flex items-center gap-2 text-body text-[var(--color-text-secondary)]">
           <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} />
           {t('people.alertOnSeen')}
         </label>
 
         <div>
-          <label className="mb-1 block text-label text-text-secondary">
+          <label className="mb-1 block text-label text-[var(--color-text-secondary)]">
             {t('people.photos')} — {t('people.photosHint')}
           </label>
           <input
@@ -170,9 +197,9 @@ function RegisterForm({ onClose }: { onClose: () => void }) {
               })
               e.target.value = '' // сбрасываем, чтобы можно было доложить ещё фото (в т.ч. те же)
             }}
-            className="text-body text-text-secondary file:mr-3 file:rounded-button file:border-0 file:bg-brand-10 file:px-3 file:py-1.5 file:text-brand"
+            className="text-body text-[var(--color-text-secondary)] file:mr-3 file:rounded-[var(--radius-md)] file:border-0 file:bg-[var(--color-brand-500)]/10 file:px-3 file:py-1.5 file:text-[var(--color-brand-text)]"
           />
-          <p className="mt-1 text-caption text-text-secondary">
+          <p className="mt-1 text-caption text-[var(--color-text-secondary)]">
             {t('people.photosMulti')}
           </p>
           {previews.length > 0 && (
@@ -182,14 +209,14 @@ function RegisterForm({ onClose }: { onClose: () => void }) {
                   <img
                     src={src}
                     alt=""
-                    className="size-16 rounded-input border border-border-default object-cover"
+                    className="size-16 rounded-[var(--radius-md)] border border-[var(--color-border-soft)] object-cover"
                   />
                   <button
                     type="button"
-                    className="absolute -right-1 -top-1 rounded-full bg-error p-0.5 text-on-brand"
+                    className="absolute -right-1.5 -top-1.5 rounded-full bg-[var(--color-error-500)] p-1 text-white shadow-[var(--shadow-sm)] outline-none transition hover:bg-[var(--color-danger-600)] focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]"
                     onClick={() => setFiles((f) => f.filter((_, j) => j !== i))}
                   >
-                    <X size={12} />
+                    <X size={16} />
                   </button>
                 </div>
               ))}
@@ -197,11 +224,7 @@ function RegisterForm({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {enroll.isError && (
-          <p className="text-label text-error">
-            {enroll.error instanceof ApiError ? enroll.error.message : t('common.noConnection')}
-          </p>
-        )}
+        {enroll.isError && <ErrorNote>{apiErrorMessage(enroll.error, t)}</ErrorNote>}
 
         <div className="flex gap-2">
           <Button type="submit" loading={enroll.isPending} disabled={!name.trim() || !files.length}>
@@ -244,10 +267,10 @@ export function WatchlistPage() {
             key={c}
             onClick={() => setFilter(c)}
             className={cn(
-              'rounded-pill px-3 py-1 text-caption font-medium',
+              'rounded-pill px-3 py-1.5 text-caption font-medium outline-none transition focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]',
               filter === c
-                ? 'bg-brand text-on-brand'
-                : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
+                ? 'bg-[var(--color-brand-500)] text-[var(--color-text-on-brand)]'
+                : 'bg-[var(--color-bg-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text-primary)]',
             )}
           >
             {c === 'all' ? t('people.filterAll') : t(`people.cat.${c}`)}

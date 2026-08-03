@@ -41,6 +41,9 @@ body[data-scroll-locked] {
   --color-brand-ring: rgba(47, 107, 255, 0.12);
   --color-brand-gradient-from: var(--color-brand-500);
   --color-brand-gradient-to:   var(--color-brand-400);
+  /* Teal accent mark used only by the Logo wordmark (ported 1:1 from the
+     legacy Ziyo `--brand-mark` token — same hex, no new color decision). */
+  --color-brand-mark: #0d9488;
   --color-accent-50:  #eef3ff;
   --color-accent-500: #5b8bff;
   --color-accent-700: #164bd2;
@@ -276,17 +279,49 @@ body[data-scroll-locked] {
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Text styles */
-  --text-body: 500 14px/1.6 var(--font-sans);
-  --text-body-sm: 500 13px/1.5 var(--font-sans);
-  --text-caption: 600 12.5px/1.5 var(--font-sans);
-  --text-display: 800 42px/1.05 var(--font-heading);
-  --text-h1: 800 26px/1.25 var(--font-heading);
-  --text-h2: 700 19px/1.3 var(--font-heading);
-  --text-h3: 700 16px/1.4 var(--font-heading);
-  --text-h4: 700 14px/1.4 var(--font-heading);
-  --text-label: 700 12.5px/1.5 var(--font-sans);
-  --text-number: 800 27px/1 var(--font-mono);
+  /* Text styles.
+   * Tailwind v4's `--text-*` namespace takes a font-SIZE only, plus optional
+   * `--text-<name>--line-height` / `--text-<name>--font-weight` companion keys.
+   * These were previously written as CSS `font` shorthand
+   * (`700 16px/1.4 var(--font-heading)`), which Tailwind emitted verbatim as
+   * `font-size: 700 16px/1.4 ...` — invalid, so the browser dropped the whole
+   * declaration and every `text-h1`/`text-body`/... utility silently did
+   * nothing. Values below are the exact weights/sizes/line-heights from the
+   * old shorthand.
+   * The namespace has no font-family slot: `--font-heading` is an alias of
+   * `--font-sans` (the inherited default), so nothing changes there, but a
+   * mono scale like `--text-number` must also carry `font-mono` at the call
+   * site to get its family. */
+  --text-body: 14px;
+  --text-body--font-weight: 500;
+  --text-body--line-height: 1.6;
+  --text-body-sm: 13px;
+  --text-body-sm--font-weight: 500;
+  --text-body-sm--line-height: 1.5;
+  --text-caption: 12.5px;
+  --text-caption--font-weight: 600;
+  --text-caption--line-height: 1.5;
+  --text-display: 42px;
+  --text-display--font-weight: 800;
+  --text-display--line-height: 1.05;
+  --text-h1: 26px;
+  --text-h1--font-weight: 800;
+  --text-h1--line-height: 1.25;
+  --text-h2: 19px;
+  --text-h2--font-weight: 700;
+  --text-h2--line-height: 1.3;
+  --text-h3: 16px;
+  --text-h3--font-weight: 700;
+  --text-h3--line-height: 1.4;
+  --text-h4: 14px;
+  --text-h4--font-weight: 700;
+  --text-h4--line-height: 1.4;
+  --text-label: 12.5px;
+  --text-label--font-weight: 700;
+  --text-label--line-height: 1.5;
+  --text-number: 27px;
+  --text-number--font-weight: 800;
+  --text-number--line-height: 1;
 
   /* ─── Chat theme — pure ERP-token aliases — see ADR 2026-07-03-chat-erp-palette ───
    * Supersedes the Telegram-green ADR (2026-07-02-chat-telegram-green-tokens):
@@ -963,6 +998,7 @@ html[data-color-scheme="dark"] {
    * runtime applyTheme() recomputes this per school brand on dark mode. */
   --color-brand-text:       #9ab8ff;
   --color-brand-text-hover: #dbe6ff;
+  --color-brand-mark: #34cbb9;
 
   /* Elevation: deeper shadows on dark surfaces so cards/popovers still
    * read as raised — light-mode shadow values are nearly invisible here. */

@@ -34,7 +34,7 @@ export function Logo({
 }) {
   return (
     <span
-      className={cn('inline-flex items-center gap-2.5 text-brand-mark', className)}
+      className={cn('inline-flex items-center gap-2.5 text-[var(--color-brand-mark)]', className)}
       aria-label="Pragmata AI"
     >
       <LogoMark size={size} />

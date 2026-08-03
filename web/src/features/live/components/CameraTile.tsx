@@ -6,6 +6,7 @@ import { Badge, Button } from '@/shared/ui'
 import { Video, VideoOff } from '@/shared/ui/icons'
 import { POLL } from '@/shared/lib/format'
 import type { Camera } from '@/shared/api/types'
+import { ZoneOverlay } from './ZoneOverlay'
 
 /** Снапшот перезапрашиваем сами (cache-buster), чтоб не кэшировался; поверх — зоны. */
 export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera: Camera) => void }) {
@@ -45,42 +46,30 @@ export function CameraTile({ camera, onOpen }: { camera: Camera; onOpen: (camera
         if (e.key === ' ') e.preventDefault()
         if (e.key === 'Enter' || e.key === ' ') onOpen(camera)
       }}
-      className="group relative overflow-hidden rounded-card border border-border-default bg-surface text-left shadow-s transition hover:shadow-m"
+      className="group relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] text-left shadow-[var(--shadow-xs)] outline-none transition-all duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)] focus-visible:border-[var(--color-brand-500)] focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]"
     >
       <div className="relative aspect-video bg-black">
         {src ? (
           <img
             src={src}
             alt={camera.name}
+            decoding="async"
             className={`h-full w-full object-cover ${camera.online ? '' : 'opacity-40 grayscale'}`}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-text-secondary">
-            {camera.online ? <Video size={28} /> : <VideoOff size={28} />}
+          <div className="flex h-full items-center justify-center text-[var(--color-text-muted)]">
+            {camera.online ? <Video size={32} /> : <VideoOff size={32} />}
           </div>
         )}
-        {/* SVG-оверлей зон: polygon в долях 0..1 → viewBox 0..100 */}
-        {camera.zones.length > 0 && (
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full">
-            {camera.zones.map((z) => (
-              <polygon
-                key={z.name}
-                points={z.polygon.map(([x, y]) => `${x * 100},${y * 100}`).join(' ')}
-                fill="color-mix(in srgb, var(--color-brand) 15%, transparent)"
-                stroke="var(--color-error)"
-                strokeWidth="0.6"
-              />
-            ))}
-          </svg>
-        )}
+        <ZoneOverlay zones={camera.zones} />
       </div>
       <div className="flex items-center justify-between gap-2 p-3">
-        <span className="min-w-0 truncate text-body font-semibold text-text-primary" title={camera.name}>
+        <span className="min-w-0 truncate text-sm font-semibold text-[var(--color-text-primary)]" title={camera.name}>
           {camera.name}
         </span>
         <div className="flex flex-shrink-0 items-center gap-2">
           <Badge tone={camera.online ? 'success' : 'error'}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'currentColor' }} />
+            <span className="size-1.5 rounded-full bg-current" />
             {camera.online ? t('live.online') : t('live.offline')}
           </Badge>
           <Button

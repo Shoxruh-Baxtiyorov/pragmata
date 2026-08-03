@@ -24,6 +24,19 @@ import { Loader2 } from '@/shared/ds/icons'
 
 export { LangSelect } from './LangSelect'
 export { SiteSelect } from './SiteSelect'
+// Kit toggle passed through unchanged — screens still using a raw
+// `<input type="checkbox">` can switch to this without a new import path.
+export { Switch } from '@/shared/ds'
+// Подтверждение необратимых действий — только через диалог кита (см. его
+// докстринг): window.confirm нельзя стилизовать и он не локализуется.
+export { ConfirmDialog } from '@/shared/ds'
+// Плашка-«таблетка» кита: сама решает hit-target и aria-label у крестика.
+export { Chip } from '@/shared/ds'
+// Графики кита НАМЕРЕННО не реэкспортируются отсюда: этот барель импортирует
+// каждый экран, а реэкспорт втягивал recharts (~330 КБ gzip вместе с его
+// деревом d3/redux) в общий бандл — его грузил даже экран входа. Две страницы
+// с графиками берут их напрямую из '@/shared/ds/charts' и грузятся отдельным
+// чанком (см. lazy в AppRouter).
 
 // --- Button: старые варианты/размеры → кит ----------------------------------
 
@@ -117,18 +130,19 @@ export function Modal({
 }) {
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      {/* showCloseButton=false: экраны рисуют собственный ✕ (иначе два крестика) */}
-      <DialogContent showCloseButton={false} className={cn('max-w-lg', className)}>
-        {children}
-      </DialogContent>
+      {/* ✕ рисует сам кит: один крестик с aria-label на все модалки. Раньше
+          каждый экран рисовал свой (showCloseButton=false), и два из пяти были
+          без подписи для скринридера. Крестик у кита абсолютный (top-2 right-2,
+          36px) — шапки модалок держат под него pr-8. */}
+      <DialogContent className={cn('max-w-lg', className)}>{children}</DialogContent>
     </Dialog>
   )
 }
 
 // --- вспомогательное ---------------------------------------------------------
 
-export function Spinner() {
-  return <KitSpinner />
+export function Spinner({ size, className }: { size?: number; className?: string }) {
+  return <KitSpinner size={size} className={className} />
 }
 
 export function PageHeader({
@@ -181,6 +195,39 @@ export function Select({
   )
 }
 
+// --- ErrorNote: тонированная плашка ошибки/предупреждения --------------------
+
+// Одна плашка на все экраны. Раньше её класс копировали ~12 раз: половина копий
+// брала алиасы --color-error-*, половина --color-status-error-* (резолвятся в
+// одно и то же), но текст расходился реально — text-xs font-medium против
+// text-label. Канон — status-токены (как у StatusBadge кита) и text-label.
+const NOTE_TONE = {
+  error:
+    'border-[var(--color-status-error-border)] bg-[var(--color-status-error-bg)] text-[var(--color-status-error-text)]',
+  warning:
+    'border-[var(--color-status-warning-border)] bg-[var(--color-status-warning-bg)] text-[var(--color-status-warning-text)]',
+} as const
+
+export function ErrorNote({
+  tone = 'error',
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLParagraphElement> & { tone?: 'error' | 'warning' }) {
+  return (
+    <p
+      className={cn(
+        'rounded-[var(--radius-md)] border px-3 py-2 text-label',
+        NOTE_TONE[tone],
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </p>
+  )
+}
+
 export function Skeleton({ className }: { className?: string }) {
   return <KitSkeleton className={className} />
 }
@@ -213,16 +260,6 @@ export function SkeletonGrid({
   )
 }
 
-export function SkeletonTiles({ count = 4 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <KitSkeleton key={i} className="h-24" />
-      ))}
-    </div>
-  )
-}
-
 export function StatTile({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] p-4 shadow-[var(--shadow-xs)]">
@@ -234,17 +271,70 @@ export function StatTile({ label, value }: { label: string; value: ReactNode }) 
   )
 }
 
-export function EmptyState({ text, onRetry }: { text?: string; onRetry?: () => void }) {
+export function EmptyState({
+  text,
+  hint,
+  icon,
+  onRetry,
+  className,
+}: {
+  text?: string
+  hint?: ReactNode
+  icon?: ReactNode
+  onRetry?: () => void
+  className?: string
+}) {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col items-center gap-3 py-16 text-[var(--color-text-secondary)]">
-      {text ?? t('common.empty')}
+    <div
+      className={cn(
+        'flex flex-col items-center text-center text-[var(--color-text-secondary)]',
+        // С иконкой — «богатая» пустота в пунктирной рамке (архив, фото человека).
+        // Без иконки — прежняя простая строка, отбитая по вертикали.
+        icon
+          ? 'gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border-strong)] p-10'
+          : 'gap-3 py-16',
+        className,
+      )}
+    >
+      {icon}
+      <p className="text-body">{text ?? t('common.empty')}</p>
+      {hint && <p className="text-caption">{hint}</p>}
       {onRetry && (
         <Button variant="secondary" size="sm" onClick={onRetry}>
           {t('common.retry')}
         </Button>
       )}
     </div>
+  )
+}
+
+// --- FieldLabel: подпись поля формы -----------------------------------------
+
+// Один набор типографики на все формы. Отступ снизу остаётся за вызывающим:
+// у части форм <label> — обычный блок (нужен mb-1.5), у части — flex-колонка
+// с gap-1.5, и там лишний margin даёт двойной зазор.
+export function FieldLabel({ className, children }: { className?: string; children?: ReactNode }) {
+  return (
+    <span
+      className={cn('block text-xs font-semibold text-[var(--color-text-secondary)]', className)}
+    >
+      {children}
+    </span>
+  )
+}
+
+// --- StaleBadge: «связь потеряна, цифры на экране устарели» -------------------
+
+// Экраны с поллингом при обрыве не гасят данные, а помечают их устаревшими.
+// Раньше эту метку набирали руками на пяти страницах.
+export function StaleBadge({ show, className }: { show: boolean; className?: string }) {
+  const { t } = useTranslation()
+  if (!show) return null
+  return (
+    <Badge tone="warning" className={className}>
+      {t('common.noConnection')}
+    </Badge>
   )
 }
 
