@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/app/layout/AppLayout'
 import { Spinner } from '@/shared/ui'
 import { LoginPage, useIsAdmin, useIsAuthed } from '@/features/auth'
+import { LandingPage } from '@/features/landing'
 import { UsersPage } from '@/features/users'
 import { SecurityPage } from '@/features/security'
 import { ArchivePage } from '@/features/archive'
@@ -47,6 +48,8 @@ export function AppRouter() {
   if (!authed) {
     return (
       <Routes>
+        {/* «/» — публичный лендинг, единственная страница вне гейта помимо входа */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -54,6 +57,9 @@ export function AppRouter() {
   }
   return (
     <Routes>
+      {/* лендинг остаётся доступен и залогиненным — это публичная витрина,
+          а не экран приложения; домом приложения по-прежнему /overview */}
+      <Route path="/" element={<LandingPage />} />
       <Route element={<AppLayout />}>
         <Route
           path="/overview"
