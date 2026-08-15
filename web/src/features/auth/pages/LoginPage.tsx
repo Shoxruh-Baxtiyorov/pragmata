@@ -62,7 +62,7 @@ export function LoginPage() {
         className="relative hidden overflow-hidden md:flex md:flex-1"
         style={{
           background:
-            'linear-gradient(135deg, #0d9488 0%, #14808f 34%, #1f5ae8 78%, #164bd2 100%)',
+            'linear-gradient(135deg, #14b8a6 0%, #0d9488 42%, #0f766e 76%, #115e59 100%)',
         }}
       >
         {/* мягкие световые пятна поверх градиента для глубины */}

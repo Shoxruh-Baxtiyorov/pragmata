@@ -24,21 +24,21 @@ body[data-scroll-locked] {
   --font-heading: var(--font-sans);
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Brand */
-  --color-brand-50:  #eef3ff;
-  --color-brand-100: #e4edff;
-  --color-brand-200: #dbe6ff;
-  --color-brand-300: #9ab8ff;
-  --color-brand-400: #5b8bff;
-  --color-brand-500: #2f6bff;
-  --color-brand-600: #1f5ae8;
-  --color-brand-700: #164bd2;
-  --color-brand-800: #123ca8;
-  --color-brand-900: #1f2940;
-  --color-brand-text:       var(--color-brand-500);
-  --color-brand-text-hover: var(--color-brand-600);
-  --color-brand-shadow: rgba(47, 107, 255, 0.3);
-  --color-brand-ring: rgba(47, 107, 255, 0.12);
+  /* Brand — бирюза логотипа (Pragmata «цвет лого»), единая для всего приложения */
+  --color-brand-50:  #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #0d9488;
+  --color-brand-600: #0f766e;
+  --color-brand-700: #115e59;
+  --color-brand-800: #134e4a;
+  --color-brand-900: #12403c;
+  --color-brand-text:       var(--color-brand-600);
+  --color-brand-text-hover: var(--color-brand-700);
+  --color-brand-shadow: rgba(13, 148, 136, 0.3);
+  --color-brand-ring: rgba(13, 148, 136, 0.14);
   --color-brand-gradient-from: var(--color-brand-500);
   --color-brand-gradient-to:   var(--color-brand-400);
   /* Teal accent mark used only by the Logo wordmark (ported 1:1 from the
@@ -996,8 +996,8 @@ html[data-color-scheme="dark"] {
    * ≥4.5:1 contrast on the dark card surface (#17202e).
    * iqbola brand-300 (#84b4f7) → 6.9:1 — clears AA for body text. The
    * runtime applyTheme() recomputes this per school brand on dark mode. */
-  --color-brand-text:       #9ab8ff;
-  --color-brand-text-hover: #dbe6ff;
+  --color-brand-text:       #5eead4;
+  --color-brand-text-hover: #ccfbf1;
   --color-brand-mark: #34cbb9;
 
   /* Elevation: deeper shadows on dark surfaces so cards/popovers still
