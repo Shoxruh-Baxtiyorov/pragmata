@@ -259,6 +259,7 @@ class HeatmapOut(BaseModel):
 class AgentAsk(BaseModel):
     question: str
     session_id: str = "web"
+    conversation_id: uuid.UUID | None = None  # сохраняемый диалог; None → создать новый
 
 
 class MediaEvidence(BaseModel):
@@ -270,6 +271,15 @@ class MediaEvidence(BaseModel):
 class AgentAnswer(BaseModel):
     text: str
     evidence: list[MediaEvidence]
+    conversation_id: str | None = None  # куда сохранён этот обмен
+
+
+class AgentMemoryIn(BaseModel):
+    text: str
+
+
+class ConversationTitleIn(BaseModel):
+    title: str
 
 
 class PersonOut(BaseModel):

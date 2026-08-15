@@ -191,6 +191,25 @@ TOOL_SPECS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "remember",
+            "description": (
+                "Запомнить факт про объект НАДОЛГО (между диалогами): предпочтение "
+                "пользователя, как что называть, важное правило объекта. Вызывай, когда "
+                "пользователь просит «запомни…»/«esla…» или сообщает устойчивый факт. "
+                "Не запоминай разовые вопросы и приватные данные без явной просьбы."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "fact": {"type": "string", "description": "факт для долговременной памяти"},
+                },
+                "required": ["fact"],
+            },
+        },
+    },
 ]
 
 # severity-значения, которые локальные модели ошибочно шлют в поле type
@@ -581,3 +600,13 @@ class AgentTools:
             s.commit()
         bump_config_version(self.sf)
         return {"ok": True, "open": open, "close": close, "note": "вне этих часов = тревога"}
+
+    def remember(self, fact: str) -> dict[str, Any]:
+        """Записать факт в долговременную память ассистента (per-site)."""
+        from pragmata.services import agent_chat_service
+
+        fact = (fact or "").strip()
+        if not fact:
+            return {"error": "empty fact"}
+        agent_chat_service.add_memory(self.scope, fact, source="user")
+        return {"ok": True, "remembered": fact, "note": "запомнил надолго"}

@@ -149,6 +149,11 @@ SYSTEM_PROMPT = """Ты — Pragmata AI, ассистент видеонаблю
    «алертить всё что после 22:00» → set_working_hours(open="08:00", close="22:00").
    После вызова подтверди, что правило создано и действует сразу.
 8. Времена в результатах уже локальные — показывай как есть.
+9. ПАМЯТЬ: тебе может даваться блок «Что ты помнишь об этом объекте» — учитывай
+   эти факты в ответах. Если пользователь просит запомнить что-то на будущее
+   («запомни, что…», «esla…», предпочтение, важный факт про объект, как что
+   называть) — вызови инструмент remember(fact="…") и подтверди, что запомнил.
+   Не запоминай разовые вопросы, пароли и приватные данные без явной просьбы.
 
 НАПОМИНАНИЕ В КОНЦЕ (самое важное, не забудь): ЯЗЫК ОТВЕТА ДОЛЖЕН СОВПАДАТЬ
 С ЯЗЫКОМ ВОПРОСА — o'zbekcha savolga faqat o'zbekcha javob, русский вопрос —
@@ -203,6 +208,31 @@ class AgentRunner:
         self._history: dict[int, list[dict[str, Any]]] = {}
 
     def answer(self, chat_id: int, question: str) -> tuple[str, list[dict[str, str]]]:
+        """Короткая память в процессе (Telegram): история per chat_id в памяти."""
+        history = self._history.setdefault(chat_id, [])
+        text, evidence = self._run(question, history)
+        history.extend(
+            [{"role": "user", "content": question}, {"role": "assistant", "content": text}]
+        )
+        del history[:-6]  # держим последние 3 обмена
+        return text, evidence
+
+    def chat(
+        self,
+        question: str,
+        history: list[dict[str, Any]] | None = None,
+        memory_text: str = "",
+    ) -> tuple[str, list[dict[str, str]]]:
+        """Сохраняемый диалог (дашборд): история приходит из БД, память вклеена
+        в системный промпт. Историю НЕ мутируем — её персистит вызывающий."""
+        return self._run(question, history or [], memory_text)
+
+    def _run(
+        self,
+        question: str,
+        history: list[dict[str, Any]],
+        memory_text: str = "",
+    ) -> tuple[str, list[dict[str, str]]]:
         """→ (текст, доказательства [{photo, caption, clip?}]). Вызывать из thread'а."""
         tz = self.cfg.site.timezone
         system = SYSTEM_PROMPT.format(
@@ -210,7 +240,8 @@ class AgentRunner:
             now=datetime.now(ZoneInfo(tz)).strftime("%d.%m.%Y %H:%M"),
             tz=tz,
         )
-        history = self._history.setdefault(chat_id, [])
+        if memory_text:
+            system = f"{system}\n\n{memory_text}"
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": system},
             *history,
@@ -270,10 +301,6 @@ class AgentRunner:
                     # раз; если инструмент уже был, ответу верим
                     forced = True
                     continue
-                history.extend(
-                    [{"role": "user", "content": question}, {"role": "assistant", "content": text}]
-                )
-                del history[:-6]  # держим последние 3 обмена
                 return text, evidence
 
             tool_used = True

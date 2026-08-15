@@ -315,4 +315,27 @@ export interface MediaEvidence {
 export interface AgentAnswer {
   text: string
   evidence: MediaEvidence[]
+  conversation_id: string | null
+}
+
+// сохранённый диалог ассистента
+export interface AgentConversation {
+  id: string
+  title: string
+  updated_at: string | null
+  message_count: number
+}
+
+export interface AgentMessage {
+  role: 'user' | 'assistant'
+  content: string
+  evidence: MediaEvidence[]
+}
+
+// факт долговременной памяти ассистента
+export interface AgentMemoryItem {
+  id: string
+  text: string
+  source: string
+  created_at: string | null
 }

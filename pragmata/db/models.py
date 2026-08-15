@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, String, func, text
+from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -378,3 +378,58 @@ class AuditLog(Base):
     path: Mapped[str] = mapped_column(String(300))
     status_code: Mapped[int] = mapped_column()
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+# ── AI-ассистент: сохраняемые диалоги + память (учится между сессиями) ────────
+
+
+class AgentConversation(Base):
+    """Сохранённый диалог с ассистентом (переживает перезагрузку/сессию)."""
+
+    __tablename__ = "agent_conversations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), default=1, index=True)
+    title: Mapped[str] = mapped_column(String(200), default="Yangi suhbat")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True
+    )
+
+
+class AgentMessage(Base):
+    """Реплика диалога. evidence — приложенные фото/клипы (как их вернул агент)."""
+
+    __tablename__ = "agent_messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_conversations.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(16))  # user | assistant
+    content: Mapped[str] = mapped_column(Text, default="")
+    evidence: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+
+class AgentMemory(Base):
+    """Долговременная память ассистента: факты/предпочтения, которые он помнит
+    между диалогами. Пополняется инструментом remember (и вручную из UI) —
+    так ассистент «учится» под конкретный объект."""
+
+    __tablename__ = "agent_memory"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), default=1, index=True)
+    text: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(16), default="user")  # user | auto
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
