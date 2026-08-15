@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "soqchi_ai",
+  "project_id": "62d7e48f-3f45-474c-87c2-e654300a5ce9"
+}
