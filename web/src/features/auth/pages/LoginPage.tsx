@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, ErrorNote, FieldLabel, Input, LangSelect } from '@/shared/ui'
 import { Logo, LogoMark } from '@/shared/ui/Logo'
-import { Eye, EyeOff, ShieldCheck, Undo2 } from '@/shared/ui/icons'
+import { Eye, EyeOff, Moon, ShieldCheck, Sun, Undo2 } from '@/shared/ui/icons'
+import { useTheme } from '@/shared/hooks/useTheme'
 import { ApiError } from '@/shared/api/client'
 import { apiErrorMessage } from '@/shared/lib/apiError'
 import { useLogin } from '../api/authApi'
@@ -20,6 +21,22 @@ const MARKS = [
 
 // Подпись поля: placeholder вместо label исчезает при вводе и хуже читается
 // скринридером — поэтому у каждого поля своя видимая подпись.
+
+function ThemeToggle() {
+  const { t } = useTranslation()
+  const [theme, toggle] = useTheme()
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
+      aria-label={theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
+      className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] outline-none transition hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]"
+    >
+      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  )
+}
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -109,7 +126,10 @@ export function LoginPage() {
       <div className="flex w-full shrink-0 flex-col justify-between p-6 sm:p-10 md:w-[44%] lg:w-[40%] xl:w-[36%]">
         <header className="flex items-center justify-between">
           <Logo size={28} />
-          <LangSelect />
+          <div className="flex items-center gap-1">
+            <LangSelect />
+            <ThemeToggle />
+          </div>
         </header>
 
         <div className="mx-auto flex w-full max-w-sm flex-col">

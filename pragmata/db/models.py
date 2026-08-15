@@ -416,6 +416,21 @@ class AgentMessage(Base):
     )
 
 
+class ContactRequest(Base):
+    """Заявка с публичного лендинга (форма «Связаться»). Без авторизации."""
+
+    __tablename__ = "contact_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(120))
+    contact: Mapped[str] = mapped_column(String(200))  # телефон или email
+    message: Mapped[str] = mapped_column(Text, default="")
+    handled: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+
 class AgentMemory(Base):
     """Долговременная память ассистента: факты/предпочтения, которые он помнит
     между диалогами. Пополняется инструментом remember (и вручную из UI) —

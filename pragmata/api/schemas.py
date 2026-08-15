@@ -278,6 +278,12 @@ class AgentMemoryIn(BaseModel):
     text: str
 
 
+class ContactIn(BaseModel):
+    name: str
+    contact: str
+    message: str = ""
+
+
 class ConversationTitleIn(BaseModel):
     title: str
 
