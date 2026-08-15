@@ -1501,3 +1501,23 @@ html[data-density="compact"] {
   th, td { border-color: #ccc !important; color: black !important; }
   a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; }
 }
+
+/* ── Логин: бирюзовый градиент панели, темнеет в тёмной теме ──────────────── */
+:root {
+  --lp-login-grad: linear-gradient(135deg, #14b8a6 0%, #0d9488 42%, #0f766e 76%, #115e59 100%);
+}
+html[data-color-scheme="dark"] {
+  --lp-login-grad: linear-gradient(140deg, #0c5c55 0%, #0b3f3b 55%, #0a2b2e 100%);
+}
+
+/* ── Автозаполнение Chrome не должно «светиться» на тёмной теме ───────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-surface) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-surface) inset;
+  caret-color: var(--color-text-primary);
+  transition: background-color 9999s ease-out 0s;
+}

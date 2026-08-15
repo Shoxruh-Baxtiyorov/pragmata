@@ -77,10 +77,7 @@ export function LoginPage() {
       {/* ── левая колонка: брендовая панель с лого (скрыта на мобилке) ──────── */}
       <div
         className="relative hidden overflow-hidden md:flex md:flex-1"
-        style={{
-          background:
-            'linear-gradient(135deg, #14b8a6 0%, #0d9488 42%, #0f766e 76%, #115e59 100%)',
-        }}
+        style={{ background: 'var(--lp-login-grad)' }}
       >
         {/* мягкие световые пятна поверх градиента для глубины */}
         <div
