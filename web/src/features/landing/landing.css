@@ -2040,3 +2040,45 @@
     transform: none;
   }
 }
+
+/* ── Кнопка переключения темы в шапке ─────────────────────────────────────── */
+.lp-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--lp-on-dark-2);
+  background: transparent;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.lp-theme-toggle:hover {
+  background: color-mix(in srgb, var(--lp-on-dark) 12%, transparent);
+  color: var(--lp-on-dark);
+}
+
+/* ── СВЕТЛАЯ ТЕМА лендинга: перекрашиваем «тёмные» lp-переменные в светлые ── */
+html[data-color-scheme="light"] .lp {
+  --lp-ink: #eef1f6;
+  --lp-ink-2: #f7f9fc;
+  --lp-panel: #ffffff;
+  --lp-panel-2: #eef1f6;
+  --lp-on-dark: #14202e;
+  --lp-on-dark-2: #47576a;
+  --lp-on-dark-3: #6d7c8f;
+  --lp-line-dark: rgba(15, 30, 45, 0.12);
+  --lp-line-dark-soft: rgba(15, 30, 45, 0.07);
+  --lp-accent-lift: var(--color-brand-600);
+  --lp-mark: #0d9488;
+}
+/* шапка в светлой теме: токены кита для LangSelect тоже светлые */
+html[data-color-scheme="light"] .lp .lp-head__tools {
+  --color-text-primary: var(--lp-on-dark);
+  --color-text-secondary: var(--lp-on-dark-2);
+  --color-text-subtle: var(--lp-on-dark-3);
+  --color-bg-muted: rgba(15, 30, 45, 0.06);
+  --color-bg-surface: var(--lp-panel);
+  --color-border-soft: var(--lp-line-dark);
+  --color-brand-text: var(--lp-accent-lift);
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   LockKeyhole,
   MessageCircle,
+  Moon,
   Package,
   Play,
   RefreshCw,
@@ -27,13 +28,16 @@ import {
   ShieldCheck,
   ShoppingCart,
   Sparkles,
+  Sun,
   UserSearch,
   X,
   type LucideIcon,
 } from '@/shared/ui/icons'
-import { Button, LangSelect, Modal } from '@/shared/ui'
+import { Button, Input, LangSelect, Modal } from '@/shared/ui'
 import { LogoMark } from '@/shared/ui/Logo'
-import { CONTACT_EMAIL, landingCopy } from '../copy'
+import { useTheme } from '@/shared/hooks/useTheme'
+import { landingCopy } from '../copy'
+import { useSubmitContact } from '../api/landingApi'
 import '../landing.css'
 
 /* Снимки панели лежат в web/public/landing/. Если файла нет — на его месте
@@ -85,6 +89,22 @@ function Reveal({
     >
       {children}
     </Tag>
+  )
+}
+
+function ThemeToggle() {
+  const { t } = useTranslation()
+  const [theme, toggle] = useTheme()
+  return (
+    <button
+      type="button"
+      className="lp-theme-toggle"
+      onClick={toggle}
+      aria-label={theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
+      title={theme === 'dark' ? t('common.themeLight') : t('common.themeDark')}
+    >
+      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
   )
 }
 
@@ -182,6 +202,7 @@ export function LandingPage() {
           </nav>
           <div className="lp-head__tools">
             <LangSelect />
+            <ThemeToggle />
             <Link to="/login" className="lp-headcta">
               <span>{t('lp.cta.login')}</span>
               <ArrowUpRight size={16} />
@@ -669,52 +690,74 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {dialogOpen && (
-        <Modal onClose={() => setDialogOpen(false)}>
-          <div className="lp-dlg">
-            <Kicker>{c.modal.kicker}</Kicker>
-            <h2>
-              {c.modal.titleA}
-              <br />
-              <em>{c.modal.titleEm}</em>
-            </h2>
-            <p>{c.modal.text}</p>
-            <div className="lp-dlg__fields">
-              <div>
-                <label htmlFor="lp-site">{c.modal.siteLabel}</label>
-                <select id="lp-site" defaultValue={c.modal.siteOptions[0]}>
-                  {c.modal.siteOptions.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="lp-cams">{c.modal.camLabel}</label>
-                <select id="lp-cams" defaultValue={c.modal.camOptions[0]}>
-                  {c.modal.camOptions.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <Button
-              size="lg"
-              className="lp-dlg__submit"
-              onClick={() => {
-                window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(c.modal.subject)}`
-              }}
-            >
-              {c.modal.submit}
-              <ArrowRight size={16} />
-            </Button>
-            <span className="lp-dlg__fineprint">{c.modal.fineprint}</span>
-          </div>
-        </Modal>
-      )}
+      {dialogOpen && <ContactModal onClose={() => setDialogOpen(false)} />}
     </div>
+  )
+}
+
+// Реальная форма «Связаться» → POST /api/v1/contact (публичный, без авторизации)
+function ContactModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
+  const submit = useSubmitContact()
+  const [name, setName] = useState('')
+  const [contact, setContact] = useState('')
+  const [message, setMessage] = useState('')
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !contact.trim() || submit.isPending) return
+    submit.mutate({ name: name.trim(), contact: contact.trim(), message: message.trim() })
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="pr-8 text-h2 font-semibold text-[var(--color-text-primary)]">
+        {t('lp.contact.title')}
+      </h2>
+      <p className="mt-1 text-body text-[var(--color-text-secondary)]">{t('lp.contact.lede')}</p>
+
+      {submit.isSuccess ? (
+        <div className="mt-5 flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-brand-500)]/40 bg-[var(--color-brand-500)]/10 px-4 py-4 text-body text-[var(--color-brand-text)]">
+          <Check size={20} /> {t('lp.contact.ok')}
+        </div>
+      ) : (
+        <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              placeholder={t('lp.contact.name')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <Input
+              placeholder={t('lp.contact.contact')}
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              required
+            />
+          </div>
+          <textarea
+            placeholder={t('lp.contact.message')}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={4}
+            className="w-full rounded-[var(--radius-md)] border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] px-3 py-2 text-body text-[var(--color-text-primary)] outline-none transition placeholder:text-[var(--color-text-subtle)] focus-visible:border-[var(--color-brand-500)] focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]"
+          />
+          {submit.isError && (
+            <p className="text-label text-[var(--color-error-500)]">{t('lp.contact.err')}</p>
+          )}
+          <div>
+            <Button
+              type="submit"
+              size="lg"
+              loading={submit.isPending}
+              disabled={!name.trim() || !contact.trim()}
+            >
+              {t('lp.contact.submit')} <ArrowRight size={16} />
+            </Button>
+          </div>
+        </form>
+      )}
+    </Modal>
   )
 }
