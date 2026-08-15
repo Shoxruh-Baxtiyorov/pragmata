@@ -33,7 +33,7 @@ import {
   X,
   type LucideIcon,
 } from '@/shared/ui/icons'
-import { Button, Input, LangSelect, Modal } from '@/shared/ui'
+import { Button, LangSelect } from '@/shared/ui'
 import { LogoMark } from '@/shared/ui/Logo'
 import { useTheme } from '@/shared/hooks/useTheme'
 import { landingCopy } from '../copy'
@@ -171,7 +171,8 @@ export function LandingPage() {
   const c = landingCopy(i18n.language)
   const [stuck, setStuck] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const goContact = () =>
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
 
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 28)
@@ -258,7 +259,7 @@ export function LandingPage() {
               </h1>
               <p className="lp-hero__lede">{c.hero.lede}</p>
               <div className="lp-hero__actions">
-                <Button size="lg" onClick={() => setDialogOpen(true)}>
+                <Button size="lg" onClick={goContact}>
                   {c.hero.ctaPrimary}
                   <ArrowRight size={16} />
                 </Button>
@@ -654,7 +655,7 @@ export function LandingPage() {
                 <em>{c.finalCta.titleEm}</em>
               </h2>
               <p>{c.finalCta.text}</p>
-              <Button size="lg" onClick={() => setDialogOpen(true)}>
+              <Button size="lg" onClick={goContact}>
                 {c.finalCta.button}
                 <ArrowRight size={16} />
               </Button>
@@ -672,6 +673,8 @@ export function LandingPage() {
             </Reveal>
           </div>
         </section>
+
+        <ContactSection />
       </main>
 
       <footer className="lp-foot">
@@ -681,7 +684,7 @@ export function LandingPage() {
           <div className="lp-foot__links">
             <a href="#capabilities">{c.nav.capabilities}</a>
             <a href="#privacy">{c.nav.privacy}</a>
-            <button type="button" onClick={() => setDialogOpen(true)}>
+            <button type="button" onClick={goContact}>
               {c.footer.contact}
             </button>
             <Link to="/login">{c.footer.login}</Link>
@@ -690,13 +693,12 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {dialogOpen && <ContactModal onClose={() => setDialogOpen(false)} />}
     </div>
   )
 }
 
-// Реальная форма «Связаться» → POST /api/v1/contact (публичный, без авторизации)
-function ContactModal({ onClose }: { onClose: () => void }) {
+// Контакт-секция «Связаться» (нормальная секция, не модалка) → POST /api/v1/contact
+function ContactSection() {
   const { t } = useTranslation()
   const submit = useSubmitContact()
   const [name, setName] = useState('')
@@ -709,55 +711,66 @@ function ContactModal({ onClose }: { onClose: () => void }) {
     submit.mutate({ name: name.trim(), contact: contact.trim(), message: message.trim() })
   }
 
-  return (
-    <Modal onClose={onClose}>
-      <h2 className="pr-8 text-h2 font-semibold text-[var(--color-text-primary)]">
-        {t('lp.contact.title')}
-      </h2>
-      <p className="mt-1 text-body text-[var(--color-text-secondary)]">{t('lp.contact.lede')}</p>
+  const points = [t('lp.trust1'), t('lp.trust2'), t('lp.trust3')]
 
-      {submit.isSuccess ? (
-        <div className="mt-5 flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-brand-500)]/40 bg-[var(--color-brand-500)]/10 px-4 py-4 text-body text-[var(--color-brand-text)]">
-          <Check size={20} /> {t('lp.contact.ok')}
-        </div>
-      ) : (
-        <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              placeholder={t('lp.contact.name')}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <Input
-              placeholder={t('lp.contact.contact')}
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              required
-            />
-          </div>
-          <textarea
-            placeholder={t('lp.contact.message')}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={4}
-            className="w-full rounded-[var(--radius-md)] border border-[var(--color-border-soft)] bg-[var(--color-bg-surface)] px-3 py-2 text-body text-[var(--color-text-primary)] outline-none transition placeholder:text-[var(--color-text-subtle)] focus-visible:border-[var(--color-brand-500)] focus-visible:ring-3 focus-visible:ring-[var(--color-brand-ring)]"
-          />
-          {submit.isError && (
-            <p className="text-label text-[var(--color-error-500)]">{t('lp.contact.err')}</p>
+  return (
+    <section id="contact" className="lp-contact lp-on-ink">
+      <div className="lp-container lp-contact__grid">
+        <Reveal className="lp-contact__copy">
+          <Kicker>{t('lp.contact.kicker')}</Kicker>
+          <h2>{t('lp.contact.title')}</h2>
+          <p>{t('lp.contact.lede')}</p>
+          <ul className="lp-contact__points">
+            {points.map((p) => (
+              <li key={p}>
+                <CircleCheck size={18} /> {p}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        <Reveal delay={0.1}>
+          {submit.isSuccess ? (
+            <div className="lp-contact__ok">
+              <CircleCheck size={22} /> {t('lp.contact.ok')}
+            </div>
+          ) : (
+            <form className="lp-contact__form" onSubmit={onSubmit}>
+              <div className="lp-contact__row">
+                <input
+                  placeholder={t('lp.contact.name')}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={120}
+                  required
+                />
+                <input
+                  placeholder={t('lp.contact.contact')}
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                  maxLength={200}
+                  required
+                />
+              </div>
+              <textarea
+                placeholder={t('lp.contact.message')}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={4000}
+                rows={4}
+              />
+              {submit.isError && <p className="lp-contact__err">{t('lp.contact.err')}</p>}
+              <button
+                type="submit"
+                className="lp-contact__submit"
+                disabled={submit.isPending || !name.trim() || !contact.trim()}
+              >
+                {t('lp.contact.submit')} <ArrowRight size={16} />
+              </button>
+            </form>
           )}
-          <div>
-            <Button
-              type="submit"
-              size="lg"
-              loading={submit.isPending}
-              disabled={!name.trim() || !contact.trim()}
-            >
-              {t('lp.contact.submit')} <ArrowRight size={16} />
-            </Button>
-          </div>
-        </form>
-      )}
-    </Modal>
+        </Reveal>
+      </div>
+    </section>
   )
 }

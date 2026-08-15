@@ -51,6 +51,9 @@
 
   --lp-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --lp-mono: var(--font-mono);
+
+  /* декоративная «плитка-экран» (industries): тёмная по умолчанию */
+  --lp-tile-grad: linear-gradient(150deg, #1b2740 0%, #0d131f 65%);
 }
 
 .lp {
@@ -242,7 +245,7 @@
 .lp-head--stuck {
   position: fixed;
   padding: 14px 0;
-  background: rgba(13, 19, 31, 0.86);
+  background: var(--lp-head-bg);
   border-bottom: 1px solid var(--lp-line-dark);
   backdrop-filter: blur(18px);
 }
@@ -1198,7 +1201,7 @@
   position: relative;
   aspect-ratio: 1.12 / 1;
   overflow: hidden;
-  background: linear-gradient(150deg, #1b2740 0%, #0d131f 65%);
+  background: var(--lp-tile-grad);
 }
 .lp-ind__tile::after {
   content: "";
@@ -2058,8 +2061,29 @@
   color: var(--lp-on-dark);
 }
 
-/* ── СВЕТЛАЯ ТЕМА лендинга: перекрашиваем «тёмные» lp-переменные в светлые ── */
+/* ═══ Тема лендинга: единообразно в ОБЕИХ темах (без белых пятен / чёрного навбара) ═══
+ * Редактор дизайна смешивал ink(тёмные) и paper(светлые) секции. Для чистой
+ * light/dark темы делаем ОБА тона следовать текущей теме: в тёмной paper→тёмный,
+ * в светлой ink→светлый + навбар/тексты светлые. */
+:root {
+  --lp-head-bg: rgba(13, 19, 31, 0.86);
+}
+
+html[data-color-scheme="dark"] .lp {
+  --lp-head-bg: rgba(13, 19, 31, 0.86);
+  /* paper-секции больше не белые — тёмная «бумага» (карточки чуть светлее фона) */
+  --lp-paper: #141d2b;
+  --lp-paper-2: #101825;
+  --lp-paper-3: #1c2637;
+  --lp-on-paper: #eef3f8;
+  --lp-on-paper-2: #bcc7d6;
+  --lp-on-paper-3: #8a97aa;
+  --lp-line-paper: rgba(255, 255, 255, 0.1);
+}
+
 html[data-color-scheme="light"] .lp {
+  --lp-head-bg: rgba(247, 249, 252, 0.88);
+  /* ink-секции больше не чёрные — светлый фон, тёмный текст */
   --lp-ink: #eef1f6;
   --lp-ink-2: #f7f9fc;
   --lp-panel: #ffffff;
@@ -2071,6 +2095,7 @@ html[data-color-scheme="light"] .lp {
   --lp-line-dark-soft: rgba(15, 30, 45, 0.07);
   --lp-accent-lift: var(--color-brand-600);
   --lp-mark: #0d9488;
+  --lp-tile-grad: linear-gradient(150deg, #dde5f0 0%, #eef1f6 65%);
 }
 /* шапка в светлой теме: токены кита для LangSelect тоже светлые */
 html[data-color-scheme="light"] .lp .lp-head__tools {
@@ -2078,7 +2103,137 @@ html[data-color-scheme="light"] .lp .lp-head__tools {
   --color-text-secondary: var(--lp-on-dark-2);
   --color-text-subtle: var(--lp-on-dark-3);
   --color-bg-muted: rgba(15, 30, 45, 0.06);
-  --color-bg-surface: var(--lp-panel);
+  --color-bg-surface: #ffffff;
   --color-border-soft: var(--lp-line-dark);
-  --color-brand-text: var(--lp-accent-lift);
+  --color-brand-text: var(--color-brand-600);
+}
+
+/* ── Контакт-секция (нормальная секция, не модалка) ───────────────────────── */
+.lp-contact {
+  padding: 120px 0;
+}
+.lp-contact__grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 72px;
+  align-items: center;
+}
+.lp-contact__copy h2 {
+  font-size: clamp(30px, 3.4vw, 46px);
+  line-height: 1.05;
+}
+.lp-contact__copy p {
+  margin-top: 22px;
+  max-width: 430px;
+  color: var(--lp-on-dark-2);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.lp-contact__points {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lp-contact__points li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--lp-on-dark-2);
+  font-size: 14px;
+}
+.lp-contact__points svg {
+  color: var(--lp-accent-lift);
+  flex: none;
+}
+.lp-contact__form {
+  background: var(--lp-panel);
+  border: 1px solid var(--lp-line-dark);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lp-contact__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.lp-contact input,
+.lp-contact textarea {
+  width: 100%;
+  background: var(--lp-panel-2);
+  border: 1px solid var(--lp-line-dark);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  color: var(--lp-on-dark);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.lp-contact input::placeholder,
+.lp-contact textarea::placeholder {
+  color: var(--lp-on-dark-3);
+}
+.lp-contact input:focus,
+.lp-contact textarea:focus {
+  outline: none;
+  border-color: var(--lp-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lp-accent) 20%, transparent);
+}
+.lp-contact textarea {
+  resize: vertical;
+  min-height: 116px;
+}
+.lp-contact__submit {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 22px;
+  border-radius: var(--radius-md);
+  background: var(--lp-accent);
+  color: var(--color-text-on-brand);
+  font-weight: 700;
+  font-size: 14px;
+  transition: background 0.16s ease, transform 0.12s ease;
+}
+.lp-contact__submit:hover {
+  background: var(--lp-accent-soft);
+}
+.lp-contact__submit:active {
+  transform: scale(0.98);
+}
+.lp-contact__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lp-contact__ok {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--lp-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lp-accent) 42%, transparent);
+  color: var(--lp-accent-lift);
+  font-size: 15px;
+}
+.lp-contact__err {
+  color: var(--color-error-500);
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .lp-contact {
+    padding: 80px 0;
+  }
+  .lp-contact__grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .lp-contact__row {
+    grid-template-columns: 1fr;
+  }
 }
