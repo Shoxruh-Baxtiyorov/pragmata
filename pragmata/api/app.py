@@ -28,6 +28,7 @@ from pragmata.api.routers import (
     events,
     insights,
     settings,
+    turnstiles,
     users,
     watchlist,
 )
@@ -67,6 +68,7 @@ for r in (
     backoffice.router,
     analytics.router,
     settings.router,
+    turnstiles.router,
 ):
     app.include_router(r)
 

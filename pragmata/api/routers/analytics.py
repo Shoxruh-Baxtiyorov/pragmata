@@ -10,12 +10,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from pragmata.analytics import catalog
-from pragmata.api.security import Principal, current_principal
+from pragmata.analytics.entitlements import resolve
+from pragmata.api.security import current_scope
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
 
 @router.get("/modules", response_model=dict)
-def modules(_: Principal = Depends(current_principal)) -> dict[str, object]:
-    """Все функции аналитики, которые клиент может включить и настроить."""
-    return catalog()
+def modules(scope: int | None = Depends(current_scope)) -> dict[str, object]:
+    """Каталог модулей аналитики. Каждый модуль помечен флагом ``entitled`` по
+    тарифу площадки: закрытые фронт рисует заблокированными."""
+    return catalog(resolve(scope).modules)

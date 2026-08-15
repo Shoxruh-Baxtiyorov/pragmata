@@ -1,6 +1,46 @@
 {
   "components": {
     "schemas": {
+      "AccessEventIn": {
+        "description": "Событие доступа от турникета (webhook от интегратора/железа).",
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "kind": {
+            "default": "open",
+            "title": "Kind",
+            "type": "string"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Meta",
+            "type": "object"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          }
+        },
+        "title": "AccessEventIn",
+        "type": "object"
+      },
       "AgentAnswer": {
         "properties": {
           "evidence": {
@@ -391,9 +431,15 @@
       "Body_enroll_api_v1_persons_enroll_post": {
         "properties": {
           "category": {
-            "default": "employee",
-            "title": "Category",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
           },
           "files": {
             "items": {
@@ -402,6 +448,18 @@
             },
             "title": "Files",
             "type": "array"
+          },
+          "folder_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder Id"
           },
           "name": {
             "title": "Name",
@@ -1212,12 +1270,43 @@
         "title": "PersonAppearance",
         "type": "object"
       },
+      "PersonCategoryIn": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PersonCategoryIn",
+        "type": "object"
+      },
       "PersonCreate": {
         "properties": {
           "category": {
-            "default": "watchlist",
-            "title": "Category",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "folder_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder Id"
           },
           "name": {
             "title": "Name",
@@ -1263,11 +1352,88 @@
         "title": "PersonCreate",
         "type": "object"
       },
+      "PersonFolderIn": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PersonFolderIn",
+        "type": "object"
+      },
+      "PersonFolderPatch": {
+        "properties": {
+          "clear_parent": {
+            "default": false,
+            "title": "Clear Parent",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "title": "PersonFolderPatch",
+        "type": "object"
+      },
       "PersonOut": {
         "properties": {
           "category": {
-            "title": "Category",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "folder_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder Id"
           },
           "id": {
             "format": "uuid",
@@ -1328,6 +1494,7 @@
           "id",
           "name",
           "category",
+          "folder_id",
           "position",
           "note",
           "watch",
@@ -1350,6 +1517,23 @@
               }
             ],
             "title": "Category"
+          },
+          "clear_folder": {
+            "default": false,
+            "title": "Clear Folder",
+            "type": "boolean"
+          },
+          "folder_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder Id"
           },
           "name": {
             "anyOf": [
@@ -1430,6 +1614,18 @@
               }
             ],
             "title": "Active"
+          },
+          "entitlements": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entitlements"
           },
           "features": {
             "anyOf": [
@@ -1950,6 +2146,175 @@
         "title": "TotpStatus",
         "type": "object"
       },
+      "TurnstileIn": {
+        "properties": {
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "config": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Config",
+            "type": "object"
+          },
+          "connector": {
+            "default": "null",
+            "title": "Connector",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "monitor",
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TurnstileIn",
+        "type": "object"
+      },
+      "TurnstileOut": {
+        "properties": {
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "connector": {
+            "title": "Connector",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "camera_id",
+          "mode",
+          "connector",
+          "config",
+          "enabled"
+        ],
+        "title": "TurnstileOut",
+        "type": "object"
+      },
+      "TurnstilePatch": {
+        "properties": {
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config"
+          },
+          "connector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connector"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "TurnstilePatch",
+        "type": "object"
+      },
       "UserCreate": {
         "properties": {
           "email": {
@@ -2386,8 +2751,26 @@
     },
     "/api/v1/analytics/modules": {
       "get": {
-        "description": "Все функции аналитики, которые клиент может включить и настроить.",
+        "description": "Каталог модулей аналитики. Каждый модуль помечен флагом ``entitled`` по\nтарифу площадки: закрытые фронт рисует заблокированными.",
         "operationId": "modules_api_v1_analytics_modules_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2400,6 +2783,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -4661,23 +5054,14 @@
     },
     "/api/v1/me": {
       "get": {
-        "description": "Кто я и что мне можно.\n\nbackoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого\nон рисует кнопки настройки тем, у кого они гарантированно дадут 403.",
+        "description": "Кто я и что мне можно.\n\nbackoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого\nон рисует кнопки настройки тем, у кого они гарантированно дадут 403.\nentitlements — права подписки площадки: фронт по ним гейтит навигацию и\nкаталог модулей (закрытое рисует заблокированным).",
         "operationId": "me_api_v1_me_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "boolean"
-                      }
-                    ]
-                  },
+                  "additionalProperties": true,
                   "title": "Response Me Api V1 Me Get",
                   "type": "object"
                 }
@@ -4997,6 +5381,452 @@
         ]
       }
     },
+    "/api/v1/person-categories": {
+      "get": {
+        "operationId": "person_categories_api_v1_person_categories_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Person Categories Api V1 Person Categories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Person Categories",
+        "tags": [
+          "people"
+        ]
+      },
+      "post": {
+        "operationId": "create_category_api_v1_person_categories_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonCategoryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Category Api V1 Person Categories Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Category",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/person-categories/{cat_id}": {
+      "delete": {
+        "operationId": "delete_category_api_v1_person_categories__cat_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cat Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Category",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/person-folders": {
+      "get": {
+        "operationId": "person_folders_api_v1_person_folders_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Person Folders Api V1 Person Folders Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Person Folders",
+        "tags": [
+          "people"
+        ]
+      },
+      "post": {
+        "operationId": "create_folder_api_v1_person_folders_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonFolderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Folder Api V1 Person Folders Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Folder",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/person-folders/{folder_id}": {
+      "delete": {
+        "operationId": "delete_folder_api_v1_person_folders__folder_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Folder Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Folder",
+        "tags": [
+          "people"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_folder_api_v1_person_folders__folder_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Folder Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonFolderPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Folder",
+        "tags": [
+          "people"
+        ]
+      }
+    },
     "/api/v1/persons": {
       "get": {
         "operationId": "persons_api_v1_persons_get",
@@ -5015,6 +5845,23 @@
                 }
               ],
               "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "folder_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Folder Id"
             }
           },
           {
@@ -5891,6 +6738,410 @@
         "summary": "Timeline",
         "tags": [
           "insights"
+        ]
+      }
+    },
+    "/api/v1/turnstiles": {
+      "get": {
+        "operationId": "list__api_v1_turnstiles_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TurnstileOut"
+                  },
+                  "title": "Response List  Api V1 Turnstiles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List ",
+        "tags": [
+          "turnstiles"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_v1_turnstiles_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnstileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "turnstiles"
+        ]
+      }
+    },
+    "/api/v1/turnstiles/{tid}": {
+      "delete": {
+        "operationId": "delete_api_v1_turnstiles__tid__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Delete Api V1 Turnstiles  Tid  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete",
+        "tags": [
+          "turnstiles"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_api_v1_turnstiles__tid__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnstilePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch",
+        "tags": [
+          "turnstiles"
+        ]
+      }
+    },
+    "/api/v1/turnstiles/{tid}/access": {
+      "post": {
+        "description": "Приём события доступа от турникета/интегратора (webhook) → в общую ленту.",
+        "operationId": "access_api_v1_turnstiles__tid__access_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessEventIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Access Api V1 Turnstiles  Tid  Access Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Access",
+        "tags": [
+          "turnstiles"
+        ]
+      }
+    },
+    "/api/v1/turnstiles/{tid}/open": {
+      "post": {
+        "description": "Ручное открытие оператором (actuation по команде).",
+        "operationId": "open__api_v1_turnstiles__tid__open_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Site-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Site-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Open  Api V1 Turnstiles  Tid  Open Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Open ",
+        "tags": [
+          "turnstiles"
         ]
       }
     },

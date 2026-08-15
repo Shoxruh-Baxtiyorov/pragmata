@@ -275,7 +275,8 @@ class AgentAnswer(BaseModel):
 class PersonOut(BaseModel):
     id: uuid.UUID
     name: str
-    category: str
+    category: str | None
+    folder_id: str | None
     position: str | None
     note: str | None
     watch: bool
@@ -286,7 +287,8 @@ class PersonOut(BaseModel):
 
 class PersonCreate(BaseModel):
     name: str
-    category: str = "watchlist"  # завели из кадра → по умолчанию под наблюдение
+    category: str | None = None  # необязательна; клиент заводит свои категории
+    folder_id: uuid.UUID | None = None
     position: str | None = None
     note: str | None = None
     watch: bool = False
@@ -296,9 +298,26 @@ class PersonCreate(BaseModel):
 class PersonPatch(BaseModel):
     name: str | None = None
     category: str | None = None
+    folder_id: uuid.UUID | None = None
+    clear_folder: bool = False  # true → убрать человека из папки
     position: str | None = None
     note: str | None = None
     watch: bool | None = None
+
+
+class PersonFolderIn(BaseModel):
+    name: str
+    parent_id: uuid.UUID | None = None
+
+
+class PersonFolderPatch(BaseModel):
+    name: str | None = None
+    parent_id: uuid.UUID | None = None
+    clear_parent: bool = False  # true → сделать папку корневой
+
+
+class PersonCategoryIn(BaseModel):
+    name: str
 
 
 class PersonPhotoOut(BaseModel):
@@ -384,6 +403,45 @@ class PlanIn(BaseModel):
     retention_alert_days: int | None = None
     active: bool | None = None
     features: list[str] | None = None
+    # права подписки: {modules, features, person_categories, limits} — см. analytics.entitlements
+    entitlements: dict[str, object] | None = None
+
+
+class TurnstileIn(BaseModel):
+    name: str
+    camera_id: str | None = None  # камера входа (для лент и сопоставления лиц)
+    mode: str = "monitor"  # monitor | face_open
+    connector: str = "null"  # null | relay
+    config: dict[str, object] = {}
+    enabled: bool = True
+
+
+class TurnstilePatch(BaseModel):
+    name: str | None = None
+    camera_id: str | None = None
+    mode: str | None = None
+    connector: str | None = None
+    config: dict[str, object] | None = None
+    enabled: bool | None = None
+
+
+class TurnstileOut(BaseModel):
+    id: str
+    name: str
+    camera_id: str | None
+    mode: str
+    connector: str
+    config: dict[str, object]
+    enabled: bool
+
+
+class AccessEventIn(BaseModel):
+    """Событие доступа от турникета (webhook от интегратора/железа)."""
+
+    kind: str = "open"  # open | denied | tailgate
+    person_id: str | None = None
+    direction: str | None = None  # in | out
+    meta: dict[str, object] = {}
 
 
 class AuditEntryOut(BaseModel):

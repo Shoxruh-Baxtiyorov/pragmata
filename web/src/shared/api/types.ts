@@ -143,6 +143,8 @@ export interface AnalyticsModule {
   event_type: string | null
   requires_model: string | null
   params: AnalyticsParam[]
+  /** открыт ли модуль тарифом площадки; отсутствие/true = открыт */
+  entitled?: boolean
 }
 export interface AnalyticsCatalog {
   categories: { key: string; label: string }[]
@@ -172,13 +174,30 @@ export interface AppearancesPage {
 export interface Person {
   id: string
   name: string
-  category: string
+  category: string | null
+  folder_id: string | null
   position: string | null
   note: string | null
   photo_url: string | null
   photo_count: number
   seen_count: number
   watch: boolean
+}
+
+// папка-дерево для людей (напр. Школа → 5-е классы → 5-А)
+export interface PersonFolder {
+  id: string
+  parent_id: string | null
+  name: string
+  count: number
+}
+
+// редактируемая категория людей (per-site)
+export interface PersonCategoryRow {
+  id: string
+  key: string
+  name: string
+  is_system: boolean
 }
 
 export const PERSON_CATEGORIES = [
@@ -189,6 +208,17 @@ export const PERSON_CATEGORIES = [
   'banned',
   'other',
 ] as const
+
+// Турникет/СКУД (GET/POST /api/v1/turnstiles)
+export interface Turnstile {
+  id: string
+  name: string
+  camera_id: string | null
+  mode: string // monitor | face_open
+  connector: string // null | relay
+  config: Record<string, unknown>
+  enabled: boolean
+}
 
 // CameraIn
 export interface CameraInput {

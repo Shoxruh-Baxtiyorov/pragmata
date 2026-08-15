@@ -33,6 +33,10 @@ class Plan(Base):
     sort: Mapped[int] = mapped_column(default=0)
     active: Mapped[bool] = mapped_column(default=True)
     features: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # права подписки: какие модули/разделы/под-функции открыты (см. analytics.entitlements)
+    entitlements: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
 
 
 class Site(Base):
@@ -125,8 +129,13 @@ class Person(Base):
         ForeignKey("sites.id"), nullable=True, index=True, default=1
     )
     name: Mapped[str] = mapped_column(String(200))
-    # employee | visitor | contractor | watchlist | banned | other
-    category: Mapped[str] = mapped_column(String(32), default="other")
+    # ключ категории из person_categories этой площадки (редактируемый список).
+    # Необязательна: список категорий заводит сам клиент, по умолчанию пуст.
+    category: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # папка/группа для организации людей (напр. класс в школе); дерево — person_folders
+    folder_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("person_folders.id"), nullable=True, index=True
+    )
     position: Mapped[str | None] = mapped_column(String(200), nullable=True)  # должность/отдел
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)
     watch: Mapped[bool] = mapped_column(default=False)  # алертить при появлении
@@ -137,6 +146,40 @@ class Person(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class PersonFolder(Base):
+    """Папка для организации людей — дерево (напр. Школа → 5-е классы → 5-А).
+    parent_id=NULL → корневая. Человек привязывается к одной папке (Person.folder_id)."""
+
+    __tablename__ = "person_folders"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), default=1, index=True)
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("person_folders.id"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(120))
+    sort: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class PersonCategory(Base):
+    """Редактируемый per-site список категорий людей (Сотрудник/Гость/…). key —
+    то, что хранится в Person.category. Дефолты сеет миграция; админ добавляет свои."""
+
+    __tablename__ = "person_categories"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), default=1, index=True)
+    key: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(80))
+    sort: Mapped[int] = mapped_column(default=0)
+    is_system: Mapped[bool] = mapped_column(default=False)  # базовая (её оставляем при сбросах)
+
+    __table_args__ = (Index("ix_person_categories_site_key", "site_id", "key", unique=True),)
 
 
 class PersonPhoto(Base):
@@ -236,6 +279,30 @@ class Event(Base):
         Index("ix_events_camera_tstart", "camera_id", "t_start"),
         Index("ix_events_type_tstart", "type", "t_start"),
         Index("ix_events_severity_tstart", "severity", "t_start"),
+    )
+
+
+class Turnstile(Base):
+    """Турникет/СКУД поверх площадки: события доступа падают в общую ленту, а в
+    режиме face_open — открытие по распознанному лицу. Гейтится фичей подписки
+    'turnstile' (см. analytics.entitlements)."""
+
+    __tablename__ = "turnstiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), default=1)
+    name: Mapped[str] = mapped_column(String(120))
+    # камера, смотрящая на вход — для сопоставления лиц и попадания событий в ленту
+    camera_id: Mapped[str | None] = mapped_column(ForeignKey("cameras.id"), nullable=True)
+    # monitor = только события доступа; face_open = открывать по лицу (actuation, off by default)
+    mode: Mapped[str] = mapped_column(String(16), default="monitor")
+    connector: Mapped[str] = mapped_column(String(16), default="null")  # null | relay
+    config: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
+    enabled: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )
 
 

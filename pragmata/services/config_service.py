@@ -25,6 +25,20 @@ def _bump() -> None:
     bump_config_version(session_factory())
 
 
+def _require_module_entitled(module_key: str, enabling: bool, scope: int | None) -> None:
+    """Клиент не может ВКЛЮЧИТЬ модуль, которого нет в его тарифе (выключать — можно).
+
+    Платформенный админ (scope=None) не ограничен. Выключение разрешаем всегда,
+    чтобы можно было убрать модуль после смены тарифа.
+    """
+    if scope is None or not enabling:
+        return
+    from pragmata.analytics.entitlements import resolve
+
+    if module_key not in resolve(scope).modules:
+        raise HTTPException(403, "модуль недоступен в вашем тарифе")
+
+
 def create_camera(payload: CameraIn, site_id: int = 1) -> None:
     from pragmata.db.models import Camera
 
@@ -160,6 +174,7 @@ def set_camera_module(
     m = module_by_key(module_key)
     if m is None or m.scope != "camera":
         raise HTTPException(404, "нет такого модуля камеры")
+    _require_module_entitled(module_key, payload.enabled, scope)
     with session_factory()() as s:
         cam = s.get(Camera, camera_id)
         if cam is None or (scope is not None and cam.site_id != scope):
@@ -182,6 +197,7 @@ def set_zone_module(
     m = module_by_key(module_key)
     if m is None or m.scope != "zone":
         raise HTTPException(404, "нет такого модуля зоны")
+    _require_module_entitled(module_key, payload.enabled, scope)
     with session_factory()() as s:
         z = s.get(Zone, zone_id)
         if z is None:

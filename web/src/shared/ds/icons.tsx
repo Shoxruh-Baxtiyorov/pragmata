@@ -86,6 +86,8 @@ import FileSpreadsheetIconSvg from '@hugeicons/core-free-icons/FileSpreadsheetIc
 import FileVideoIconSvg from '@hugeicons/core-free-icons/FileVideoIcon'
 import FilterIconSvg from '@hugeicons/core-free-icons/FilterIcon'
 import FloppyDiskIconSvg from '@hugeicons/core-free-icons/FloppyDiskIcon'
+import Folder01IconSvg from '@hugeicons/core-free-icons/Folder01Icon'
+import FolderAddIconSvg from '@hugeicons/core-free-icons/FolderAddIcon'
 import GiftIconSvg from '@hugeicons/core-free-icons/GiftIcon'
 import GlobeIconSvg from '@hugeicons/core-free-icons/GlobeIcon'
 import HappyIconSvg from '@hugeicons/core-free-icons/HappyIcon'
@@ -297,6 +299,8 @@ export const FileSpreadsheet = createHugeIcon(FileSpreadsheetIconSvg, 'FileSprea
 export const FileText = createHugeIcon(File02IconSvg, 'FileText')
 export const FileVideo = createHugeIcon(FileVideoIconSvg, 'FileVideo')
 export const Filter = createHugeIcon(FilterIconSvg, 'Filter')
+export const Folder = createHugeIcon(Folder01IconSvg, 'Folder')
+export const FolderPlus = createHugeIcon(FolderAddIconSvg, 'FolderPlus')
 export const Forward = createHugeIcon(ArrowTurnForwardIconSvg, 'Forward')
 export const Gift = createHugeIcon(GiftIconSvg, 'Gift')
 export const Globe = createHugeIcon(GlobeIconSvg, 'Globe')

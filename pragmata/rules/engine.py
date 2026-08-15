@@ -38,6 +38,9 @@ SEVERITY = {
     "loading_activity": "info",
     "plate_recognized": "info",
     "plate_unlisted": "warning",
+    "turnstile_open": "info",
+    "turnstile_denied": "warning",
+    "turnstile_tailgate": "alert",
 }
 
 _DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

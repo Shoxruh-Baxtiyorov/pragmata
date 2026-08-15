@@ -16,6 +16,8 @@ import { WatchlistPage } from '@/features/watchlist'
 import { AnalyticsPage } from '@/features/analytics'
 import { JournalPage } from '@/features/journal'
 import { HeatmapPage } from '@/features/heatmap'
+import { TurnstilesPage } from '@/features/turnstiles'
+import { BackofficePage } from '@/features/backoffice'
 import { SettingsPage } from '@/features/settings'
 
 // Единственные две страницы с графиками. recharts со своим деревом зависимостей
@@ -68,6 +70,8 @@ export function AppRouter() {
         <Route path="/events" element={<EventsPage />} />
         <Route path="/journal" element={<JournalPage />} />
         <Route path="/heatmap" element={<HeatmapPage />} />
+        <Route path="/turnstiles" element={<TurnstilesPage />} />
+        <Route path="/backoffice" element={<BackofficePage />} />
         <Route
           path="/stats"
           element={

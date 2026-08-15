@@ -51,17 +51,30 @@ def login(payload: LoginRequest, request: Request) -> TokenResponse:
 
 
 @router.get("/me")
-def me(p: Principal = Depends(current_principal)) -> dict[str, str | bool]:
+def me(p: Principal = Depends(current_principal)) -> dict[str, object]:
     """Кто я и что мне можно.
 
     backoffice отдаём явно: фронт не может сам вычислить allowlist, а без этого
     он рисует кнопки настройки тем, у кого они гарантированно дадут 403.
+    entitlements — права подписки площадки: фронт по ним гейтит навигацию и
+    каталог модулей (закрытое рисует заблокированным).
     """
+    from pragmata.analytics.entitlements import resolve
     from pragmata.config import get_settings
 
+    ent = resolve(p.scope)
     return {
         "sub": p.sub,
         "username": p.username,
         "role": p.role,
+        "site_id": p.site_id,
         "backoffice": p.is_admin and p.username.lower() in get_settings().backoffice_usernames,
+        "entitlements": {
+            "all": ent.all_access,
+            "tariff": ent.tariff,
+            "modules": sorted(ent.modules),
+            "features": sorted(ent.features),
+            "person_categories": sorted(ent.person_categories),
+            "limits": ent.limits,
+        },
     }

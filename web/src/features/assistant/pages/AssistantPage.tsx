@@ -6,6 +6,7 @@ import { Bot, Send, Sparkles } from '@/shared/ui/icons'
 import type { MediaEvidence } from '@/shared/api/types'
 import { useAgentEnabled, useAsk } from '../api/assistantApi'
 import { EvidenceMedia } from '../components/EvidenceMedia'
+import { AssistantText } from '../components/AssistantText'
 
 interface Msg {
   role: 'user' | 'assistant'
@@ -109,7 +110,7 @@ export function AssistantPage() {
                     'border border-[var(--color-status-error-border)] bg-[var(--color-status-error-bg)] text-[var(--color-status-error-text)]',
                 )}
               >
-                {m.text}
+                {m.role === 'assistant' && !m.failed ? <AssistantText text={m.text} /> : m.text}
               </div>
               {m.evidence && m.evidence.length > 0 && (
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">

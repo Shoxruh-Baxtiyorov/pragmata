@@ -36,6 +36,7 @@ def list_plans() -> list[dict[str, object]]:
                 "retention_alert_days": p.retention_alert_days,
                 "active": p.active,
                 "features": list(p.features or []),
+                "entitlements": dict(p.entitlements or {}),
             }
             for p in rows
         ]
@@ -65,6 +66,8 @@ def upsert_plan(key: str, patch: PlanIn, *, create: bool) -> dict[str, object]:
             plan.active = patch.active
         if patch.features is not None:
             plan.features = patch.features
+        if patch.entitlements is not None:
+            plan.entitlements = patch.entitlements
         s.commit()
     return next(p for p in list_plans() if p["key"] == key)
 
@@ -104,8 +107,10 @@ def create_site(payload: SiteCreate) -> int:
             retention_alert_days=plan.retention_alert_days,
         )
         s.add(site)
-        s.commit()
+        s.flush()
         sid = site.id
+        # категории людей НЕ сеем: список пуст по умолчанию, клиент заводит свои
+        s.commit()
     bump_config_version(session_factory())
     return sid
 

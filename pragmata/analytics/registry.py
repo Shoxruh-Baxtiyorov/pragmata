@@ -244,8 +244,14 @@ def _param_dict(p: ParamSpec) -> dict[str, object]:
     return d
 
 
-def catalog() -> dict[str, object]:
-    """Сериализованный каталог для API/фронта: категории, tier-метки, модули."""
+def catalog(entitled_modules: frozenset[str] | None = None) -> dict[str, object]:
+    """Сериализованный каталог для API/фронта: категории, tier-метки, модули.
+
+    ``entitled_modules`` — ключи, открытые тарифом площадки; каждый модуль
+    получает флаг ``entitled``. None → все открыты (админ/без ограничений).
+    Каталог всегда отдаёт ВСЕ модули: закрытые фронт показывает с меткой
+    «нет в вашем тарифе», а не скрывает (апселл + прозрачность).
+    """
     return {
         "categories": [{"key": k, "label": v} for k, v in CATEGORIES],
         "tiers": [{"key": k, "label": v} for k, v in TIERS.items()],
@@ -260,6 +266,7 @@ def catalog() -> dict[str, object]:
                 "event_type": m.event_type,
                 "requires_model": m.requires_model,
                 "params": [_param_dict(p) for p in m.params],
+                "entitled": entitled_modules is None or m.key in entitled_modules,
             }
             for m in MODULES
         ],

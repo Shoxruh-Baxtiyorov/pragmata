@@ -1,11 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/shared/api/client'
-import type { Person, PersonCreate } from '@/shared/api/types'
+import type { Person, PersonCreate, PersonCategoryRow, PersonFolder } from '@/shared/api/types'
 
-export function usePersons(category?: string) {
-  const q = category ? `?category=${category}` : ''
+export function usePersons(category?: string, folderId?: string) {
+  const params = new URLSearchParams()
+  if (category) params.set('category', category)
+  if (folderId) params.set('folder_id', folderId)
+  const q = params.toString() ? `?${params}` : ''
   return useQuery({
-    queryKey: ['persons', category ?? 'all'],
+    queryKey: ['persons', category ?? 'all', folderId ?? 'any'],
     queryFn: () => api.get<Person[]>(`/api/v1/persons${q}`),
   })
 }
@@ -16,6 +19,7 @@ export interface EnrollInput {
   position: string
   note: string
   watch: boolean
+  folderId: string | null
   files: File[]
 }
 
@@ -29,10 +33,77 @@ export function useEnrollPerson() {
       form.append('position', input.position)
       form.append('note', input.note)
       form.append('watch', String(input.watch))
+      if (input.folderId) form.append('folder_id', input.folderId)
       input.files.forEach((f) => form.append('files', f))
       return api.postForm('/api/v1/persons/enroll', form)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['persons'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['persons'] })
+      void qc.invalidateQueries({ queryKey: ['person-folders'] })
+    },
+  })
+}
+
+// --- папки-дерево людей (напр. Школа → 5-е классы → 5-А) --------------------
+
+export function usePersonFolders() {
+  return useQuery({
+    queryKey: ['person-folders'],
+    queryFn: () => api.get<PersonFolder[]>('/api/v1/person-folders'),
+  })
+}
+
+export function useCreateFolder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; parent_id?: string | null }) =>
+      api.post('/api/v1/person-folders', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['person-folders'] }),
+  })
+}
+
+export function usePatchFolder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown> }) =>
+      api.patch(`/api/v1/person-folders/${id}`, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['person-folders'] }),
+  })
+}
+
+export function useDeleteFolder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.del(`/api/v1/person-folders/${id}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['person-folders'] })
+      void qc.invalidateQueries({ queryKey: ['persons'] })
+    },
+  })
+}
+
+// --- редактируемые категории людей (per-site) ------------------------------
+
+export function usePersonCategories() {
+  return useQuery({
+    queryKey: ['person-categories'],
+    queryFn: () => api.get<PersonCategoryRow[]>('/api/v1/person-categories'),
+  })
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => api.post('/api/v1/person-categories', { name }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['person-categories'] }),
+  })
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.del(`/api/v1/person-categories/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['person-categories'] }),
   })
 }
 

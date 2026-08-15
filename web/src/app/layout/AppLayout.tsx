@@ -12,6 +12,8 @@ import {
   CalendarClock,
   Camera,
   ClipboardList,
+  CreditCard,
+  DoorOpen,
   LayoutDashboard,
   LayoutGrid,
   LogOut,
@@ -36,9 +38,19 @@ import { LangSelect, SiteSelect } from '@/shared/ui'
 import { Logo, LogoMark } from '@/shared/ui/Logo'
 import { cn } from '@/shared/lib/utils'
 import { useTheme } from '@/shared/hooks/useTheme'
-import { authActions, useIsAdmin, useUsername } from '@/features/auth'
+import { authActions, useCanManage, useEntitlements, useIsAdmin, useUsername } from '@/features/auth'
 
-type NavItem = { to: string; key: string; icon: IconComponent; admin?: boolean }
+// feature — ключ раздела в правах подписки (analytics.entitlements). Нет ключа =
+// ядро, доступно всегда. Есть ключ — прячем раздел, если тариф его не открывает.
+// backoffice — раздел владельца платформы (admin + allowlist BACKOFFICE_USERS).
+type NavItem = {
+  to: string
+  key: string
+  icon: IconComponent
+  admin?: boolean
+  feature?: string
+  backoffice?: boolean
+}
 const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   { items: [{ to: '/overview', key: 'nav.overview', icon: LayoutDashboard }] },
   {
@@ -46,29 +58,31 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: '/live', key: 'nav.live', icon: RadioTower },
       { to: '/events', key: 'nav.events', icon: ShieldAlert },
-      { to: '/journal', key: 'nav.journal', icon: ClipboardList },
-      { to: '/heatmap', key: 'nav.heatmap', icon: LayoutGrid },
-      { to: '/stats', key: 'nav.stats', icon: TrendingUp },
+      { to: '/journal', key: 'nav.journal', icon: ClipboardList, feature: 'journal' },
+      { to: '/heatmap', key: 'nav.heatmap', icon: LayoutGrid, feature: 'heatmap' },
+      { to: '/stats', key: 'nav.stats', icon: TrendingUp, feature: 'stats' },
     ],
   },
   {
     label: 'navGroup.investigate',
     items: [
-      { to: '/assistant', key: 'nav.assistant', icon: Sparkles },
-      { to: '/search', key: 'nav.search', icon: Search },
-      { to: '/archive', key: 'nav.archive', icon: Archive },
-      { to: '/watchlist', key: 'nav.watchlist', icon: Users },
+      { to: '/assistant', key: 'nav.assistant', icon: Sparkles, feature: 'assistant' },
+      { to: '/search', key: 'nav.search', icon: Search, feature: 'search' },
+      { to: '/archive', key: 'nav.archive', icon: Archive, feature: 'archive' },
+      { to: '/watchlist', key: 'nav.watchlist', icon: Users, feature: 'watchlist' },
     ],
   },
   {
     label: 'navGroup.admin',
     items: [
       { to: '/manage', key: 'nav.manage', icon: Camera },
+      { to: '/turnstiles', key: 'nav.turnstiles', icon: DoorOpen, feature: 'turnstile' },
       { to: '/analytics', key: 'nav.analytics', icon: SlidersHorizontal },
       { to: '/system', key: 'nav.system', icon: Settings },
       { to: '/settings', key: 'nav.settings', icon: CalendarClock, admin: true },
       { to: '/users', key: 'nav.users', icon: UserCog, admin: true },
       { to: '/security', key: 'nav.security', icon: ShieldCheck },
+      { to: '/backoffice', key: 'nav.backoffice', icon: CreditCard, backoffice: true },
     ],
   },
 ]
@@ -84,6 +98,8 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDE_KEY) === '1')
   const isAdmin = useIsAdmin()
   const username = useUsername()
+  const ent = useEntitlements()
+  const canManage = useCanManage()
 
   const toggleSide = () =>
     setCollapsed((c) => {
@@ -154,7 +170,12 @@ export function AppLayout() {
         {/* навигация */}
         <nav className={cn('flex-1 overflow-y-auto px-3 pb-3', collapsed && 'lg:px-2')}>
           {NAV_GROUPS.map((group, gi) => {
-            const items = group.items.filter((it) => !it.admin || isAdmin)
+            const items = group.items.filter(
+              (it) =>
+                (!it.admin || isAdmin) &&
+                (!it.backoffice || canManage) &&
+                (ent.all || !it.feature || ent.features.includes(it.feature)),
+            )
             if (items.length === 0) return null
             return (
               <div key={gi}>

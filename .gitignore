@@ -10,3 +10,6 @@ models/
 .DS_Store
 .codesearch.db/
 marketing/
+.qa-*.png
+*.mypy_cache/
+docs/deck/

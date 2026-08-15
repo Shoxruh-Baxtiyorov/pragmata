@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 585 130" width="585" height="130" role="img" aria-label="Pragmata AI">
+  <g fill="#0d9488" transform="translate(12 17) scale(0.96)">
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(0 50 50)"/>
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(60 50 50)"/>
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(120 50 50)"/>
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(180 50 50)"/>
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(240 50 50)"/>
+    <path d="M95.94 52.41 A46 46 0 0 1 75.05 88.58 L51.83 64.89 L63.12 57.27 Z" transform="rotate(300 50 50)"/>
+  </g>
+  <text x="133" y="66" font-family="Liberation Sans, Arial, Helvetica, sans-serif" font-weight="bold" font-size="52" letter-spacing="5" fill="#0E1621" dominant-baseline="central">PRAGMATA AI</text>
+</svg>

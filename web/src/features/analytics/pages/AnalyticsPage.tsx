@@ -36,7 +36,9 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
   const setModule = useSetModule()
   const isZone = module.scope === 'zone'
   const isSite = module.scope === 'site'
-  const locked = module.tier === 'C'
+  const notEntitled = module.entitled === false
+  // заблокирован = нет модели (tier C) ИЛИ модуль не входит в тариф площадки
+  const locked = module.tier === 'C' || notEntitled
 
   const zones = camera.zones ?? []
   const [zoneId, setZoneId] = useState<string>(zones[0]?.id ?? '')
@@ -79,7 +81,11 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
   }
 
   return (
-    <Card className="flex flex-col gap-3 p-4 transition-shadow duration-[var(--dur-normal)] hover:shadow-[var(--shadow-sm)]">
+    <Card
+      className={`flex flex-col gap-3 p-4 transition-shadow duration-[var(--dur-normal)] hover:shadow-[var(--shadow-sm)] ${
+        notEntitled ? 'opacity-70' : ''
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -87,6 +93,7 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
               {t(`an.mod.${module.key}`, { defaultValue: module.name })}
             </span>
             <Badge tone={TIER_TONE[module.tier]}>{t(`analytics.tier.${module.tier}`)}</Badge>
+            {notEntitled && <Badge tone="warning">{t('analytics.lockedBadge')}</Badge>}
           </div>
           <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
             {t(`an.moddesc.${module.key}`, { defaultValue: module.description })}
@@ -105,11 +112,13 @@ function ModuleCard({ module, camera }: { module: AnalyticsModule; camera: Camer
         )}
       </div>
 
-      {locked && (
+      {notEntitled ? (
+        <div className={NOTE_BOX}>{t('analytics.notInPlan')}</div>
+      ) : module.tier === 'C' ? (
         <div className={NOTE_BOX}>
           {t('analytics.needModel')}: {module.requires_model}
         </div>
-      )}
+      ) : null}
 
       {isSite && <div className={NOTE_BOX}>{t('analytics.siteScope')}</div>}
 

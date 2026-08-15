@@ -94,9 +94,14 @@ def own_person_or_404(person_id: uuid.UUID, scope: int | None) -> None:
         raise HTTPException(404, "нет такого человека")
 
 
-def list_persons(category: str | None = None, scope: int | None = None) -> list[PersonOut]:
+def list_persons(
+    category: str | None = None,
+    scope: int | None = None,
+    folder_id: uuid.UUID | None = None,
+) -> list[PersonOut]:
     from pragmata.api.schemas import PersonOut
     from pragmata.db.models import Person, PersonPhoto, Track
+    from pragmata.services import person_org_service
 
     with session_factory()() as s:
         q = select(Person).order_by(Person.created_at.desc())
@@ -104,6 +109,9 @@ def list_persons(category: str | None = None, scope: int | None = None) -> list[
             q = q.where(Person.site_id == scope)
         if category:
             q = q.where(Person.category == category)
+        if folder_id is not None:
+            # папка + все её подпапки (напр. «5-е классы» показывает и 5-А, и 5-Б)
+            q = q.where(Person.folder_id.in_(person_org_service.subtree_ids(scope, folder_id)))
         persons = s.execute(q).scalars().all()
         seen = {
             r[0]: r[1]
@@ -124,6 +132,7 @@ def list_persons(category: str | None = None, scope: int | None = None) -> list[
                 id=p.id,
                 name=p.name,
                 category=p.category,
+                folder_id=str(p.folder_id) if p.folder_id else None,
                 position=p.position,
                 note=p.note,
                 watch=p.watch,
@@ -137,20 +146,24 @@ def list_persons(category: str | None = None, scope: int | None = None) -> list[
 
 def enroll_person(
     name: str,
-    category: str,
+    category: str | None,
     position: str | None,
     note: str | None,
     watch: bool,
     images: list[bytes],
     site_id: int | None = None,
+    folder_id: uuid.UUID | None = None,
 ) -> uuid.UUID:
     """Регистрация человека по фото: детект лица на каждом → усреднённый эталон."""
     from pragmata.db.models import Person, PersonPhoto
+    from pragmata.services import person_org_service
 
     if not name.strip():
         raise HTTPException(422, "имя обязательно")
-    if category not in CATEGORIES:
-        raise HTTPException(422, f"категория: {', '.join(CATEGORIES)}")
+    category = (category or "").strip() or None
+    if category is not None and category not in person_org_service.allowed_category_keys(site_id):
+        raise HTTPException(422, "неизвестная категория для этой площадки")
+    person_org_service.assert_folder_ok(folder_id, site_id)
     if not images:
         raise HTTPException(422, "нужно хотя бы одно фото")
     if not _recognizer().available:
@@ -173,6 +186,7 @@ def enroll_person(
             site_id=site_id,
             name=name.strip(),
             category=category,
+            folder_id=folder_id,
             position=(position or None),
             note=(note or None),
             watch=watch,
@@ -266,9 +280,14 @@ def photo_path(photo_id: uuid.UUID) -> str | None:
 def create_person(payload: PersonCreate, site_id: int | None = None) -> uuid.UUID:
     """Завести человека, взяв эталон у существующего трека (из Поиска/кадра)."""
     from pragmata.db.models import Person, Track
+    from pragmata.services import person_org_service
 
-    if payload.category not in CATEGORIES:
-        raise HTTPException(422, f"категория: {', '.join(CATEGORIES)}")
+    if (
+        payload.category is not None
+        and payload.category not in person_org_service.allowed_category_keys(site_id)
+    ):
+        raise HTTPException(422, "неизвестная категория для этой площадки")
+    person_org_service.assert_folder_ok(payload.folder_id, site_id)
     with session_factory()() as s:
         track = s.get(Track, payload.track_id)
         if track is None or (track.clip_emb is None and track.face_emb is None):
@@ -277,6 +296,7 @@ def create_person(payload: PersonCreate, site_id: int | None = None) -> uuid.UUI
             site_id=site_id,
             name=payload.name,
             category=payload.category,
+            folder_id=payload.folder_id,
             position=payload.position,
             note=payload.note,
             watch=payload.watch,
@@ -291,6 +311,7 @@ def create_person(payload: PersonCreate, site_id: int | None = None) -> uuid.UUI
 
 def patch_person(person_id: uuid.UUID, patch: PersonPatch) -> None:
     from pragmata.db.models import Person
+    from pragmata.services import person_org_service
 
     with session_factory()() as s:
         p = s.get(Person, person_id)
@@ -299,9 +320,15 @@ def patch_person(person_id: uuid.UUID, patch: PersonPatch) -> None:
         if patch.name is not None:
             p.name = patch.name
         if patch.category is not None:
-            if patch.category not in CATEGORIES:
-                raise HTTPException(422, f"категория: {', '.join(CATEGORIES)}")
-            p.category = patch.category
+            cat = patch.category.strip() or None  # "" → снять категорию
+            if cat is not None and cat not in person_org_service.allowed_category_keys(p.site_id):
+                raise HTTPException(422, "неизвестная категория для этой площадки")
+            p.category = cat
+        if patch.clear_folder:
+            p.folder_id = None
+        elif patch.folder_id is not None:
+            person_org_service.assert_folder_ok(patch.folder_id, p.site_id)
+            p.folder_id = patch.folder_id
         if patch.position is not None:
             p.position = patch.position
         if patch.note is not None:
