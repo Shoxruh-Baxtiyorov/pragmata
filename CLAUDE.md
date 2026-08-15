@@ -118,7 +118,7 @@ Investigation (`investigation.py`): CLIP contrast margin — candidate passes on
 Feature branch → PR to `main`. Push only on the owner's explicit command (local-first). SSH via `~/.ssh/id_ed25519_aibot` (`core.sshCommand` already set in repo).
 
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:1105d646 -->
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:46cd31e7 -->
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
@@ -162,6 +162,7 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
    # Team-maintainer opt-in only, unless current instructions forbid it:
    git pull --rebase
+   bd dolt push
    git push
    git status
    ```
