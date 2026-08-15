@@ -147,7 +147,7 @@ function ShotFrame({ src, alt }: { src: string; alt: string }) {
 }
 
 export function LandingPage() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const c = landingCopy(i18n.language)
   const [stuck, setStuck] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -170,21 +170,6 @@ export function LandingPage() {
 
   return (
     <div className="lp" id="top">
-      <div className="lp-rail" aria-hidden="true">
-        <span className="lp-rail__label">PRAGMATA / 01</span>
-        <span className="lp-rail__track">
-          <i />
-        </span>
-        <span className="lp-rail__label lp-rail__label--ok">LOCAL BY DESIGN</span>
-      </div>
-      <div className="lp-scan" aria-hidden="true">
-        <span className="lp-scan__label">SCAN / 24H</span>
-        <span className="lp-scan__track">
-          <i />
-        </span>
-        <span className="lp-scan__label lp-scan__label--ok">LOCAL LOOP</span>
-      </div>
-
       <header className={`lp-head ${stuck ? 'lp-head--stuck' : ''}`}>
         <div className="lp-container lp-head__inner">
           <Logo label={c.a11y.home} />
@@ -197,10 +182,10 @@ export function LandingPage() {
           </nav>
           <div className="lp-head__tools">
             <LangSelect />
-            <button type="button" className="lp-headcta" onClick={() => setDialogOpen(true)}>
-              <span>{c.headerCta}</span>
+            <Link to="/login" className="lp-headcta">
+              <span>{t('lp.cta.login')}</span>
               <ArrowUpRight size={16} />
-            </button>
+            </Link>
             <button
               type="button"
               className="lp-burger"
@@ -227,16 +212,10 @@ export function LandingPage() {
                 <ArrowRight size={16} />
               </a>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false)
-                setDialogOpen(true)
-              }}
-            >
-              {c.headerCta}
+            <Link to="/login" onClick={() => setMenuOpen(false)}>
+              {t('lp.cta.login')}
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
         )}
       </header>
