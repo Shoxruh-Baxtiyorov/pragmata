@@ -36,8 +36,47 @@ export function useDeleteTurnstile() {
   })
 }
 
+export function usePatchTurnstile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<TurnstileInput> }) =>
+      api.patch(`/api/v1/turnstiles/${id}`, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
 export function useOpenTurnstile() {
   return useMutation({
     mutationFn: (id: string) => api.post<{ ok: boolean }>(`/api/v1/turnstiles/${id}/open`, {}),
+  })
+}
+
+// авто-открытие по лицу: решение принимает сервер (политика + актуация)
+export interface FaceOpenResult {
+  open: boolean
+  reason: string
+  person: string | null
+}
+
+export function useFaceOpen() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      person_id,
+      similarity,
+      live,
+    }: {
+      id: string
+      person_id: string
+      similarity: number
+      live: boolean
+    }) =>
+      api.post<FaceOpenResult>(`/api/v1/turnstiles/${id}/face-open`, {
+        person_id,
+        similarity,
+        live,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['events'] }),
   })
 }

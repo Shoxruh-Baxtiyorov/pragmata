@@ -11,7 +11,13 @@ import uuid  # noqa: TC003 — uuid.UUID в сигнатурах FastAPI-роу�
 from fastapi import APIRouter, Depends, HTTPException
 
 from pragmata.analytics.entitlements import resolve
-from pragmata.api.schemas import AccessEventIn, TurnstileIn, TurnstileOut, TurnstilePatch
+from pragmata.api.schemas import (
+    AccessEventIn,
+    FaceOpenIn,
+    TurnstileIn,
+    TurnstileOut,
+    TurnstilePatch,
+)
 from pragmata.api.security import current_scope
 from pragmata.services import turnstile_service as svc
 
@@ -62,3 +68,12 @@ def access(
 ) -> dict[str, object]:
     """Приём события доступа от турникета/интегратора (webhook) → в общую ленту."""
     return svc.ingest_access(tid, payload, scope)
+
+
+@router.post("/{tid}/face-open")
+def face_open(
+    tid: uuid.UUID, payload: FaceOpenIn, scope: int | None = Depends(require_turnstile)
+) -> dict[str, object]:
+    """Авто-открытие по распознанному лицу. Живость проверяется на устройстве
+    входа; сервер принуждает политику (порог/живость/категории) и актуирует."""
+    return svc.face_open_decision(tid, payload, scope)

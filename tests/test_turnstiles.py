@@ -78,3 +78,65 @@ def test_turnstile_event_types_have_severity() -> None:
     assert SEVERITY["turnstile_open"] == "info"
     assert SEVERITY["turnstile_denied"] == "warning"
     assert SEVERITY["turnstile_tailgate"] == "alert"
+
+
+# --- авто-открытие по лицу: чистое решение доступа --------------------------
+
+
+def test_face_open_allows_valid() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    assert (
+        evaluate_face_open("Aziz", "employee", 0.9, True, 0.55, True, [])
+        is None  # пропускаем
+    )
+
+
+def test_face_open_denies_without_liveness() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    # фото с телефона: похоже, но живости нет → anti-spoof отказ
+    assert evaluate_face_open("Aziz", "employee", 0.99, False, 0.55, True, []) == "no_liveness"
+
+
+def test_face_open_denies_low_confidence() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    assert evaluate_face_open("Aziz", "employee", 0.4, True, 0.55, True, []) == "low_confidence"
+
+
+def test_face_open_denies_banned_even_in_allowlist() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    assert evaluate_face_open("X", "banned", 0.9, True, 0.55, True, ["banned"]) == "banned"
+
+
+def test_face_open_denies_outside_allowlist() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    reason = evaluate_face_open("Guest", "visitor", 0.9, True, 0.55, True, ["employee"])
+    assert reason == "not_allowed"
+
+
+def test_face_open_denies_unknown_person() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    assert evaluate_face_open(None, None, 0.9, True, 0.55, True, []) == "unknown"
+
+
+def test_face_open_liveness_optional_when_policy_off() -> None:
+    from pragmata.services.turnstile_service import evaluate_face_open
+
+    # require_liveness=False → живость не требуется
+    assert evaluate_face_open("Aziz", "employee", 0.9, False, 0.55, False, []) is None
+
+
+def test_face_policy_parses_config_and_defaults() -> None:
+    from pragmata.services.turnstile_service import _face_policy
+
+    assert _face_policy({}) == (0.55, True, [])
+    assert _face_policy(
+        {"min_similarity": 0.7, "require_liveness": False, "allow_categories": ["employee"]}
+    ) == (0.7, False, ["employee"])
+    # мусор в min_similarity → дефолт, не падаем
+    assert _face_policy({"min_similarity": "x"})[0] == 0.55

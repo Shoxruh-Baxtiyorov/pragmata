@@ -460,6 +460,19 @@ class AccessEventIn(BaseModel):
     meta: dict[str, object] = {}
 
 
+class FaceOpenIn(BaseModel):
+    """Запрос авто-открытия по распознанному лицу (от on-device сканера входа).
+
+    Живость (anti-spoof) определяется НА УСТРОЙСТВЕ при захвате и приходит в
+    `live`; сервер лишь ПРИНУЖДАЕТ политику (require_liveness/allow_categories).
+    """
+
+    person_id: uuid.UUID
+    similarity: float = 0.0  # уверенность распознавания 0..1
+    live: bool = False  # прошла ли проверка живости на устройстве
+    direction: str | None = None  # in | out
+
+
 class AuditEntryOut(BaseModel):
     id: uuid.UUID
     ts: datetime
