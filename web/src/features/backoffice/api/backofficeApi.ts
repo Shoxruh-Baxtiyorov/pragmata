@@ -19,9 +19,21 @@ export interface PlanRow {
   key: string
   name: string
   price_note: string
+  retention_info_days: number
+  retention_alert_days: number
   active: boolean
   features: string[]
   entitlements: PlanEntitlements
+}
+
+// поля, которые можно править/задать при создании подписки
+export interface PlanPatch {
+  name?: string
+  price_note?: string
+  retention_info_days?: number
+  retention_alert_days?: number
+  active?: boolean
+  entitlements?: PlanEntitlements
 }
 
 export function useBoSites() {
@@ -53,14 +65,33 @@ export function useAssignPlan() {
   })
 }
 
-export function useSavePlanEntitlements() {
+// правка существующей подписки (мета и/или права)
+export function useUpdatePlan() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ key, entitlements }: { key: string; entitlements: PlanEntitlements }) =>
-      api.patch(`/api/v1/backoffice/plans/${key}`, { entitlements }),
+    mutationFn: ({ key, patch }: { key: string; patch: PlanPatch }) =>
+      api.patch(`/api/v1/backoffice/plans/${key}`, patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bo-plans'] })
       qc.invalidateQueries({ queryKey: ['me'] })
     },
+  })
+}
+
+// создание новой подписки (key — латиница/цифры, неизменяемый идентификатор)
+export function useCreatePlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ key, body }: { key: string; body: PlanPatch }) =>
+      api.post(`/api/v1/backoffice/plans/${key}`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bo-plans'] }),
+  })
+}
+
+export function useDeletePlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (key: string) => api.del(`/api/v1/backoffice/plans/${key}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bo-plans'] }),
   })
 }
