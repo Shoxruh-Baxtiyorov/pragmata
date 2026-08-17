@@ -1,12 +1,15 @@
 /* ─────────────────────────────────────────────────────────────────────────
  * Тексты лендинга. Отдельно от src/shared/i18n — там короткие строки
- * интерфейса, а здесь длинная маркетинговая проза; смешивать их в одном
- * словаре значит утопить ключи приложения. Гарантия паритета та же:
- * ru — канонический словарь, uz/en типизированы как typeof ru.
+ * интерфейса, а здесь маркетинговые; смешивать их в одном словаре значит
+ * утопить ключи приложения. Паритет тот же: ru — канонический словарь,
+ * uz/en типизированы как typeof ru.
  *
  * Язык по умолчанию — uz (правило платформы), берётся из i18n.language.
- * Правило текста: обычные слова, без внутренних терминов («треки», «VLM»,
- * «CLIP», «false positive» и т.п.).
+ * Правила текста:
+ *   — обычные слова, без внутренних терминов («треки», «VLM», «CLIP»);
+ *   — одна мысль на строку: лид секции — одно предложение, текст плитки —
+ *     не длиннее строки-двух. Длинная проза на витрине не читается, её
+ *     пролистывают.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export const CONTACT_EMAIL = 'hello@pragmata.ai'
@@ -16,74 +19,65 @@ const ru = {
     how: 'Как это работает',
     capabilities: 'Возможности',
     product: 'Панель',
-    industries: 'Для вашего объекта',
-    privacy: 'Приватность',
+    industries: 'Объекты',
+    privacy: 'Данные',
   },
   headerCta: 'Посмотреть в работе',
-  brand: { name: 'PRAGMATA', descriptor: 'ON-PREMISE AI ДЛЯ БЕЗОПАСНОСТИ' },
+  brand: { name: 'PRAGMATA' },
 
   hero: {
-    eyebrow: 'AI-ПОМОЩНИК ПО БЕЗОПАСНОСТИ НА ВАШЕМ СЕРВЕРЕ',
+    /* Формула позиционирования из docs/DESIGN.uz.md — не выдуманная метрика,
+       а то, как продукт описан в собственном дизайн-документе проекта. */
+    formula: '4 часа перемотки → ответ за 20 секунд',
     titleA: 'Ваши камеры записывают.',
     titleEm: 'Pragmata сообщает.',
-    lede: 'Охранник, который не отвлекается: смотрит ваши камеры, находит важное и присылает доказательство вашей команде.',
+    lede: 'Смотрит ваши камеры, находит важное и присылает доказательство в Telegram.',
     ctaPrimary: 'Как это работает',
-    ctaSecondary: 'Посмотреть систему',
-    trust: ['Работает с вашими камерами', 'Работает на вашем сервере', 'Работает без интернета'],
-    bottomLeft: 'Для складов, производств, торговых сетей, школ и логистики',
-    bottomRight: 'Листайте дальше',
   },
 
-  panel: {
-    cam: 'КАМЕРА 04 / СЕВЕРНЫЙ ДОК',
+  /* Карточка тревоги поверх снимка панели. Пример, а не запись с реального
+     объекта — об этом прямо говорит note под снимком. */
+  sample: {
     time: '22:41:08',
-    target: 'ЧЕЛОВЕК / 97.4%',
-    loop: 'ЛОКАЛЬНЫЙ КОНТУР',
-    tracking: 'ВЕДЁТСЯ НАБЛЮДЕНИЕ',
-    trackingMeta: 'НЕПРЕРЫВНО',
-    caption: '01 / АКТИВНЫЙ КАРАУЛ',
-    captionRight: 'ТРЕВОГА С КОНТЕКСТОМ',
+    label: 'Вход в зону',
+    detail: 'Северный док · видео сохранено',
   },
 
-  feed: {
-    head: 'ТРЕВОГИ СЕЙЧАС',
-    count: '03 / 03',
-    footer: 'Telegram-уведомления включены',
-    items: [
-      { time: '22:41:08', label: 'Вход в зону', detail: 'Северный док' },
-      { time: '22:43:17', label: 'Вне рабочих часов', detail: 'Склад 04' },
-      { time: '22:47:02', label: 'Камера не отвечает', detail: 'Ворота 02' },
-    ],
+  diagram: {
+    siteLabel: 'НА ОБЪЕКТЕ',
+    cameras: 'Ваши камеры',
+    camerasMeta: 'RTSP · уже стоят',
+    device: 'Устройство Pragmata',
+    deviceMeta: 'собирает поток',
+    serverTitle: 'Сервер Pragmata',
+    serverMeta: 'обработка · клипы, кадры, распознавание',
+    outTitle: 'Telegram',
+    outMeta: 'тревога вашей команде',
   },
 
   proof: {
-    lead: 'ДЛЯ КАМЕР, КОТОРЫЕ У ВАС УЖЕ ЕСТЬ',
-    items: [
-      'Без нового оборудования',
-      'На вашем сервере',
-      'Ничего не уходит с объекта',
-      'Контур остаётся закрытым',
-    ],
+    lead: 'ДЛЯ КАМЕР, КОТОРЫЕ У ВАС ЕСТЬ',
+    items: ['Ваши камеры остаются', 'Устройство на объекте', 'Тревога в Telegram', 'Видео к каждой'],
   },
 
   shift: {
     kicker: 'ПЕРЕМЕНА',
     titleA: 'От пассивного архива',
     titleEm: 'к активному караулу.',
-    text: 'Большинство камер делают свою работу молча: записывают всё и не сообщают ничего. Pragmata смотрит поток, понимает сцену и говорит команде, когда правило нарушено.',
-    link: 'Перейти к возможностям',
+    text: 'Камеры записывают всё и не говорят ничего. Pragmata говорит, когда правило нарушено.',
+    link: 'Возможности',
     before: {
       label: 'ДО / CCTV',
       tag: 'ПАССИВНО',
       title: 'Что-то произошло.',
-      text: 'Смотреть часы записи. Восстанавливать момент. Надеяться, что камера его видела.',
-      meta: 'ПОСЛЕ СОБЫТИЯ / ВРУЧНУЮ',
+      text: 'Часы перемотки вручную.',
+      meta: 'ПОСЛЕ СОБЫТИЯ',
     },
     after: {
       label: 'ПОСЛЕ / PRAGMATA',
       tag: 'АКТИВНО',
       title: 'Вот доказательство.',
-      text: 'Тревога, контекст и видео — пока они ещё нужны.',
+      text: 'Тревога, контекст и видео.',
       meta: 'СРАЗУ / АВТОМАТИЧЕСКИ',
     },
   },
@@ -92,37 +86,24 @@ const ru = {
     kicker: 'ПОМОЩНИК',
     titleA: 'Меньше смотреть.',
     titleEm: 'Больше знать.',
-    lede: 'Pragmata снимает повторяющуюся работу с вашей сети камер, чтобы внимание команды уходило туда, где оно действительно нужно.',
+    lede: 'Повторяющуюся работу забирает система.',
+    askSample: 'Кто заходил на склад вчера вечером?',
+    askReply: 'Ответ с кадром и видео',
     items: [
       {
         title: 'Видит людей в движении',
-        text: 'Находит людей на ваших живых камерах и ведёт их по кадру, поэтому поток становится сигналом, а не пассивной записью.',
-        tags: ['Живые камеры', 'Поиск людей', 'Непрерывное наблюдение'],
+        text: 'Находит людей на живых камерах и ведёт по кадру.',
+      },
+      { title: 'Правила сообщают о себе', text: '' },
+      { title: 'Доказательство нарезано', text: '' },
+      { title: 'Спросите, что случилось', text: '' },
+      {
+        title: 'Поиск по описанию',
+        text: 'Опишите, кого ищете, — система пройдёт по записям.',
       },
       {
-        title: 'Правила сообщают о себе сами',
-        text: 'Понятные правила: вход в зону, долгое нахождение, присутствие вне рабочих часов, вход и выход, камера не отвечает. Система не ждёт, пока кто-то заметит.',
-        tags: ['Вход в зону', 'Долгое нахождение', 'Вне рабочих часов'],
-      },
-      {
-        title: 'Доказательство уже нарезано',
-        text: 'К каждой тревоге автоматически сохраняется короткое видео и кадр. Не нужно листать запись и угадывать, какой момент был важным.',
-        tags: ['Видео автоматически', 'Кадр и запись', 'История тревог'],
-      },
-      {
-        title: 'Спросите, что случилось',
-        text: 'Спрашивайте на узбекском или русском: «Кто заходил на склад вчера вечером?» Ответ приходит вместе с кадром или видео.',
-        tags: ['Узбекский и русский', 'Обычные слова', 'С доказательством'],
-      },
-      {
-        title: 'Найти человека по описанию',
-        text: 'Опишите, кого ищете, и система пройдёт по сохранённым проходам. Помогает, когда описание помните лучше, чем время.',
-        tags: ['По внешнему виду', 'По записям', 'Быстрый поиск'],
-      },
-      {
-        title: 'Превращает запись в контекст',
-        text: 'Описание сцены, автомобильные номера, тепловая карта и сводка за день делают тихие часы понятными без ещё одной системы, за которой надо следить.',
-        tags: ['Описание сцены', 'Автономера', 'Сводка за день'],
+        title: 'Запись становится контекстом',
+        text: 'Описание сцены, автономера, тепловая карта, сводка за день.',
       },
     ],
   },
@@ -131,10 +112,10 @@ const ru = {
     kicker: 'ПАНЕЛЬ',
     titleA: 'Весь объект —',
     titleEm: 'на одном экране.',
-    lede: 'Тревоги, живые камеры и вопросы к системе — в одном месте, на вашем сервере.',
+    lede: 'Тревоги, камеры и вопросы к системе — в одном месте.',
     shots: [
-      { title: 'Обзор объекта', text: 'Что произошло за сутки, по камерам и по правилам.' },
-      { title: 'Тревоги и доказательства', text: 'Список событий, кадр и видео рядом с каждым.' },
+      { title: 'Обзор объекта', text: 'Что произошло за сутки.' },
+      { title: 'Тревоги и доказательства', text: 'К каждой — кадр и видео.' },
     ],
   },
 
@@ -142,50 +123,40 @@ const ru = {
     kicker: 'ГДЕ РАБОТАЕТ',
     titleA: 'Сделано для',
     titleEm: 'настоящей смены.',
-    lede: 'Для тех, кто отвечает за объект, когда двери закрылись, свет погас, а запись стала чужой проблемой.',
+    lede: 'Для тех, кто отвечает за объект после закрытия дверей.',
     items: [
       {
         label: '01 / СКЛАДЫ И ПРОИЗВОДСТВА',
         title: 'Узнавать не после смены.',
-        text: 'Ловите вход в док, присутствие вне рабочих часов и отключение камеры, пока контекст ещё свежий.',
+        text: 'Вход в док, ночное присутствие, отключение камеры.',
       },
       {
         label: '02 / ТОРГОВЫЕ СЕТИ',
         title: 'Каждый магазин под ответом.',
-        text: 'Видно, что требует внимания на всех объектах: входы, выходы, долгое нахождение, необычные часы и доказательство за каждой тревогой.',
+        text: 'Все объекты в одном списке, за каждой тревогой — доказательство.',
       },
       {
         label: '03 / ШКОЛЫ И ЛОГИСТИКА',
-        title: 'Тихие места остаются видимыми.',
-        text: 'Понятный присмотр за коридорами, воротами, дворами и маршрутами — теми камерами, которые уже стоят.',
+        title: 'Тихие места видно.',
+        text: 'Коридоры, ворота и дворы — на тех камерах, что уже стоят.',
       },
     ],
-    link: 'Посмотреть сценарий',
-    slip: 'ВИДЕО СОХРАНЕНО',
   },
 
   privacy: {
-    kicker: 'ВОЗРАЖЕНИЕ',
-    titleA: '«Данные уходят',
-    titleEm: 'с моего объекта?»',
-    no: 'НЕТ.',
-    text: 'Pragmata работает на вашем сервере, с вашими камерами, полностью без интернета. Запись остаётся внутри вашей работы.',
-    points: ['Без обработки в облаке', 'Без нового оборудования', 'Без зависимости от интернета'],
-    panelHead: 'ЛОКАЛЬНАЯ СИСТЕМА / ОНЛАЙН',
-    panelStrong: 'Ваш сервер',
-    panelSmall: 'Обработка остаётся здесь',
+    kicker: 'ДАННЫЕ',
+    titleA: 'Куда уходит',
+    titleEm: 'ваша запись.',
+    text: 'Устройство на объекте собирает поток, обработка и хранение — на сервере Pragmata. Значит, клипы и кадры покидают объект. Мы это не прячем, а показываем.',
   },
 
   workflow: {
     kicker: 'ОДИН КОНТУР / ЧЕТЫРЕ ШАГА',
-    titleA: 'Когда на объекте тихо,',
-    titleEm: 'Pragmata не молчит.',
-    lede: 'Простой рабочий контур для тех моментов, которые обычно теряются между камерой и утренним отчётом.',
     steps: [
       { title: 'Заметить', text: 'Человек, движение, состояние камеры.' },
       { title: 'Понять', text: 'Правило, сцена, вопрос обычными словами.' },
       { title: 'Сообщить', text: 'Нужная тревога — в Telegram.' },
-      { title: 'Доказать', text: 'Кадр или видео вместе с контекстом.' },
+      { title: 'Доказать', text: 'Кадр или видео с контекстом.' },
     ],
   },
 
@@ -193,40 +164,34 @@ const ru = {
     kicker: 'СЛЕДУЮЩАЯ СМЕНА',
     titleA: 'Дайте камерам',
     titleEm: 'голос.',
-    text: 'Расскажите, что ваш объект перестанет пропускать. Мы покажем, куда Pragmata встаёт в уже имеющиеся камеры и процессы.',
-    button: 'Поговорить с командой Pragmata',
-    asideStrong: 'Караул, который не отвлекается.',
-    metaLeft: 'ДЛЯ ЛОКАЛЬНОГО КОНТРОЛЯ',
-    metaRight: 'UZ / RU / EN',
+    text: 'Расскажите, что ваш объект перестанет пропускать.',
+    button: 'Запросить демо',
   },
 
   footer: {
-    tagline: 'AI-безопасность для камер, которые у вас уже есть.',
+    tagline: 'AI-безопасность для камер, которые у вас есть.',
     contact: 'Связаться',
     login: 'Войти в панель',
     copyright: '© 2026 PRAGMATA AI',
   },
 
   modal: {
-    kicker: 'НАЧНЁМ С ВАШЕГО ОБЪЕКТА',
     titleA: 'Найдём',
     titleEm: 'пропущенные моменты.',
-    text: 'Расскажите, где сегодняшние камеры заставляют вас догадываться. Команда Pragmata вернётся с понятным следующим шагом.',
+    text: 'Где сегодняшние камеры заставляют вас догадываться?',
     siteLabel: 'Ваш объект',
     siteOptions: ['Склад', 'Производство', 'Торговая сеть', 'Школа', 'Логистика'],
     camLabel: 'Сколько камер',
-    camOptions: ['1–10 камер', '11–50 камер', '51–100 камер', 'Больше 100'],
+    camOptions: ['1–10', '11–50', '51–100', 'Больше 100'],
     submit: 'Начать разговор',
     subject: 'Pragmata AI — разговор об объекте',
-    fineprint: 'Облачный аккаунт не нужен. Новое оборудование не предлагаем.',
-    close: 'Закрыть',
   },
 
   a11y: {
     home: 'Pragmata AI — на главную',
     nav: 'Основная навигация',
     menu: 'Меню',
-    feed: 'Пример списка тревог',
+    feed: 'Пример тревоги',
   },
 }
 
@@ -235,78 +200,61 @@ const uz: typeof ru = {
     how: 'Qanday ishlaydi',
     capabilities: 'Imkoniyatlar',
     product: 'Panel',
-    industries: 'Obyektingiz uchun',
-    privacy: 'Maxfiylik',
+    industries: 'Kimlar uchun',
+    privacy: 'Ma‘lumot',
   },
   headerCta: 'Ishda ko‘rish',
-  brand: { name: 'PRAGMATA', descriptor: 'O‘Z SERVERINGIZDA AI XAVFSIZLIK' },
+  brand: { name: 'PRAGMATA' },
 
   hero: {
-    eyebrow: 'O‘Z SERVERINGIZDA ISHLAYDIGAN AI XAVFSIZLIK YORDAMCHISI',
+    formula: '4 soat yozuv varaqlash → 20 soniyada javob',
     titleA: 'Kameralaringiz yozadi.',
     titleEm: 'Pragmata xabar beradi.',
-    lede: 'Chalg‘imaydigan qorovul: kameralaringizni kuzatadi, muhimini topadi va dalilni jamoangizga yuboradi.',
+    lede: 'Kameralaringizni kuzatadi, muhimini topadi va dalilni Telegramga yuboradi.',
     ctaPrimary: 'Qanday ishlaydi',
-    ctaSecondary: 'Tizimni ko‘rish',
-    trust: [
-      'Mavjud kameralar bilan ishlaydi',
-      'O‘z serveringizda ishlaydi',
-      'Internetsiz ishlaydi',
-    ],
-    bottomLeft: 'Omborlar, ishlab chiqarish, savdo tarmoqlari, maktablar va logistika uchun',
-    bottomRight: 'Pastga o‘tish',
   },
 
-  panel: {
-    cam: 'KAMERA 04 / SHIMOLIY DOK',
+  sample: {
     time: '22:41:08',
-    target: 'ODAM / 97.4%',
-    loop: 'MAHALLIY HALQA',
-    tracking: 'KUZATUV KETMOQDA',
-    trackingMeta: 'UZLUKSIZ',
-    caption: '01 / FAOL QOROVUL',
-    captionRight: 'KONTEKSTLI TREVOGA',
+    label: 'Hududga kirish',
+    detail: 'Shimoliy dok · video saqlandi',
   },
 
-  feed: {
-    head: 'HOZIRGI TREVOGALAR',
-    count: '03 / 03',
-    footer: 'Telegram xabarnomasi yoniq',
-    items: [
-      { time: '22:41:08', label: 'Hududga kirish', detail: 'Shimoliy dok' },
-      { time: '22:43:17', label: 'Ish vaqtidan tashqari', detail: 'Ombor 04' },
-      { time: '22:47:02', label: 'Kamera javob bermaydi', detail: 'Darvoza 02' },
-    ],
+  diagram: {
+    siteLabel: 'SIZDA',
+    cameras: 'Kameralaringiz',
+    camerasMeta: 'RTSP · allaqachon turibdi',
+    device: 'Pragmata qurilmasi',
+    deviceMeta: 'oqimni yig‘adi',
+    serverTitle: 'Pragmata serveri',
+    serverMeta: 'ishlov · klip, kadr, tanib olish',
+    outTitle: 'Telegram',
+    outMeta: 'jamoangizga xabar',
   },
 
   proof: {
-    lead: 'SIZDA ALLAQACHON BOR KAMERALAR UCHUN',
-    items: [
-      'Yangi qurilma shart emas',
-      'O‘z serveringizda',
-      'Ma‘lumot obyektdan chiqmaydi',
-      'Halqa yopiq qoladi',
-    ],
+    lead: 'SIZDA BOR KAMERALAR UCHUN',
+    items: ['Kameralaringiz qoladi', 'Sizda kichik qurilma', 'Telegramga ogohlantirish', 'Har biriga video'],
   },
 
   shift: {
     kicker: 'O‘ZGARISH',
     titleA: 'Passiv arxivdan',
     titleEm: 'faol qorovulga.',
-    text: 'Ko‘p kameralar o‘z ishini jimgina qiladi: hammasini yozadi, hech narsa aytmaydi. Pragmata oqimni kuzatadi, sahnani tushunadi va qoida buzilganda jamoangizga aytadi.',
-    link: 'Imkoniyatlarga o‘tish',
+    text: 'Kameralar hammasini yozadi va hech narsa aytmaydi. Pragmata qoida buzilganda aytadi.',
+    link: 'Imkoniyatlar',
     before: {
       label: 'OLDIN / CCTV',
       tag: 'PASSIV',
       title: 'Nimadir bo‘ldi.',
-      text: 'Soatlab yozuvni ko‘rish. Lahzani tiklash. Kamera ko‘rgan bo‘lsin deb umid qilish.',
-      meta: 'VOQEADAN KEYIN / QO‘LDA',
+      text: 'Soatlab yozuv varaqlash.',
+      meta: 'VOQEADAN KEYIN',
     },
     after: {
       label: 'KEYIN / PRAGMATA',
       tag: 'FAOL',
       title: 'Dalil shu yerda.',
-      text: 'Trevoga, kontekst va video — hali kerak bo‘lganda.',
+      text: 'Ogohlantirish, kontekst va video.',
       meta: 'O‘SHA ZAHOTI / AVTOMATIK',
     },
   },
@@ -315,55 +263,36 @@ const uz: typeof ru = {
     kicker: 'YORDAMCHI',
     titleA: 'Kamroq qarash.',
     titleEm: 'Ko‘proq bilish.',
-    lede: 'Pragmata kameralar tarmog‘idagi takrorlanuvchi ishni o‘ziga oladi, jamoangizning e‘tibori esa haqiqatan kerak joyga qoladi.',
+    lede: 'Takrorlanuvchi ishni tizim o‘z zimmasiga oladi.',
+    askSample: 'Kecha kechqurun omborga kim kirdi?',
+    askReply: 'Kadr va video bilan javob',
     items: [
       {
         title: 'Harakatdagi odamlarni ko‘radi',
-        text: 'Jonli kameralaringizda odamlarni topadi va kadr bo‘ylab kuzatib boradi — oqim passiv yozuv emas, signalga aylanadi.',
-        tags: ['Jonli kameralar', 'Odam topish', 'Uzluksiz kuzatuv'],
+        text: 'Jonli kameralarda odamlarni topadi va kadr bo‘ylab kuzatadi.',
+      },
+      { title: 'Qoidalar o‘zi xabar beradi', text: '' },
+      { title: 'Dalil allaqachon kesilgan', text: '' },
+      { title: 'Nima bo‘lganini so‘rang', text: '' },
+      {
+        title: 'Tavsif bo‘yicha qidiruv',
+        text: 'Kimni izlayotganingizni ta‘riflang — tizim yozuvlardan topadi.',
       },
       {
-        title: 'Qoidalar o‘zi xabar beradi',
-        text: 'Tushunarli qoidalar: hududga kirish, uzoq turish, ish vaqtidan tashqari bo‘lish, kirish va chiqish, kamera javob bermasligi. Tizim kimdir sezishini kutmaydi.',
-        tags: ['Hududga kirish', 'Uzoq turish', 'Ish vaqtidan tashqari'],
-      },
-      {
-        title: 'Dalil allaqachon kesilgan',
-        text: 'Har bir trevogaga qisqa video va kadr avtomatik saqlanadi. Yozuvni varaqlab, qaysi lahza muhim ekanini taxmin qilish shart emas.',
-        tags: ['Video avtomatik', 'Kadr va yozuv', 'Trevogalar tarixi'],
-      },
-      {
-        title: 'Nima bo‘lganini so‘rang',
-        text: 'O‘zbek yoki rus tilida so‘rang: «Kecha kechqurun omborga kim kirdi?» Javob kadr yoki video bilan keladi.',
-        tags: ['O‘zbek va rus', 'Oddiy so‘zlar', 'Dalil bilan'],
-      },
-      {
-        title: 'Tavsif bo‘yicha odam topish',
-        text: 'Kimni izlayotganingizni ta‘riflab bering — tizim saqlangan o‘tishlar bo‘ylab qidiradi. Vaqtdan ko‘ra tavsif yodda bo‘lganda qo‘l keladi.',
-        tags: ['Ko‘rinish bo‘yicha', 'Yozuvlar bo‘ylab', 'Tez qidiruv'],
-      },
-      {
-        title: 'Yozuvni kontekstga aylantiradi',
-        text: 'Sahna tavsifi, avtomobil raqamlari, issiqlik xaritasi va kunlik xulosa jim soatlarni tushunarli qiladi — yana bir kuzatib turadigan tizimsiz.',
-        tags: ['Sahna tavsifi', 'Avto raqam', 'Kunlik xulosa'],
+        title: 'Yozuv kontekstga aylanadi',
+        text: 'Sahna tavsifi, avto raqam, issiqlik xaritasi, kunlik xulosa.',
       },
     ],
   },
 
   product: {
     kicker: 'PANEL',
-    titleA: 'Butun obyekt —',
+    titleA: 'Hamma kamera —',
     titleEm: 'bitta ekranda.',
-    lede: 'Trevogalar, jonli kameralar va tizimga savollar — bitta joyda, o‘z serveringizda.',
+    lede: 'Ogohlantirishlar, kameralar va savollar — bir joyda.',
     shots: [
-      {
-        title: 'Obyekt ko‘rinishi',
-        text: 'Bir sutkada nima bo‘ldi — kameralar va qoidalar bo‘yicha.',
-      },
-      {
-        title: 'Trevogalar va dalillar',
-        text: 'Voqealar ro‘yxati, har biriga kadr va video yonida.',
-      },
+      { title: 'Umumiy ko‘rinish', text: 'Bir sutkada nima bo‘ldi.' },
+      { title: 'Ogohlantirish va dalil', text: 'Har biriga kadr va video.' },
     ],
   },
 
@@ -371,49 +300,39 @@ const uz: typeof ru = {
     kicker: 'QAYERDA ISHLAYDI',
     titleA: 'Haqiqiy smena',
     titleEm: 'uchun qilingan.',
-    lede: 'Eshiklar yopilib, chiroq o‘chib, yozuv boshqaning muammosiga aylanganda obyekt uchun javob beradiganlar uchun.',
+    lede: 'Eshiklar yopilgandan keyin javobgar bo‘lib qoladiganlar uchun.',
     items: [
       {
         label: '01 / OMBOR VA ISHLAB CHIQARISH',
         title: 'Smenadan keyin bilib qolmang.',
-        text: 'Dokka kirish, ish vaqtidan tashqari harakat va kamera uzilishini kontekst hali yangi bo‘lganda ushlang.',
+        text: 'Dokka kirish, tungi harakat, kamera uzilishi.',
       },
       {
         label: '02 / SAVDO TARMOQLARI',
         title: 'Har bir do‘kon javob beradi.',
-        text: 'Barcha obyektlarda nima e‘tibor talab qilishi ko‘rinadi: kirish, chiqish, uzoq turish, g‘ayrioddiy vaqt va har bir trevoga ortidagi dalil.',
+        text: 'Barcha do‘kon bitta ro‘yxatda, har ogohlantirish ortida dalil.',
       },
       {
         label: '03 / MAKTAB VA LOGISTIKA',
         title: 'Jim joylar ko‘rinib turadi.',
-        text: 'Yo‘laklar, darvozalar, hovlilar va yo‘nalishlar uchun tushunarli nazorat — allaqachon turgan kameralar bilan.',
+        text: 'Yo‘lak, darvoza va hovlilar — turgan kameralar bilan.',
       },
     ],
-    link: 'Holatni ko‘rish',
-    slip: 'VIDEO SAQLANDI',
   },
 
   privacy: {
-    kicker: 'E‘TIROZ',
-    titleA: '«Ma‘lumot obyektdan',
-    titleEm: 'chiqib ketadimi?»',
-    no: 'YO‘Q.',
-    text: 'Pragmata sizning serveringizda, sizning kameralaringiz bilan, butunlay internetsiz ishlaydi. Yozuv ishingiz ichida qoladi.',
-    points: ['Bulutda ishlov yo‘q', 'Yangi qurilma yo‘q', 'Internetga bog‘liqlik yo‘q'],
-    panelHead: 'MAHALLIY TIZIM / ONLAYN',
-    panelStrong: 'Sizning serveringiz',
-    panelSmall: 'Ishlov shu yerda qoladi',
+    kicker: 'MA‘LUMOT',
+    titleA: 'Yozuvingiz',
+    titleEm: 'qayerga boradi.',
+    text: 'Sizdagi qurilma oqimni yig‘adi, ishlov va saqlash Pragmata serverida bo‘ladi. Ya‘ni kliplar va kadrlar sizdan chiqib bizga keladi. Buni yashirmaymiz — ko‘rsatamiz.',
   },
 
   workflow: {
     kicker: 'BITTA HALQA / TO‘RT QADAM',
-    titleA: 'Obyekt jimib qolganda,',
-    titleEm: 'Pragmata jim turmaydi.',
-    lede: 'Kamera va ertalabki hisobot orasida odatda yo‘qoladigan lahzalar uchun oddiy ish halqasi.',
     steps: [
       { title: 'Sezish', text: 'Odam, harakat, kamera holati.' },
       { title: 'Tushunish', text: 'Qoida, sahna, oddiy so‘zlardagi savol.' },
-      { title: 'Xabar berish', text: 'Kerakli trevoga — Telegramga.' },
+      { title: 'Xabar berish', text: 'Kerakli ogohlantirish — Telegramga.' },
       { title: 'Isbotlash', text: 'Kadr yoki video, kontekst bilan.' },
     ],
   },
@@ -422,40 +341,34 @@ const uz: typeof ru = {
     kicker: 'KEYINGI SMENA',
     titleA: 'Kameralaringizga',
     titleEm: 'ovoz bering.',
-    text: 'Obyektingiz nimani boy bermasligi kerakligini aytib bering. Pragmata mavjud kameralar va jarayonlaringizga qanday tushishini ko‘rsatamiz.',
-    button: 'Pragmata jamoasi bilan gaplashish',
-    asideStrong: 'Chalg‘imaydigan qorovul.',
-    metaLeft: 'MAHALLIY NAZORAT UCHUN',
-    metaRight: 'UZ / RU / EN',
+    text: 'Nimani boy bermaslik kerakligini aytib bering.',
+    button: 'Demo so‘rash',
   },
 
   footer: {
-    tagline: 'Sizda allaqachon bor kameralar uchun AI xavfsizlik.',
+    tagline: 'Sizda bor kameralar uchun AI xavfsizlik.',
     contact: 'Bog‘lanish',
     login: 'Panelga kirish',
     copyright: '© 2026 PRAGMATA AI',
   },
 
   modal: {
-    kicker: 'OBYEKTINGIZDAN BOSHLAYMIZ',
     titleA: 'Boy berilgan',
     titleEm: 'lahzalarni topamiz.',
-    text: 'Hozirgi kameralaringiz sizni qayerda taxmin qilishga majbur qilayotganini aytib bering. Pragmata jamoasi tushunarli keyingi qadam bilan qaytadi.',
-    siteLabel: 'Obyektingiz',
+    text: 'Hozirgi kameralaringiz sizni qayerda taxmin qilishga majbur qiladi?',
+    siteLabel: 'Qayerda ishlatasiz',
     siteOptions: ['Ombor', 'Ishlab chiqarish', 'Savdo tarmog‘i', 'Maktab', 'Logistika'],
     camLabel: 'Kamera soni',
-    camOptions: ['1–10 kamera', '11–50 kamera', '51–100 kamera', '100 dan ko‘p'],
+    camOptions: ['1–10', '11–50', '51–100', '100 dan ko‘p'],
     submit: 'Suhbatni boshlash',
-    subject: 'Pragmata AI — obyekt haqida suhbat',
-    fineprint: 'Bulut hisobi shart emas. Yangi qurilma taklif qilmaymiz.',
-    close: 'Yopish',
+    subject: 'Pragmata AI — suhbat',
   },
 
   a11y: {
     home: 'Pragmata AI — boshiga',
     nav: 'Asosiy navigatsiya',
     menu: 'Menyu',
-    feed: 'Trevogalar ro‘yxati namunasi',
+    feed: 'Ogohlantirish namunasi',
   },
 }
 
@@ -464,74 +377,61 @@ const en: typeof ru = {
     how: 'How it works',
     capabilities: 'Capabilities',
     product: 'Dashboard',
-    industries: 'For your site',
-    privacy: 'Privacy',
+    industries: 'Sites',
+    privacy: 'Your data',
   },
   headerCta: 'See it in action',
-  brand: { name: 'PRAGMATA', descriptor: 'ON-PREMISE AI SECURITY' },
+  brand: { name: 'PRAGMATA' },
 
   hero: {
-    eyebrow: 'ON-PREMISE AI SECURITY COPILOT',
+    formula: '4 hours of scrubbing → an answer in 20 seconds',
     titleA: 'Your cameras record.',
     titleEm: 'Pragmata reports.',
-    lede: 'The guard that never looks away — watching your existing cameras, finding what matters, and sending the evidence to your team.',
-    ctaPrimary: 'See how it works',
-    ctaSecondary: 'Explore the system',
-    trust: ['Works with existing cameras', 'Runs on your server', 'Runs fully offline'],
-    bottomLeft: 'For warehouses, factories, retail chains, schools and logistics',
-    bottomRight: 'Scroll to inspect',
+    lede: 'Watches your cameras, finds what matters, sends the evidence to Telegram.',
+    ctaPrimary: 'How it works',
   },
 
-  panel: {
-    cam: 'CAM 04 / NORTH BAY',
+  sample: {
     time: '22:41:08',
-    target: 'PERSON / 97.4%',
-    loop: 'LOCAL LOOP',
-    tracking: 'TRACKING ACTIVE',
-    trackingMeta: 'CONTINUOUS',
-    caption: '01 / THE ACTIVE GUARD',
-    captionRight: 'ALERTS WITH CONTEXT',
+    label: 'Zone entry',
+    detail: 'North loading bay · clip saved',
   },
 
-  feed: {
-    head: 'LIVE ALERTS',
-    count: '03 / 03',
-    footer: 'Telegram push active',
-    items: [
-      { time: '22:41:08', label: 'Zone entry', detail: 'North loading bay' },
-      { time: '22:43:17', label: 'After hours', detail: 'Warehouse 04' },
-      { time: '22:47:02', label: 'Camera not responding', detail: 'Gate 02' },
-    ],
+  diagram: {
+    siteLabel: 'AT YOUR SITE',
+    cameras: 'Your cameras',
+    camerasMeta: 'RTSP · already installed',
+    device: 'Pragmata device',
+    deviceMeta: 'collects the stream',
+    serverTitle: 'Pragmata server',
+    serverMeta: 'processing · clips, frames, recognition',
+    outTitle: 'Telegram',
+    outMeta: 'the alert, to your team',
   },
 
   proof: {
-    lead: 'BUILT FOR THE CAMERAS YOU ALREADY OWN',
-    items: [
-      'No new hardware',
-      'On your server',
-      'Nothing leaves the site',
-      'The loop stays closed',
-    ],
+    lead: 'FOR THE CAMERAS YOU ALREADY OWN',
+    items: ['Your cameras stay', 'A device on site', 'Alerts to Telegram', 'A clip with each'],
   },
 
   shift: {
     kicker: 'THE SHIFT',
     titleA: 'From passive archive',
     titleEm: 'to active guard.',
-    text: 'Most cameras do their job quietly — recording everything and reporting nothing. Pragmata watches the stream, understands the scene, and tells your team when the rule is broken.',
-    link: 'Meet the capabilities',
+    text: 'Cameras record everything and report nothing. Pragmata speaks when a rule breaks.',
+    link: 'Capabilities',
     before: {
       label: 'BEFORE / CCTV',
       tag: 'PASSIVE',
       title: 'Something happened.',
-      text: 'Watch hours of footage. Reconstruct the moment. Hope the camera saw it.',
-      meta: 'AFTER THE FACT / MANUAL',
+      text: 'Hours of scrubbing, by hand.',
+      meta: 'AFTER THE FACT',
     },
     after: {
       label: 'AFTER / PRAGMATA',
       tag: 'ACTIVE',
       title: 'Here is the evidence.',
-      text: 'The alert, the context, and the clip — while they are still useful.',
+      text: 'The alert, the context, the clip.',
       meta: 'IN THE MOMENT / AUTOMATIC',
     },
   },
@@ -540,37 +440,24 @@ const en: typeof ru = {
     kicker: 'THE COPILOT',
     titleA: 'Less watching.',
     titleEm: 'More knowing.',
-    lede: 'Pragmata takes the repetitive work out of your camera network so your team can spend attention where it actually matters.',
+    lede: 'The system takes the repetitive work.',
+    askSample: 'Who entered the warehouse last night?',
+    askReply: 'Answered with a frame and a clip',
     items: [
       {
         title: 'Sees people in motion',
-        text: 'Finds people on your live cameras and follows them across the frame, so a feed becomes a signal instead of a passive recording.',
-        tags: ['Live cameras', 'People finding', 'Continuous tracking'],
+        text: 'Finds people on live cameras and follows them across the frame.',
+      },
+      { title: 'Rules report themselves', text: '' },
+      { title: 'Evidence already clipped', text: '' },
+      { title: 'Ask what happened', text: '' },
+      {
+        title: 'Search by description',
+        text: 'Describe who you are looking for — the system walks the records.',
       },
       {
-        title: 'Rules that report themselves',
-        text: 'Plain rules: zone entry, lingering, presence outside working hours, entry and exit, camera not responding. The system does not wait for someone to notice.',
-        tags: ['Zone entry', 'Lingering', 'After hours'],
-      },
-      {
-        title: 'Evidence, already clipped',
-        text: 'Every alert automatically keeps a short clip and a still frame. No scrubbing, no guessing which moment mattered.',
-        tags: ['Automatic clip', 'Frame and clip', 'Alert history'],
-      },
-      {
-        title: 'Ask what happened',
-        text: 'Ask in Uzbek or Russian: “Who entered the warehouse last night?” The answer arrives with a frame or a clip.',
-        tags: ['Uzbek and Russian', 'Plain words', 'Backed by evidence'],
-      },
-      {
-        title: 'Find a person by description',
-        text: 'Describe who you are looking for and the system walks the saved passes. Useful when you remember the description better than the time.',
-        tags: ['By appearance', 'Across records', 'Fast search'],
-      },
-      {
-        title: 'Turns footage into context',
-        text: 'Scene descriptions, licence plates, a heat map, and a daily summary make the quiet hours legible without another system to babysit.',
-        tags: ['Scene description', 'Licence plates', 'Daily summary'],
+        title: 'Footage becomes context',
+        text: 'Scene descriptions, plates, a heat map, a daily summary.',
       },
     ],
   },
@@ -579,13 +466,10 @@ const en: typeof ru = {
     kicker: 'THE DASHBOARD',
     titleA: 'The whole site —',
     titleEm: 'on one screen.',
-    lede: 'Alerts, live cameras, and questions to the system — in one place, on your server.',
+    lede: 'Alerts, cameras and questions — in one place.',
     shots: [
-      { title: 'Site overview', text: 'What happened in a day, by camera and by rule.' },
-      {
-        title: 'Alerts and evidence',
-        text: 'The event list, with a frame and a clip beside each one.',
-      },
+      { title: 'Site overview', text: 'What happened in a day.' },
+      { title: 'Alerts and evidence', text: 'A frame and a clip on each.' },
     ],
   },
 
@@ -593,50 +477,40 @@ const en: typeof ru = {
     kicker: 'WHERE IT WORKS',
     titleA: 'Built for the',
     titleEm: 'real shift.',
-    lede: 'For the people responsible when the doors close, the lights go out, and the footage becomes someone else’s problem.',
+    lede: 'For the people responsible once the doors close.',
     items: [
       {
         label: '01 / WAREHOUSES & FACTORIES',
-        title: 'Stop finding out after the shift.',
-        text: 'Catch loading bay entry, after-hours presence, and camera downtime while the context is still fresh.',
+        title: 'Stop finding out later.',
+        text: 'Loading bay entry, night-time movement, camera downtime.',
       },
       {
         label: '02 / RETAIL CHAINS',
         title: 'Every store accountable.',
-        text: 'See what needs attention across sites: entries, exits, lingering, unusual hours, and the evidence behind each alert.',
+        text: 'Every site in one list, evidence behind every alert.',
       },
       {
         label: '03 / SCHOOLS & LOGISTICS',
-        title: 'The quiet places stay visible.',
-        text: 'Practical watch over corridors, gates, yards, and routes — with the cameras already in place.',
+        title: 'Quiet places stay visible.',
+        text: 'Corridors, gates and yards — on the cameras already there.',
       },
     ],
-    link: 'See the use case',
-    slip: 'CLIP SAVED',
   },
 
   privacy: {
-    kicker: 'THE OBJECTION',
-    titleA: '“Does data leave',
-    titleEm: 'my site?”',
-    no: 'NO.',
-    text: 'Pragmata runs on your server, with your existing cameras, fully offline. Your footage stays inside your operation.',
-    points: ['No cloud processing', 'No new hardware', 'No dependence on the internet'],
-    panelHead: 'LOCAL SYSTEM / ONLINE',
-    panelStrong: 'Your server',
-    panelSmall: 'Processing stays here',
+    kicker: 'YOUR DATA',
+    titleA: 'Where your footage',
+    titleEm: 'actually goes.',
+    text: 'A device at your site collects the stream; processing and storage happen on the Pragmata server. So clips and frames do leave your site. We show that rather than hide it.',
   },
 
   workflow: {
     kicker: 'ONE LOOP / FOUR MOVES',
-    titleA: 'When the site goes quiet,',
-    titleEm: 'Pragmata does not.',
-    lede: 'A simple operating loop for the moments that usually disappear between a camera feed and a morning report.',
     steps: [
       { title: 'Detect', text: 'A person, a movement, a camera state.' },
       { title: 'Understand', text: 'A rule, a scene, a question in plain words.' },
       { title: 'Notify', text: 'The right alert, pushed to Telegram.' },
-      { title: 'Prove', text: 'A frame or a clip with the context attached.' },
+      { title: 'Prove', text: 'A frame or a clip with the context.' },
     ],
   },
 
@@ -644,11 +518,8 @@ const en: typeof ru = {
     kicker: 'THE NEXT SHIFT',
     titleA: 'Give your cameras',
     titleEm: 'a voice.',
-    text: 'Tell us what your site needs to stop missing. We will show you where Pragmata fits into the cameras and workflows you already have.',
-    button: 'Talk to the Pragmata team',
-    asideStrong: 'The guard that never looks away.',
-    metaLeft: 'BUILT FOR LOCAL CONTROL',
-    metaRight: 'UZ / RU / EN',
+    text: 'Tell us what your site needs to stop missing.',
+    button: 'Request a demo',
   },
 
   footer: {
@@ -659,25 +530,22 @@ const en: typeof ru = {
   },
 
   modal: {
-    kicker: 'START WITH YOUR SITE',
     titleA: 'Let’s find the',
     titleEm: 'missed moments.',
-    text: 'Tell us where your current cameras leave you guessing. A member of the Pragmata team will follow up with a practical next step.',
+    text: 'Where do your cameras leave you guessing today?',
     siteLabel: 'Your site',
     siteOptions: ['Warehouse', 'Factory', 'Retail chain', 'School', 'Logistics'],
     camLabel: 'Existing cameras',
-    camOptions: ['1–10 cameras', '11–50 cameras', '51–100 cameras', '100+ cameras'],
+    camOptions: ['1–10', '11–50', '51–100', '100+'],
     submit: 'Open a conversation',
     subject: 'Pragmata AI site conversation',
-    fineprint: 'No cloud account required. No new hardware pitch.',
-    close: 'Close',
   },
 
   a11y: {
     home: 'Pragmata AI home',
     nav: 'Primary navigation',
     menu: 'Menu',
-    feed: 'Sample alert feed',
+    feed: 'Sample alert',
   },
 }
 

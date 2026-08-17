@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, Languages } from '@/shared/ui/icons'
+import { Check, ChevronDown } from '@/shared/ui/icons'
+import { FlagGb, FlagRu, FlagUz } from '@/shared/ui/Flags'
 import { cn } from '@/shared/lib/utils'
 import { setLang } from '@/shared/i18n'
 
 type Lang = 'uz' | 'ru' | 'en'
+
+const FLAGS = { uz: FlagUz, ru: FlagRu, en: FlagGb } as const
 
 // Родные названия: язык выбирают глазами, а не переводом на текущий язык
 const LANGS: { code: Lang; label: string; short: string }[] = [
@@ -53,7 +56,10 @@ export function LangSelect() {
           open && 'bg-[var(--color-bg-muted)] text-[var(--color-text-primary)]',
         )}
       >
-        <Languages size={17} />
+        {(() => {
+          const Flag = FLAGS[current.code]
+          return <Flag size={18} />
+        })()}
         <span className="hidden sm:inline">{current.short}</span>
         <ChevronDown size={14} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
@@ -82,9 +88,10 @@ export function LangSelect() {
                       : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
                   )}
                 >
-                  <span className="w-7 text-caption font-bold text-[var(--color-text-subtle)]">
-                    {l.short}
-                  </span>
+                  {(() => {
+                    const Flag = FLAGS[l.code]
+                    return <Flag size={20} className="shrink-0" />
+                  })()}
                   <span className="flex-1">{l.label}</span>
                   {active && <Check size={16} />}
                 </button>
